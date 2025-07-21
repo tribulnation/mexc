@@ -1,0 +1,7 @@
+build
+twine
+ipykernel
+pyright
+python-dotenv
+trading-sdk
+-e mexc
