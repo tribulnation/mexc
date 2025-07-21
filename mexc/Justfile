@@ -1,5 +1,5 @@
-VENV := justfile_directory() + "/.venv"
-PYTHON := justfile_directory() + "/.venv/bin/python"
+VENV := justfile_directory() + "/../.venv"
+PYTHON := justfile_directory() + "/../.venv/bin/python"
 PKG := "."
 
 help:
