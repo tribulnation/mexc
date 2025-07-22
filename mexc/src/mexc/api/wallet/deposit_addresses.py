@@ -1,5 +1,5 @@
-from typing_extensions import TypedDict
-from pydantic import RootModel, ConfigDict
+from typing_extensions import TypedDict, NotRequired
+from pydantic import RootModel
 from mexc.core import AuthedMixin, timestamp as ts, ApiError
 
 class Chain(TypedDict):
@@ -10,6 +10,7 @@ class Chain(TypedDict):
   chainDisplayName: str
   """New standard naming, use this for withdraws."""
   netWork: str
+  memo: NotRequired[str | None]
 
 class Response(RootModel):
   root: list[Chain] | ApiError
