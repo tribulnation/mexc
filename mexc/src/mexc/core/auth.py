@@ -1,15 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from urllib.parse import urlencode, quote
 import hashlib
 import hmac
-from .client import ClientMixin
+from .client import ClientMixin, MEXC_FUTURES_API_BASE
 
 def sign(query_string: str, *, secret: str) -> str:
   return hmac.new(secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
-
-def encode_query(obj) -> str:
-  import json
-  return (json.dumps(obj, separators=(',', ':'))) # binance can't cope with spaces, it seems
 
 @dataclass
 class AuthedMixin(ClientMixin):
@@ -34,8 +30,12 @@ class AuthedMixin(ClientMixin):
     query = urlencode(fixed_params, quote_via=quote)
     return query + '&signature=' + self.sign(query)
   
-  async def authed_request(self, method: str, path: str, params: dict = {}, *, base_url: str | None = None):
-    return await self.request(method, path, headers=self.headers, params=params, base_url=base_url)
+  async def authed_request(self, method: str, path: str, params: dict = {}):
+    return await self.request(method, path, headers=self.headers, params=params)
   
-  async def signed_request(self, method: str, path: str, params: dict = {}, *, base_url: str | None = None):
-    return await self.request(method, path + '?' + self.signed_query(params), headers=self.headers, base_url=base_url)
+  async def signed_request(self, method: str, path: str, params: dict = {}):
+    return await self.request(method, path + '?' + self.signed_query(params), headers=self.headers)
+  
+@dataclass
+class FuturesAuthedMixin(AuthedMixin):
+  base_url: str = field(default=MEXC_FUTURES_API_BASE, kw_only=True)

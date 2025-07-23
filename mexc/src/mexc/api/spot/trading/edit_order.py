@@ -1,26 +1,26 @@
-from dataclasses import dataclass
-from typing_extensions import TypedDict, NotRequired, Literal
-from pydantic import BaseModel
-from mexc.core import UIMixin
+from typing_extensions import TypedDict
+from mexc.core import UIMixin, lazy_validator, DEFAULT_VALIDATE
 
-class Data(BaseModel):
+class Data(TypedDict):
   oldOrderId: str
   newOrderId: str
 
-class Response(BaseModel):
+class Response(TypedDict):
   code: int
   msg: str
   timestamp: int
-  data: Data | None = None
+  data: Data | None
+
+validate_response = lazy_validator(Response)
 
 class EditOrder(UIMixin):
   async def edit_order(
     self, *, orderId: str, price: str, quantity: str,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> Response:
     r = await self.ui_request('POST', '/api/platform/spot/order/modify', json={
       'orderId': orderId,
       'quantity': quantity,
       'price': price,
     })
-    return Response.model_validate_json(r.text) if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

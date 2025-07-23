@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from pydantic import RootModel
-from mexc.core import ClientMixin, ApiError
+from mexc.core import ClientMixin, ApiError, lazy_validator, DEFAULT_VALIDATE
 
 class Trade(TypedDict):
   id: str | None
@@ -11,14 +11,14 @@ class Trade(TypedDict):
   isBuyerMaker: bool
   isBestMatch: bool
 
-class Response(RootModel):
-  root: list[Trade] | ApiError
+Response: type[list[Trade] | ApiError] = list[Trade] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class Trades(ClientMixin):
   async def trades(
     self, symbol: str, *,
     limit: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[Trade]:
     """Get recent trades for a given symbol.
     
@@ -32,4 +32,4 @@ class Trades(ClientMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.request('GET', '/api/v3/trades', params=params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

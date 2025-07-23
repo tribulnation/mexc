@@ -1,7 +1,7 @@
 from typing_extensions import NamedTuple, Literal
 from datetime import datetime
-from pydantic import RootModel
-from mexc.core import ClientMixin, timestamp as ts, ApiError
+from mexc.core import ClientMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 
 class Candle(NamedTuple):
   open_time: int
@@ -13,9 +13,8 @@ class Candle(NamedTuple):
   close_time: int
   quote_volume: str
 
-
-class Response(RootModel):
-  root: list[Candle] | ApiError
+Response: type[list[Candle] | ApiError] = list[Candle] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 Interval = Literal['1m', '5m', '15m', '30m', '60m', '4h', '1d', '1W', '1M']
 
@@ -23,16 +22,16 @@ class Candles(ClientMixin):
   async def candles(
     self, symbol: str, *,
     interval: Interval,
-    startTime: datetime | None = None, endTime: datetime | None = None,
+    start: datetime | None = None, end: datetime | None = None,
     limit: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[Candle]:
     """Get klines (candles) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
     - `interval`: The interval of the klines (default: 1m).
-    - `startTime`: The start time to query. If given, only klines after this time will be returned.
-    - `endTime`: The end time to query. If given, only klines before this time will be returned.
+    - `start`: The start time to query. If given, only klines after this time will be returned.
+    - `end`: The end time to query. If given, only klines before this time will be returned.
     - `limit`: The maximum number of klines to return (default: 500, max: 1000).
     - `validate`: Whether to validate the response against the expected schema (default: True).
 
@@ -41,9 +40,9 @@ class Candles(ClientMixin):
     params: dict = {'symbol': symbol, 'interval': interval}
     if limit is not None:
       params['limit'] = limit
-    if startTime is not None:
-      params['startTime'] = ts.dump(startTime)
-    if endTime is not None:
-      params['endTime'] = ts.dump(endTime)
+    if start is not None:
+      params['startTime'] = ts.dump(start)
+    if end is not None:
+      params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/klines', params=params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

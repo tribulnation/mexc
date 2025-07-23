@@ -1,8 +1,8 @@
 from typing_extensions import TypedDict
-from pydantic import RootModel
 from mexc.core import (
   AuthedMixin, timestamp as ts,
-  OrderSide, OrderType, OrderStatus, TimeInForce, ApiError
+  OrderSide, OrderType, OrderStatus, TimeInForce, ApiError,
+  lazy_validator, DEFAULT_VALIDATE
 )
 
 class OrderState(TypedDict):
@@ -22,15 +22,15 @@ class OrderState(TypedDict):
   updateTime: int | None
   isWorking: bool
 
-class Response(RootModel):
-  root: OrderState | ApiError
+Response: type[OrderState | ApiError] = OrderState | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class QueryOrder(AuthedMixin):
   async def query_order(
     self, *, symbol: str, orderId: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | OrderState:
     """Query an order (of your account) by ID.
     
@@ -51,4 +51,4 @@ class QueryOrder(AuthedMixin):
     if orderId is not None:
       params['orderId'] = orderId
     r = await self.signed_request('GET', '/api/v3/order', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

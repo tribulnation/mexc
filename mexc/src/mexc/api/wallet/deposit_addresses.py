@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
-from pydantic import RootModel
-from mexc.core import AuthedMixin, timestamp as ts, ApiError
+from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 
 class Chain(TypedDict):
   coin: str
@@ -12,13 +12,13 @@ class Chain(TypedDict):
   netWork: str
   memo: NotRequired[str | None]
 
-class Response(RootModel):
-  root: list[Chain] | ApiError
+Response: type[list[Chain] | ApiError] = list[Chain] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class DepositAddresses(AuthedMixin):
   async def deposit_addresses(
     self, coin: str, *, network: str | None = None,
-    timestamp: int | None = None, validate: bool = True,
+    timestamp: int | None = None, validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[Chain]:
     """Get deposit addresses for a given coin.
     
@@ -35,4 +35,4 @@ class DepositAddresses(AuthedMixin):
     if network is not None:
       params['network'] = network
     r = await self.signed_request('GET', '/api/v3/capital/deposit/address', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

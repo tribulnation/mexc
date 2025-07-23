@@ -1,16 +1,16 @@
-from pydantic import RootModel
-from mexc.core import AuthedMixin, timestamp as ts, ApiError
+from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 from .query_order import OrderState
 
-class Response(RootModel):
-  root: list[OrderState] | ApiError
+Response: type[list[OrderState] | ApiError] = list[OrderState] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class QueryAllOrders(AuthedMixin):
   async def query_all_orders(
     self, *, symbol: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[OrderState]:
     """Query all orders (of your account) for a given symbol.
     
@@ -28,4 +28,4 @@ class QueryAllOrders(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/openOrders', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

@@ -1,7 +1,6 @@
 from typing_extensions import TypedDict, overload
 from datetime import datetime
-from pydantic import RootModel
-from mexc.core import ClientMixin, timestamp as ts, ApiError
+from mexc.core import ClientMixin, timestamp as ts, ApiError, lazy_validator, DEFAULT_VALIDATE
 
 class AggTrade(TypedDict):
   """Aggregate tradeId"""
@@ -22,27 +21,27 @@ class AggTrade(TypedDict):
   M: bool
 
 
-class Response(RootModel):
-  root: list[AggTrade] | ApiError
+Response: type[list[AggTrade] | ApiError] = list[AggTrade] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class AggTrades(ClientMixin):
   @overload
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[AggTrade]:
     ...
   @overload
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
     start: datetime, end: datetime,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[AggTrade]:
     ...
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
     start: datetime | None = None, end: datetime | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[AggTrade]:
     """Get aggregate trades for a given symbol.
     
@@ -62,4 +61,4 @@ class AggTrades(ClientMixin):
     if end is not None:
       params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/aggTrades', params=params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

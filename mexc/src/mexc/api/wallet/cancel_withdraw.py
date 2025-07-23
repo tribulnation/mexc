@@ -1,17 +1,17 @@
 from typing_extensions import TypedDict
-from pydantic import RootModel
-from mexc.core import AuthedMixin, timestamp as ts, ApiError
+from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 
 class WithdrawId(TypedDict):
   id: str
 
-class Response(RootModel):
-  root: WithdrawId | ApiError
+Response: type[WithdrawId | ApiError] = WithdrawId | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class CancelWithdraw(AuthedMixin):
   async def cancel_withdraw(
     self, id: str, *,
-    timestamp: int | None = None, validate: bool = True,
+    timestamp: int | None = None, validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | WithdrawId:
     """Cancel a withdrawal, given its ID.
     
@@ -25,4 +25,4 @@ class CancelWithdraw(AuthedMixin):
       'id': id, 'timestamp': timestamp or ts.now(),
     }
     r = await self.signed_request('DELETE', '/api/v3/capital/withdraw', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
-from pydantic import RootModel
-from mexc.core import AuthedMixin, timestamp as ts, ApiError
+from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 
 class Network(TypedDict):
   depositEnable: bool
@@ -19,13 +19,13 @@ class Currency(TypedDict):
   name: str
   networkList: list[Network]
 
-class Response(RootModel):
-  root: list[Currency] | ApiError
+Response: type[list[Currency] | ApiError] = list[Currency] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class CurrencyInfo(AuthedMixin):
   async def currency_info(
     self, *, timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[Currency]:
     """Query currency information, of all supported currencies.
     
@@ -36,4 +36,4 @@ class CurrencyInfo(AuthedMixin):
     """
     params = {'timestamp': timestamp or ts.now()}
     r = await self.signed_request('GET', '/api/v3/capital/config/getall', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

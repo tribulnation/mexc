@@ -8,7 +8,6 @@ class UIMixin(ClientMixin):
   u_id: str = ''
   ui_base: str = field(default=MEXC_UI_BASE, kw_only=True)
 
-  @ClientMixin.with_client
   async def ui_request(
     self, method: str, path: str, params: dict | None = None, *,
     headers: dict | None = None, cookies: dict | None = None,
@@ -18,3 +17,4 @@ class UIMixin(ClientMixin):
       'u_id': self.u_id,
       **(cookies or {}),
     }, json=json)
+  

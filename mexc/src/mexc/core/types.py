@@ -1,4 +1,11 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict, TypeVar, Generic, Any
+
+T = TypeVar('T', default=Any)
+
+class FuturesResponse(TypedDict, Generic[T]):
+  code: int
+  success: bool
+  data: T | None
 
 OrderSide = Literal['BUY', 'SELL']
 OrderType = Literal['LIMIT', 'MARKET', 'LIMIT_MAKER', 'IMMEDIATE_OR_CANCEL', 'FILL_OR_KILL']

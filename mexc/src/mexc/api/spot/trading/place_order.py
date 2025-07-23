@@ -1,8 +1,8 @@
 from typing_extensions import TypedDict, Literal
-from pydantic import RootModel
 from mexc.core import (
   AuthedMixin, timestamp as ts,
-  OrderSide, OrderType, ApiError
+  OrderSide, OrderType, ApiError,
+  lazy_validator, DEFAULT_VALIDATE,
 )
 
 class BaseOrder(TypedDict):
@@ -33,15 +33,15 @@ class NewOrder(TypedDict):
   side: OrderSide
   transactTime: int
 
-class Response(RootModel):
-  root: NewOrder | ApiError
+Response: type[NewOrder | ApiError] = NewOrder | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class PlaceOrder(AuthedMixin):
   async def place_order(
     self, symbol: str, order: Order, *,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | NewOrder:
     """Place a new order on the spot market.
     
@@ -60,4 +60,4 @@ class PlaceOrder(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('POST', '/api/v3/order', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

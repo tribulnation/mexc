@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict, NotRequired
 from datetime import datetime
-from pydantic import RootModel
-from mexc.core import AuthedMixin, timestamp as ts, ApiError
+from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
+  lazy_validator, DEFAULT_VALIDATE
 
 class Trade(TypedDict):
   id: str
@@ -18,8 +18,8 @@ class Trade(TypedDict):
   isSelfTrade: bool
   clientOrderId: NotRequired[str|None]
 
-class Response(RootModel):
-  root: list[Trade] | ApiError
+Response: type[list[Trade] | ApiError] = list[Trade] | ApiError # type: ignore
+validate_response = lazy_validator(Response)
 
 class MyTrades(AuthedMixin):
   async def my_trades(
@@ -30,7 +30,7 @@ class MyTrades(AuthedMixin):
     limit: int | None = None,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | list[Trade]:
     """Get all trades (of your account) for a given symbol.
 
@@ -62,4 +62,4 @@ class MyTrades(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/myTrades', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()

@@ -1,8 +1,8 @@
 from typing_extensions import TypedDict, NotRequired
-from pydantic import RootModel
 from mexc.core import (
   AuthedMixin, timestamp as ts,
-  OrderSide, OrderType, OrderStatus, TimeInForce, ApiError
+  OrderSide, OrderType, OrderStatus, TimeInForce, ApiError,
+  lazy_validator, DEFAULT_VALIDATE
 )
 
 class CanceledOrder(TypedDict):
@@ -20,15 +20,15 @@ class CanceledOrder(TypedDict):
   type: OrderType
   side: OrderSide
 
-class Response(RootModel):
-  root: CanceledOrder | ApiError
+Response: type[CanceledOrder | ApiError] = CanceledOrder | ApiError # type: ignore
+validate_response = lazy_validator(Response)
   
 class CancelOrder(AuthedMixin):
   async def cancel_order(
     self, symbol: str, *, orderId: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = True,
+    validate: bool = DEFAULT_VALIDATE,
   ) -> ApiError | CanceledOrder:
     """Cancel an open order (of your account) by ID.
     
@@ -47,4 +47,4 @@ class CancelOrder(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('DELETE', '/api/v3/order', params)
-    return Response.model_validate_json(r.text).root if validate else r.json()
+    return validate_response(r.text) if validate else r.json()
