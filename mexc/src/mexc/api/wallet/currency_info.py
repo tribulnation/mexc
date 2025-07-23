@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 
 class Network(TypedDict):
   depositEnable: bool
@@ -25,7 +25,7 @@ validate_response = lazy_validator(Response)
 class CurrencyInfo(AuthedMixin):
   async def currency_info(
     self, *, timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[Currency]:
     """Query currency information, of all supported currencies.
     
@@ -36,4 +36,4 @@ class CurrencyInfo(AuthedMixin):
     """
     params = {'timestamp': timestamp or ts.now()}
     r = await self.signed_request('GET', '/api/v3/capital/config/getall', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

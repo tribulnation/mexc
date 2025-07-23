@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, overload
 from datetime import datetime
-from mexc.core import ClientMixin, timestamp as ts, ApiError, lazy_validator, DEFAULT_VALIDATE
+from mexc.core import ClientMixin, timestamp as ts, ApiError, lazy_validator
 
 class AggTrade(TypedDict):
   """Aggregate tradeId"""
@@ -28,20 +28,20 @@ class AggTrades(ClientMixin):
   @overload
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[AggTrade]:
     ...
   @overload
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
     start: datetime, end: datetime,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[AggTrade]:
     ...
   async def agg_trades(
     self, symbol: str, *, limit: int | None = None,
     start: datetime | None = None, end: datetime | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[AggTrade]:
     """Get aggregate trades for a given symbol.
     
@@ -61,4 +61,4 @@ class AggTrades(ClientMixin):
     if end is not None:
       params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/aggTrades', params=params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

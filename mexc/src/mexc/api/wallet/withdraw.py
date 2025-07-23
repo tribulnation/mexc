@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 
 class WithdrawId(TypedDict):
   id: str
@@ -16,7 +16,7 @@ class Withdraw(AuthedMixin):
     contract_address: str | None = None,
     memo: str | None = None,
     remark: str | None = None,
-    timestamp: int | None = None, validate: bool = DEFAULT_VALIDATE,
+    timestamp: int | None = None, validate: bool | None = None,
   ) -> ApiError | WithdrawId:
     """Withdraw assets from your account.
     
@@ -45,4 +45,4 @@ class Withdraw(AuthedMixin):
     if remark is not None:
       params['remark'] = remark
     r = await self.signed_request('POST', '/api/v3/capital/withdraw', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

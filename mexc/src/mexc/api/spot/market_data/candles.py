@@ -1,7 +1,7 @@
 from typing_extensions import NamedTuple, Literal
 from datetime import datetime
 from mexc.core import ClientMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 
 class Candle(NamedTuple):
   open_time: int
@@ -24,7 +24,7 @@ class Candles(ClientMixin):
     interval: Interval,
     start: datetime | None = None, end: datetime | None = None,
     limit: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[Candle]:
     """Get klines (candles) for a given symbol.
     
@@ -45,4 +45,4 @@ class Candles(ClientMixin):
     if end is not None:
       params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/klines', params=params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

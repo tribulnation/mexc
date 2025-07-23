@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict, Literal
 from datetime import datetime
 from mexc.core import FuturesClientMixin, timestamp as ts, \
-  lazy_validator, FuturesResponse, DEFAULT_VALIDATE
+  lazy_validator, FuturesResponse
 
 class CandleData(TypedDict):
   time: list[int]
@@ -25,7 +25,7 @@ class Candles(FuturesClientMixin):
     self, symbol: str, *,
     interval: Interval | None = None,
     start: datetime | None = None, end: datetime | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> FuturesResponse[CandleData]:
     """Get klines (candles) for a given symbol. Returns at most 2000 candles.
     
@@ -45,4 +45,4 @@ class Candles(FuturesClientMixin):
     if end is not None:
       params['end'] = ts.dump(end)
     r = await self.request('GET', f'/api/v1/contract/kline/{symbol}', params=params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

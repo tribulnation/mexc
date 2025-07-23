@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict, NotRequired
 from datetime import datetime
 from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 
 class Trade(TypedDict):
   id: str
@@ -30,7 +30,7 @@ class MyTrades(AuthedMixin):
     limit: int | None = None,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[Trade]:
     """Get all trades (of your account) for a given symbol.
 
@@ -62,4 +62,4 @@ class MyTrades(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/myTrades', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

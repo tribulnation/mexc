@@ -1,5 +1,5 @@
-from typing_extensions import TypedDict, NamedTuple
-from mexc.core import ClientMixin, ApiError, lazy_validator, DEFAULT_VALIDATE
+from typing_extensions import TypedDict, NamedTuple 
+from mexc.core import ClientMixin, ApiError, lazy_validator
 
 class BookEntry(NamedTuple):
   price: str
@@ -14,7 +14,7 @@ Response: type[OrderBook | ApiError] = OrderBook | ApiError # type: ignore
 validate_response = lazy_validator(Response)
 
 class Depth(ClientMixin):
-  async def depth(self, symbol: str, limit: int | None = None, validate: bool = DEFAULT_VALIDATE) -> ApiError | OrderBook:
+  async def depth(self, symbol: str, limit: int | None = None, validate: bool | None = None) -> ApiError | OrderBook:
     """Get the order book for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
@@ -27,4 +27,4 @@ class Depth(ClientMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.request('GET', f'/api/v3/depth', params=params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

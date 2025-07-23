@@ -1,5 +1,5 @@
 from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 from .query_order import OrderState
 
 Response: type[list[OrderState] | ApiError] = list[OrderState] | ApiError # type: ignore
@@ -10,7 +10,7 @@ class QueryAllOrders(AuthedMixin):
     self, *, symbol: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[OrderState]:
     """Query all orders (of your account) for a given symbol.
     
@@ -28,4 +28,4 @@ class QueryAllOrders(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/openOrders', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

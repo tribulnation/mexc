@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from functools import wraps
 import httpx
+from .validation import DEFAULT_VALIDATE
 
 MEXC_SPOT_API_BASE = 'https://api.mexc.com'
 MEXC_FUTURES_API_BASE = 'https://contract.mexc.com'
@@ -49,6 +50,10 @@ class Client:
 class ClientMixin:
   base_url: str = field(default=MEXC_SPOT_API_BASE, kw_only=True)
   client: Client = field(kw_only=True, default_factory=Client)
+  default_validate: bool = field(default=DEFAULT_VALIDATE, kw_only=True)
+
+  def validate(self, validate: bool | None) -> bool:
+    return self.default_validate if validate is None else validate
 
   async def __aenter__(self):
     await self.client.__aenter__()

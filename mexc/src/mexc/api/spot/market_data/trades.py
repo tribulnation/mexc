@@ -1,6 +1,5 @@
 from typing_extensions import TypedDict
-from pydantic import RootModel
-from mexc.core import ClientMixin, ApiError, lazy_validator, DEFAULT_VALIDATE
+from mexc.core import ClientMixin, ApiError, lazy_validator
 
 class Trade(TypedDict):
   id: str | None
@@ -18,7 +17,7 @@ class Trades(ClientMixin):
   async def trades(
     self, symbol: str, *,
     limit: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | list[Trade]:
     """Get recent trades for a given symbol.
     
@@ -32,4 +31,4 @@ class Trades(ClientMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.request('GET', '/api/v3/trades', params=params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

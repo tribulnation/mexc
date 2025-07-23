@@ -2,7 +2,7 @@ from typing_extensions import TypedDict, Literal
 from mexc.core import (
   AuthedMixin, timestamp as ts,
   OrderSide, OrderType, ApiError,
-  lazy_validator, DEFAULT_VALIDATE,
+  lazy_validator,
 )
 
 class BaseOrder(TypedDict):
@@ -41,7 +41,7 @@ class PlaceOrder(AuthedMixin):
     self, symbol: str, order: Order, *,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | NewOrder:
     """Place a new order on the spot market.
     
@@ -60,4 +60,4 @@ class PlaceOrder(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('POST', '/api/v3/order', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

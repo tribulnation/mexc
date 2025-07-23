@@ -2,7 +2,7 @@ from typing_extensions import TypedDict, NotRequired
 from mexc.core import (
   AuthedMixin, timestamp as ts,
   OrderSide, OrderType, OrderStatus, TimeInForce, ApiError,
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 )
 
 class CanceledOrder(TypedDict):
@@ -28,7 +28,7 @@ class CancelOrder(AuthedMixin):
     self, symbol: str, *, orderId: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | CanceledOrder:
     """Cancel an open order (of your account) by ID.
     
@@ -47,4 +47,4 @@ class CancelOrder(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('DELETE', '/api/v3/order', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

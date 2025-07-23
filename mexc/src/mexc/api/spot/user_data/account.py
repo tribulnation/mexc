@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import AuthedMixin, timestamp as ts, ApiError, \
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 
 class Balance(TypedDict):
   asset: str
@@ -23,7 +23,7 @@ validate_response = lazy_validator(Response)
 class Account(AuthedMixin):
   async def account(
     self, *, recvWindow: int | None = None,
-    timestamp: int | None = None, validate: bool = DEFAULT_VALIDATE,
+    timestamp: int | None = None, validate: bool | None = None,
   ) -> ApiError | AccountInfo:
     """Get account information (of your account), including trading/deposit/withdrawal permissions and asset balances.
     
@@ -39,4 +39,4 @@ class Account(AuthedMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/account', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()

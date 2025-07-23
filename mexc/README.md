@@ -10,10 +10,11 @@ pip install mexc-trading-sdk
 
 ## Features
 
-- Fully async (with `httpx`)
-- Type-annotated (with `TypedDict`, `Literal`, etc.) and validated (with `pydantic`)
+- Fully async (with `httpx`).
+- Type-annotated with `TypedDict`, `Literal`, etc.
+- Optionally validated with `pydantic`.
 - [Trading SDK](https://github.com/tribulnation/sdk) compatibility layer
-- Easy context-managed usage (with `async with`)
+- Easy context-managed usage (with `async with`).
 - Comprehensive spot trading, market data, and wallet endpoints
 
 ## Usage
@@ -42,6 +43,25 @@ from mexc.api.spot import MarketData
 
 async with MarketData() as client:
   candles = await client.candles('BTCUSDT', interval='15m')
+```
+
+## Optional Validation
+
+By default, the SDK will validate the response against the expected schema.
+
+You can disable validation method by method using the `validate` parameter:
+
+```python
+await client.account(validate=False)
+```
+
+...or disable it globally:
+
+```python	
+async with MEXC(API_KEY, API_SECRET, default_validate=False) as client:
+  ...
+# or
+client.default_validate = False
 ```
 
 ## Trading SDK Compatibility

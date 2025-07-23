@@ -2,7 +2,7 @@ from typing_extensions import TypedDict
 from mexc.core import (
   AuthedMixin, timestamp as ts,
   OrderSide, OrderType, OrderStatus, TimeInForce, ApiError,
-  lazy_validator, DEFAULT_VALIDATE
+  lazy_validator
 )
 
 class OrderState(TypedDict):
@@ -30,7 +30,7 @@ class QueryOrder(AuthedMixin):
     self, *, symbol: str, orderId: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
-    validate: bool = DEFAULT_VALIDATE,
+    validate: bool | None = None,
   ) -> ApiError | OrderState:
     """Query an order (of your account) by ID.
     
@@ -51,4 +51,4 @@ class QueryOrder(AuthedMixin):
     if orderId is not None:
       params['orderId'] = orderId
     r = await self.signed_request('GET', '/api/v3/order', params)
-    return validate_response(r.text) if validate else r.json()
+    return validate_response(r.text) if self.validate(validate) else r.json()
