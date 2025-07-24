@@ -27,7 +27,7 @@ validate_response = lazy_validator(Response)
 
 class QueryOrder(AuthedMixin):
   async def query_order(
-    self, *, symbol: str, orderId: str,
+    self, symbol: str, *, orderId: str,
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,

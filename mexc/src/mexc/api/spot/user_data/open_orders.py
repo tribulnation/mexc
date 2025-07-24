@@ -5,21 +5,21 @@ from .query_order import OrderState
 Response: type[list[OrderState] | ApiError] = list[OrderState] | ApiError # type: ignore
 validate_response = lazy_validator(Response)
 
-class QueryAllOrders(AuthedMixin):
-  async def query_all_orders(
-    self, *, symbol: str,
+class OpenOrders(AuthedMixin):
+  async def open_orders(
+    self, symbol: str, *,
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
   ) -> ApiError | list[OrderState]:
-    """Query all orders (of your account) for a given symbol.
+    """Query open orders (of your account) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`
     - `recvWindow`: If the server receives the request after `timestamp + recvWindow`, it will be rejected (default: 5000).
     - `timestamp`: The timestamp for the request, in milliseconds (default: now).
     - `validate`: Whether to validate the response against the expected schema (default: True).
 
-    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#all-orders)
+    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#open-orders)
     """
     params = {
       'symbol': symbol,

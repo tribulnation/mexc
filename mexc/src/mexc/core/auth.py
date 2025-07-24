@@ -4,13 +4,21 @@ import hashlib
 import hmac
 from .client import ClientMixin, MEXC_FUTURES_API_BASE
 
-def sign(query_string: str, *, secret: str) -> str:
-  return hmac.new(secret.encode(), query_string.encode(), hashlib.sha256).hexdigest()
+def sign(payload: str, *, secret: str) -> str:
+  return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
 @dataclass
 class AuthedMixin(ClientMixin):
   api_key: str
   api_secret: str
+
+  @classmethod
+  def env(cls):
+    import os
+    return cls(
+      api_key=os.environ['MEXC_ACCESS_KEY'],
+      api_secret=os.environ['MEXC_SECRET_KEY'],
+    )
 
   @property
   def headers(self) -> dict:
@@ -30,8 +38,11 @@ class AuthedMixin(ClientMixin):
     query = urlencode(fixed_params, quote_via=quote)
     return query + '&signature=' + self.sign(query)
   
-  async def authed_request(self, method: str, path: str, params: dict = {}):
-    return await self.request(method, path, headers=self.headers, params=params)
+  async def authed_request(
+    self, method: str, path: str, params: dict = {}, *,
+    json: dict | None = None,
+  ):
+    return await self.request(method, path, headers=self.headers, params=params, json=json)
   
   async def signed_request(self, method: str, path: str, params: dict = {}):
     return await self.request(method, path + '?' + self.signed_query(params), headers=self.headers)

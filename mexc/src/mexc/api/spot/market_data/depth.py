@@ -14,7 +14,7 @@ Response: type[OrderBook | ApiError] = OrderBook | ApiError # type: ignore
 validate_response = lazy_validator(Response)
 
 class Depth(ClientMixin):
-  async def depth(self, symbol: str, limit: int | None = None, validate: bool | None = None) -> ApiError | OrderBook:
+  async def depth(self, symbol: str, *, limit: int | None = None, validate: bool | None = None) -> ApiError | OrderBook:
     """Get the order book for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
