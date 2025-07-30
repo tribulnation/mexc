@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from functools import wraps
 import httpx
-from .validation import DEFAULT_VALIDATE
+from .validation import ValidationMixin
 
 MEXC_SPOT_API_BASE = 'https://api.mexc.com'
 MEXC_FUTURES_API_BASE = 'https://contract.mexc.com'
@@ -9,6 +9,7 @@ MEXC_FUTURES_API_BASE = 'https://contract.mexc.com'
 class Client:
   async def __aenter__(self):
     self._client = httpx.AsyncClient()
+    await self._client.__aenter__()
     return self
   
   async def __aexit__(self, *args):
@@ -47,23 +48,21 @@ class Client:
     }, cookies=cookies, json=json)
 
 @dataclass
-class ClientMixin:
+class ClientMixin(ValidationMixin):
   base_url: str = field(default=MEXC_SPOT_API_BASE, kw_only=True)
   client: Client = field(kw_only=True, default_factory=Client)
-  default_validate: bool = field(default=DEFAULT_VALIDATE, kw_only=True)
-
-  def validate(self, validate: bool | None) -> bool:
-    return self.default_validate if validate is None else validate
 
   async def __aenter__(self):
     await self.client.__aenter__()
     return self
   
-  async def __aexit__(self, *args):
-    await self.client.__aexit__(*args)
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    await self.client.__aexit__(exc_type, exc_value, traceback)
 
-  async def request(self, method: str, path: str, params: dict | None = None, *,
-    headers: dict | None = None, cookies: dict | None = None, json=None,
+  async def request(
+    self, method: str, path: str, params: dict | None = None, *,
+    headers: dict | None = None, cookies: dict | None = None,
+    json=None,
   ):
     return await self.client.request(method, self.base_url + path, params=params, headers={
       'User-Agent': 'trading-sdk',

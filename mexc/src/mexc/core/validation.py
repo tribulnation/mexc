@@ -1,4 +1,5 @@
 from typing_extensions import TypeVar
+from dataclasses import dataclass, field
 
 T = TypeVar('T')
 
@@ -20,3 +21,10 @@ DEFAULT_VALIDATE = True
 #   DEFAULT_VALIDATE = True
 # else:
 #   DEFAULT_VALIDATE = False
+
+@dataclass
+class ValidationMixin:
+  default_validate: bool = field(default=DEFAULT_VALIDATE, kw_only=True)
+
+  def validate(self, validate: bool | None) -> bool:
+    return self.default_validate if validate is None else validate

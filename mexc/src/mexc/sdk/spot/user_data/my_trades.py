@@ -18,7 +18,7 @@ async def _my_trades(
         Trade(
           id=t['id'],
           price=Decimal(t['price']),
-          quantity=Decimal(t['qty']),
+          qty=Decimal(t['qty']),
           time=timestamp.parse(t['time']),
           side='BUY' if t['isBuyer'] else 'SELL',
           maker=t['isMaker'],
@@ -36,12 +36,12 @@ async def _paginate_trades_forward(
   ids = set()
   while end is None or start < end:
     trades = await _my_trades(client, symbol, limit=limit, start=start, end=end)
-    new_trades = [t for t in reversed(trades) if t['id'] not in ids] # ordered by time
+    new_trades = [t for t in reversed(trades) if t.id not in ids] # ordered by time
     if not new_trades:
       break
-    ids.update(t['id'] for t in new_trades)
+    ids.update(t.id for t in new_trades)
     yield new_trades
-    start = new_trades[-1]['time']
+    start = new_trades[-1].time
 
 async def _paginate_trades_backward(
   client: Client, symbol: str, *, limit: int | None = None,
@@ -51,30 +51,29 @@ async def _paginate_trades_backward(
   ids = set()
   while start is None or start < end:
     trades = await _my_trades(client, symbol, limit=limit, start=start, end=end)
-    new_trades = [t for t in trades if t['id'] not in ids] # ordered backwards by time
+    new_trades = [t for t in trades if t.id not in ids] # ordered backwards by time
     if not new_trades:
       break
-    ids.update(t['id'] for t in new_trades)
+    ids.update(t.id for t in new_trades)
     yield new_trades
-    end = new_trades[-1]['time']
+    end = new_trades[-1].time
 
-@dataclass(frozen=True)
-class MyTrades(MyTradesTDK, SdkMixin[Client]):
-  Client = Client
-
+@dataclass
+class MyTrades(MyTradesTDK, SdkMixin):
   async def my_trades(
     self, symbol: str, *, limit: int | None = None,
     start: datetime | None = None, end: datetime | None = None
   ) -> AsyncIterable[Sequence[Trade]]:
+    spot = self.client.spot
     if start and end:
-      async for trades in _paginate_trades_forward(self.client, symbol, start=start, end=end, limit=limit):
+      async for trades in _paginate_trades_forward(spot, symbol, start=start, end=end, limit=limit):
         yield trades
     elif start:
-      async for trades in _paginate_trades_forward(self.client, symbol, start=start, limit=limit):
+      async for trades in _paginate_trades_forward(spot, symbol, start=start, limit=limit):
         yield trades
     elif end:
-      async for trades in _paginate_trades_backward(self.client, symbol, end=end, limit=limit):
+      async for trades in _paginate_trades_backward(spot, symbol, end=end, limit=limit):
         yield trades
     else:
-      async for trades in _paginate_trades_backward(self.client, symbol, end=datetime.now(), limit=limit):
+      async for trades in _paginate_trades_backward(spot, symbol, end=datetime.now(), limit=limit):
         yield trades
