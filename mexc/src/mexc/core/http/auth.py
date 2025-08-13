@@ -117,7 +117,7 @@ class AuthHttpMixin(HttpMixin):
       method, self.base_url + path, headers=headers, json=json,
       content=content, data=data, files=files, auth=auth,
       follow_redirects=follow_redirects, cookies=cookies,
-      timeout=timeout, extensions=extensions,
+      timeout=timeout, extensions=extensions, params=params,
     )
   
   async def signed_request(
@@ -127,7 +127,7 @@ class AuthHttpMixin(HttpMixin):
     data: httpx._types.RequestData | None = None,
     files: httpx._types.RequestFiles | None = None,
     json: Any | None = None,
-    params: httpx._types.QueryParamTypes | None = None,
+    params: Mapping | None = None,
     headers: Mapping[str, str] | None = None,
     cookies: httpx._types.CookieTypes | None = None,
     auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
@@ -139,5 +139,5 @@ class AuthHttpMixin(HttpMixin):
       method, self.base_url + path, headers=headers, json=json,
       content=content, data=data, files=files, auth=auth,
       follow_redirects=follow_redirects, cookies=cookies,
-      timeout=timeout, extensions=extensions,
+      timeout=timeout, extensions=extensions, params=params,
     )

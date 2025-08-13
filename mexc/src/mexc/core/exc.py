@@ -9,3 +9,6 @@ class ValidationError(Error):
 
 class UserError(Error):
   ...
+
+class AuthError(Error):
+  ...

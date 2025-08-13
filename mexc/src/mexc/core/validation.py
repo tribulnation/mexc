@@ -1,6 +1,6 @@
 from typing_extensions import TypeVar
 from dataclasses import dataclass, field
-from core.exc import ValidationError
+from mexc.core.exc import ValidationError
 
 T = TypeVar('T')
 

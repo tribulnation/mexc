@@ -1,48 +1,52 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
 from mexc.core import AuthHttpClient
-from mexc.spot import MEXC_SPOT_API_BASE
+from mexc.core.ws.base import SocketClient
+from mexc.futures import MEXC_FUTURES_API_BASE
 from .market_data import MarketData
 from .trading import Trading
-from .user_data import UserData
-from .wallet import Wallet
-from .streams import Streams, MEXC_SOCKET_URL
+from .streams import Streams, MEXC_FUTURES_SOCKET_URL
 
 @dataclass
-class Spot(MarketData, Trading, UserData, Wallet):
+class Futures(MarketData, Trading):
   streams: Streams
 
   def __init__(
     self, *,
-    api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    api_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
     auth_http: AuthHttpClient,
     default_validate: bool = True,
-    **kwargs: Unpack[Streams.Config],
+    **kwargs: Unpack[SocketClient.Config],
   ):
-    self.default_validate = default_validate
     self.base_url = api_url
+    self.default_validate = default_validate
     self.http = self.auth_http = auth_http
-    self.streams = Streams(api_url=api_url, ws_url=ws_url, auth_http=auth_http, **kwargs)
+    self.streams = Streams.new(
+      auth_http.api_key, auth_http.api_secret,
+      url=ws_url,
+      default_validate=default_validate,
+      **kwargs,
+    )
 
   @classmethod
   def new(
     cls, api_key: str, api_secret: str, *,
-    base_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    base_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
     default_validate: bool = True,
-    **kwargs: Unpack[Streams.Config],
+    **kwargs: Unpack[SocketClient.Config],
   ):
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
     return cls(api_url=base_url, ws_url=ws_url, auth_http=auth_http, default_validate=default_validate, **kwargs)
-
+  
   @classmethod
   def env(
     cls, *,
-    base_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    base_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
     default_validate: bool = True,
-    **kwargs: Unpack[Streams.Config],
+    **kwargs: Unpack[SocketClient.Config],
   ):
     import os
     return cls.new(
