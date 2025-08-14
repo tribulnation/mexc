@@ -12,7 +12,6 @@ pip install mexc-trading-sdk
 
 - Fully async (with `httpx`)
 - Type-annotated (with `TypedDict`, `Literal`, etc.) and validated (with `pydantic`)
-- [Trading SDK](https://github.com/tribulnation/sdk) compatibility layer
 - Easy context-managed usage (with `async with`)
 - Comprehensive spot trading, market data, and wallet endpoints
 - Spot data and user WebSocket streams
@@ -45,29 +44,6 @@ from mexc.spot import MarketData
 
 async with MarketData() as client:
   candles = await client.candles('BTCUSDT', interval='15m')
-```
-
-## Trading SDK Compatibility
-
-This SDK includes a compatibility layer with the [Trading SDK](https://github.com/tribulnation/sdk).
-
-> Note: For Trading SDK compatibility, use `from mexc.sdk import MEXC`, not `from mexc import MEXC`.
-
-```python
-import trading_sdk as tdk
-from mexc.sdk import MEXC
-
-async def micro_strategy(client: tdk.Trading):
-    while True:
-        await client.place_order('BTCUSDT', {
-            'quantity': '1',
-            'type': 'MARKET',
-            'side': 'BUY',
-        })
-        await asyncio.sleep(3600*24)
-
-async with MEXC(API_KEY, API_SECRET) as client:
-    await micro_strategy(client)
 ```
 
 ## Supported APIs
@@ -114,7 +90,7 @@ The SDK covers the following MEXC endpoints:
 
 #### Trading
 
-Currently "under maintenance" (see the [docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#order-under-maintenance))
+Has been "under maintenance" (see the [docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#order-under-maintenance)) for years. I.e., they don't want you to trade futures via the API, sorry.
 
 #### Market Data
 - [`candles`](mexc/src/mexc/futures/market_data/candles.py)
