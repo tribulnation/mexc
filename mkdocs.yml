@@ -1,0 +1,45 @@
+site_name: MEXC Python SDK
+repo_name: mexc
+repo_url: https://github.com/tribulnation/mexc
+
+theme:
+  name: material
+  features:
+    - content.code.copy
+  logo: media/logo.png
+  favicon: media/logo.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - scheme: default
+      primary: black
+      accent: amber
+      toggle:
+        icon: material/brightness-7 
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: black
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+extra:
+  homepage: https://tribulnation.com
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Keys Setup: api-keys.md
+  - Simple DCA Bot: simple-dca-bot.md
+  - Hedging Perps: hedging-perps.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+
+plugins: 
+  - mkdocstrings
