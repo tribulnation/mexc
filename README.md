@@ -1,39 +1,45 @@
-# MEXC API SDK
+# MEXC Trading SDK
 
-An unofficial, fully-typed async Python SDK for the MEXC cryptocurrency exchange, with Trading SDK compatibility.
+> The unofficial, fully-typed async Python SDK for MEXC, by Tribulnation.
 
-## Installation
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+## Quick Start
 
 ```bash
 pip install mexc-trading-sdk
 ```
 
-## Features
-
-- Fully async (with `httpx`)
-- Type-annotated (with `TypedDict`, `Literal`, etc.) and validated (with `pydantic`)
-- Easy context-managed usage (with `async with`)
-- Comprehensive spot trading, market data, and wallet endpoints
-- Spot data and user WebSocket streams
-- Futures data endpoints
-- Futures data and user WebSocket streams
-
-## Usage
-
 ```python
-from mexc import MEXC  # Main async client
-
-API_KEY = "your_api_key" # aka "access key"
-API_SECRET = "your_api_secret" # aka "secret key"
+from mexc import MEXC
 
 async with MEXC.new(API_KEY, API_SECRET) as client:
-  r = await client.spot.place_order('BTCUSDT', {
-    'price': '100000',
+  candles = await client.spot.place_order('BTCUSDT', {
+    'price': '50000',
     'quantity': '0.001',
     'type': 'LIMIT',
     'side': 'BUY',
   })
 ```
+
+## Why MEXC SDK?
+
+- **🚀 Fully Async** - Built with `httpx` for high-performance async operations
+- **🔒 Type Safe** - Complete type annotations with `TypedDict` and `pydantic` validation
+- **⚡ Easy to Use** - Simple context-managed API with `async with`
+- **📊 Comprehensive** - Spot trading, market data, wallet, and WebSocket streams
+- **🎯 No Setup Required** - Start exploring markets immediately
+
+## What's Included
+
+- **Market Data** - Real-time prices, order books, and historical data
+- **Spot Trading** - Place, cancel, and query orders
+- **User Data** - Account balances, trade history, and order status
+- **Wallet Operations** - Deposits, withdrawals, and address management
+- **WebSocket Streams** - Live market data and user notifications
+
+## Authentication
 
 > Get your API keys from the [MEXC dashboard](https://www.mexc.com/user/openapi).
 
