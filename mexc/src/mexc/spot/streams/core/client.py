@@ -1,5 +1,6 @@
 from typing_extensions import Any, TypedDict
 from dataclasses import dataclass, field
+import websockets
 from mexc.core import json, validator, ValidationError
 from mexc.core.ws.streams_rpc import StreamsRPCSocketClient
 from .proto import parse_proto
@@ -18,7 +19,7 @@ class StreamsClient(StreamsRPCSocketClient):
   url: str = field(default=MEXC_SOCKET_URL, kw_only=True)
 
   async def send(self, msg):
-    await self.ws.send(json().dumps(msg))
+    await (await self.ws).send(json().dumps(msg), text=True)
 
   async def send_request(self, method: str, params=None):
     msg = {'method': method}
@@ -43,10 +44,13 @@ class StreamsClient(StreamsRPCSocketClient):
       proto = parse_proto(msg)
       channel: str = proto.channel # type: ignore
       return channel, proto
+    
+  async def open(self):
+    return await super().open()
 
 @dataclass
 class StreamsMixin:
-  ws: StreamsClient
+  ws: StreamsClient = field(default_factory=StreamsClient, kw_only=True)
 
   async def __aenter__(self):
     await self.ws.__aenter__()

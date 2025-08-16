@@ -4,15 +4,18 @@ import asyncio
 from functools import wraps
 from dataclasses import dataclass, field
 from datetime import timedelta
+import logging
 import websockets
-from mexc.core.exc import UserError, NetworkError
+from ..exc import NetworkError
+
+logger = logging.getLogger('mexc.core.ws')
 
 class Restart:
   ...
 
 @dataclass
 class Context:
-  conn: websockets.ClientConnection
+  ws: websockets.ClientConnection
   pinger: asyncio.Task
   listener: asyncio.Task
   restarter: asyncio.Task
@@ -37,14 +40,14 @@ class SocketClient(ABC):
     restart_every: timedelta
 
   @property
-  def ctx(self) -> Context:
+  async def ctx(self) -> Context:
     if (ctx := getattr(self, '_ctx', None)) is None:
-      raise UserError('Client must be used as context manager: `async with ...: ...`')
+      ctx = await self.open()
     return ctx
   
   @property
-  def ws(self) -> websockets.ClientConnection:
-    return self.ctx.conn
+  async def ws(self) -> websockets.ClientConnection:
+    return (await self.ctx).ws
   
   @staticmethod
   def with_client(fn):
@@ -63,56 +66,60 @@ class SocketClient(ABC):
     return self
   
   async def __aexit__(self, exc_type, exc_value, traceback):
-    await self.close(self.ctx, exc_type, exc_value, traceback)
+    await self.close(await self.ctx, exc_type, exc_value, traceback)
   
+  @abstractmethod
   async def open(self):
-    self.started.clear()
+    logger.info('Opening...')
     async def connect():
       try:
-        return await websockets.connect(self.url, timeout=self.timeout)
+        return await websockets.connect(self.url, open_timeout=self.timeout.total_seconds())
       except websockets.exceptions.WebSocketException as e:
         raise NetworkError(f'Failed to connect to {self.url}') from e
     
-    conn = await connect()
+    ws = await connect()
+    logger.info('Connected!')
     self._ctx = Context(
-      conn=conn,
+      ws=ws,
       pinger=asyncio.create_task(self.pinger()),
-      listener=asyncio.create_task(self.listener()),
+      listener=asyncio.create_task(self.listener(ws)),
       restarter=asyncio.create_task(self.restarter()),
     )
     self.started.set()
+    return self._ctx
 
   async def close(self, ctx: Context, exc_type=None, exc_value=None, traceback=None):
     ctx.pinger.cancel()
     ctx.listener.cancel()
     ctx.restarter.cancel()
-    await ctx.conn.__aexit__(exc_type, exc_value, traceback)
+    await ctx.ws.__aexit__(exc_type, exc_value, traceback)
 
   async def pinger(self):
-    await self.started.wait()
     while True:
       await asyncio.sleep(self.ping_every.total_seconds())
       try:
+        logger.debug('Pinging...')
         await asyncio.wait_for(self.ping(), self.timeout.total_seconds())
       except asyncio.TimeoutError:
+        logger.warning('Ping timeout, restarting...')
         asyncio.create_task(self.restart())
         break
 
-  async def listener(self):
-    await self.started.wait()
+  async def listener(self, ws: websockets.ClientConnection, /):
     while True:
-      msg = await self.ctx.conn.recv()
+      msg = await ws.recv()
+      logger.debug('Received: %s', msg)
       self.on_msg(msg)
 
   async def restarter(self):
-    await self.started.wait()
     await asyncio.sleep(self.restart_every.total_seconds())
     asyncio.create_task(self.restart())
 
   async def restart(self):
+    logger.info('Restarting...')
     self.started.clear()
     self.on_msg(Restart())
-    await self.close(self.ctx)
+    await self.close(await self.ctx)
     await self.open()
 
   @abstractmethod

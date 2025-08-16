@@ -1,5 +1,6 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
+import asyncio
 from mexc.core import AuthHttpClient
 from mexc.core.ws.base import SocketClient
 from mexc.futures import MEXC_FUTURES_API_BASE
@@ -56,4 +57,10 @@ class Futures(MarketData, Trading):
       ws_url=ws_url,
       default_validate=default_validate,
       **kwargs,
+    )
+  
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    await asyncio.gather(
+      super().__aexit__(exc_type, exc_value, traceback),
+      self.streams.__aexit__(exc_type, exc_value, traceback),
     )

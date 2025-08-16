@@ -18,7 +18,7 @@ class StreamsClient(StreamsRPCSocketClient):
   url: str = field(default=MEXC_FUTURES_SOCKET_URL, kw_only=True)
 
   async def send(self, msg):
-    await self.ws.send(json().dumps(msg))
+    await (await self.ws).send(json().dumps(msg), text=True)
 
   async def send_request(self, method: str, params=None):
     msg = {'method': method}
@@ -29,7 +29,7 @@ class StreamsClient(StreamsRPCSocketClient):
   async def ping(self):
     if not 'pong' in self.subscribers:
       self.subscribers['pong'] = asyncio.Queue()
-    await self.send('ping')
+    await self.send_request('ping')
     await self.subscribers['pong'].get()
 
   async def request_subscription(self, channel: str, params=None):
@@ -47,6 +47,9 @@ class StreamsClient(StreamsRPCSocketClient):
       return 'pong', r
     else:
       return None, r
+    
+  async def open(self):
+    return await super().open()
 
 @dataclass
 class StreamsMixin(ValidationMixin):

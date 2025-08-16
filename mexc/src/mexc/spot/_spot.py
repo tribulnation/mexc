@@ -1,5 +1,6 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
+import asyncio
 from mexc.core import AuthHttpClient
 from mexc.spot import MEXC_SPOT_API_BASE
 from .market_data import MarketData
@@ -52,4 +53,10 @@ class Spot(MarketData, Trading, UserData, Wallet):
       ws_url=ws_url,
       default_validate=default_validate,
       **kwargs,
+    )
+  
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    await asyncio.gather(
+      super().__aexit__(exc_type, exc_value, traceback),
+      self.streams.__aexit__(exc_type, exc_value, traceback),
     )

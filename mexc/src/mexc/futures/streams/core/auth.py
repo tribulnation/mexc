@@ -26,10 +26,10 @@ class AuthedStreamsClient(StreamsClient):
       **kwargs,
     )
 
-  async def __aenter__(self):
-    await super().__aenter__()
+  async def open(self):
+    ctx = await super().open()
     await self.login()
-    return self
+    return ctx
   
   async def login(self):
     t = ts.now()
@@ -47,11 +47,11 @@ class AuthedStreamsClient(StreamsClient):
     return r
   
   async def request_subscription(self, channel: str, params=None):
-    ...
+    await self.ctx # ensure connection is open
     # all channels are auto-subscribed
   
   async def request_unsubscription(self, channel: str):
-    ...
+    await self.ctx # ensure connection is open
 
 @dataclass
 class AuthedStreamsMixin(ValidationMixin):
