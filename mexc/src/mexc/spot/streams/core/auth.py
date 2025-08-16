@@ -4,7 +4,7 @@ from datetime import timedelta
 import asyncio
 from mexc.core import timestamp as ts, AuthHttpClient, validator
 from mexc.spot import MEXC_SPOT_API_BASE
-from .client import StreamsClient, MEXC_SOCKET_URL
+from .client import StreamsClient, MEXC_SPOT_SOCKET_URL
 
 class ListenResponse(TypedDict):
   listenKey: str
@@ -21,7 +21,7 @@ class Context:
 class UserStreamsClient:
   auth_http: AuthHttpClient
   api_url: str = MEXC_SPOT_API_BASE
-  ws_url: str = MEXC_SOCKET_URL
+  ws_url: str = MEXC_SPOT_SOCKET_URL
   keep_alive_every: timedelta = timedelta(minutes=30)
   ctx: Context | None = None
 
@@ -32,7 +32,7 @@ class UserStreamsClient:
   def new(
     cls, api_key: str, api_secret: str, *,
     api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    ws_url: str = MEXC_SPOT_SOCKET_URL,
     keep_alive_every: timedelta = timedelta(minutes=30),
   ):
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
@@ -42,7 +42,7 @@ class UserStreamsClient:
   def env(
     cls, *,
     api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    ws_url: str = MEXC_SPOT_SOCKET_URL,
     keep_alive_every: timedelta = timedelta(minutes=30),
   ):
     import os

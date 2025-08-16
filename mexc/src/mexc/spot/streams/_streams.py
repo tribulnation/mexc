@@ -2,7 +2,7 @@ from typing_extensions import Unpack
 from dataclasses import dataclass
 from mexc.core import AuthHttpClient, filter_kwargs
 from mexc.spot import MEXC_SPOT_API_BASE
-from .core import StreamsClient, UserStreamsClient, MEXC_SOCKET_URL
+from .core import StreamsClient, UserStreamsClient, MEXC_SPOT_SOCKET_URL
 from .market import MarketStreams
 from .user import UserStreams
 
@@ -15,7 +15,7 @@ class Streams(MarketStreams, UserStreams):
   def __init__(
     self, *,
     api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    ws_url: str = MEXC_SPOT_SOCKET_URL,
     auth_http: AuthHttpClient,
     **kwargs: Unpack[Config],
   ):
@@ -28,7 +28,7 @@ class Streams(MarketStreams, UserStreams):
   def new(
     cls, api_key: str, api_secret: str, *,
     api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    ws_url: str = MEXC_SPOT_SOCKET_URL,
     **kwargs: Unpack[Config],
   ):
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
@@ -38,7 +38,7 @@ class Streams(MarketStreams, UserStreams):
   def env(
     cls, *,
     api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SOCKET_URL,
+    ws_url: str = MEXC_SPOT_SOCKET_URL,
     **kwargs: Unpack[Config],
   ):
     import os

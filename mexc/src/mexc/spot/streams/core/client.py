@@ -5,7 +5,7 @@ from mexc.core import json, validator, ValidationError
 from mexc.core.ws.streams_rpc import StreamsRPCSocketClient
 from .proto import parse_proto
 
-MEXC_SOCKET_URL = 'wss://wbs-api.mexc.com/ws'
+MEXC_SPOT_SOCKET_URL = 'wss://wbs-api.mexc.com/ws'
 
 class Response(TypedDict):
   id: int
@@ -16,7 +16,7 @@ validate_response = validator(Response)
 
 @dataclass
 class StreamsClient(StreamsRPCSocketClient):
-  url: str = field(default=MEXC_SOCKET_URL, kw_only=True)
+  url: str = field(default=MEXC_SPOT_SOCKET_URL, kw_only=True)
 
   async def send(self, msg):
     await (await self.ws).send(json().dumps(msg), text=True)
