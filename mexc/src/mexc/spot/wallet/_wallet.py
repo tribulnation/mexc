@@ -4,8 +4,8 @@ from .deposit_addresses import DepositAddresses
 from .withdraw import Withdraw
 from .cancel_withdraw import CancelWithdraw
 from .deposit_history import DepositHistory
-from .withdraw_history import WithdrawHistory
+from .withdrawal_history import WithdrawalHistory
 
 @dataclass
-class Wallet(CurrencyInfo, DepositAddresses, Withdraw, CancelWithdraw, DepositHistory, WithdrawHistory):
+class Wallet(CurrencyInfo, DepositAddresses, Withdraw, CancelWithdraw, DepositHistory, WithdrawalHistory):
   ...

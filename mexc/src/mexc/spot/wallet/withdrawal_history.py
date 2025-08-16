@@ -39,8 +39,8 @@ class Withdrawal(TypedDict):
 Response: type[list[Withdrawal] | ApiError] = list[Withdrawal] | ApiError # type: ignore
 validate_response = validator(Response)
 
-class WithdrawHistory(AuthSpotMixin):
-  async def withdraw_history(
+class WithdrawalHistory(AuthSpotMixin):
+  async def withdrawal_history(
     self, *, coin: str | None = None,
     status: Status | None = None,
     start: datetime | None = None,
