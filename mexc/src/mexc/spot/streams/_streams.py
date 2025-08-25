@@ -1,7 +1,7 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
-from mexc.core import AuthHttpClient, filter_kwargs
-from mexc.spot import MEXC_SPOT_API_BASE
+from mexc.core import filter_kwargs
+from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .core import StreamsClient, UserStreamsClient, MEXC_SPOT_SOCKET_URL
 from .market import MarketStreams
 from .user import UserStreams

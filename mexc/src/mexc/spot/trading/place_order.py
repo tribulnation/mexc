@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, Literal
 from mexc.core import timestamp as ts, validator, OrderSide, OrderType
-from mexc.spot.util import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ApiError
 
 class BaseOrder(TypedDict):
   side: OrderSide

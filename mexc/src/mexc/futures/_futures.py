@@ -1,15 +1,15 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
 import asyncio
-from mexc.core import AuthHttpClient
 from mexc.core.ws.base import SocketClient
-from mexc.futures import MEXC_FUTURES_API_BASE
+from mexc.futures.core import MEXC_FUTURES_API_BASE, AuthHttpClient
 from .market_data import MarketData
 from .trading import Trading
+from .user_data import UserData
 from .streams import Streams, MEXC_FUTURES_SOCKET_URL
 
 @dataclass
-class Futures(MarketData, Trading):
+class Futures(MarketData, Trading, UserData):
   streams: Streams
 
   def __init__(

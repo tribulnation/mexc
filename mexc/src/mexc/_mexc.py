@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import asyncio
-from mexc.core import AuthHttpClient
 from .spot import Spot
 from .futures import Futures
 
@@ -14,10 +13,9 @@ class MEXC:
     cls, api_key: str, api_secret: str, *,
     validate: bool = True,
   ):
-    auth_http = AuthHttpClient(api_key, api_secret)
     return cls(
-      spot=Spot(auth_http=auth_http, default_validate=validate),
-      futures=Futures(auth_http=auth_http, default_validate=validate),
+      spot=Spot.new(api_key=api_key, api_secret=api_secret, default_validate=validate),
+      futures=Futures.new(api_key=api_key, api_secret=api_secret, default_validate=validate),
     )
   
   @classmethod

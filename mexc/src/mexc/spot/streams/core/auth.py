@@ -2,8 +2,8 @@ from typing_extensions import TypedDict
 from dataclasses import dataclass
 from datetime import timedelta
 import asyncio
-from mexc.core import timestamp as ts, AuthHttpClient, validator
-from mexc.spot import MEXC_SPOT_API_BASE
+from mexc.core import timestamp as ts, validator
+from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .client import StreamsClient, MEXC_SPOT_SOCKET_URL
 
 class ListenResponse(TypedDict):

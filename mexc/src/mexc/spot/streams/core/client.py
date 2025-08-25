@@ -1,6 +1,5 @@
 from typing_extensions import Any, TypedDict
 from dataclasses import dataclass, field
-import websockets
 from mexc.core import json, validator, ValidationError
 from mexc.core.ws.streams_rpc import StreamsRPCSocketClient
 from .proto import parse_proto

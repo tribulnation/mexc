@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from mexc.core import validator
-from mexc.spot.util import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ApiError
 
 class Trade(TypedDict):
   id: str | None

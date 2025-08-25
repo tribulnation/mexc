@@ -1,6 +1,6 @@
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.util import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ApiError
 from .query_order import OrderState
 
 Response: type[list[OrderState] | ApiError] = list[OrderState] | ApiError # type: ignore

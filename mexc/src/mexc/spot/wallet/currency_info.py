@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import timestamp as ts, validator
-from mexc.spot.util import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ApiError
 
 class Network(TypedDict):
   depositEnable: bool

@@ -2,7 +2,7 @@ from typing_extensions import TypedDict, NotRequired
 from enum import Enum
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.util import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ApiError
 
 class TransferType(Enum):
   outside = 0

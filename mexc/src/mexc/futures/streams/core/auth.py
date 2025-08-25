@@ -1,6 +1,7 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
-from mexc.core import timestamp as ts, sign, AuthError, ValidationMixin
+from mexc.core import timestamp as ts, AuthError, ValidationMixin
+from mexc.futures.core import sign
 from .client import StreamsClient, Response, MEXC_FUTURES_SOCKET_URL
 
 @dataclass

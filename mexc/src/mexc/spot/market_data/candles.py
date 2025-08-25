@@ -1,7 +1,7 @@
 from typing_extensions import NamedTuple, Literal
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.util import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ApiError
 
 class Candle(NamedTuple):
   open_time: int

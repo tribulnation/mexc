@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, TypeVar
 from mexc.core import validator
-from mexc.spot.util import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ApiError
 
 S = TypeVar('S', bound=str, default=str)
 

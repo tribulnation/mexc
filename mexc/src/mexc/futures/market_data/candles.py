@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict, Literal
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.futures.util import FuturesMixin, FuturesResponse
+from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class CandleData(TypedDict):
   time: list[int]

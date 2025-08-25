@@ -1,8 +1,7 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
 import asyncio
-from mexc.core import AuthHttpClient
-from mexc.spot import MEXC_SPOT_API_BASE
+from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .market_data import MarketData
 from .trading import Trading
 from .user_data import UserData

@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from mexc.core import validator
-from mexc.futures.util import FuturesMixin, FuturesResponse
+from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class Data(TypedDict):
   symbol: str
