@@ -1,6 +1,6 @@
 from typing_extensions import Any, Mapping
 from dataclasses import dataclass, field
-from urllib.parse import urlencode, quote
+from urllib.parse import quote
 import json as jsonlib
 import hashlib
 import hmac
@@ -17,8 +17,11 @@ def query_string(params: Mapping) -> str:
       return str(v).lower()
     else:
       return v
-  fixed_params = [(k, fix(v)) for k, v in params.items()]
-  return urlencode(fixed_params, quote_via=quote)
+  return '&'.join([
+    f'{k}={quote(str(fix(v)))}'
+    for k, v in sorted(params.items())
+  ])
+  
 
 @dataclass
 class AuthHttpClient(HttpClient):
