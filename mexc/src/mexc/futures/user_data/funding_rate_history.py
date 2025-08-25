@@ -36,7 +36,14 @@ class FundingRateHistory(AuthFuturesMixin):
     page_num: int | None = None,
     page_size: int | None = None,
     validate: bool | None = None,
-  ):
+  ) -> FuturesResponse[Data]:
+    """
+    - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
+    - `position_id`: The position ID.
+    - `page_num`: The page number (default: 1).
+    - `page_size`: The page size (default: 20, max: 100).
+    - `validate`: Whether to validate the response against the expected schema (default: True).
+    """
     params: dict = {'symbol': symbol}
     if position_id is not None:
       params['positionId'] = position_id

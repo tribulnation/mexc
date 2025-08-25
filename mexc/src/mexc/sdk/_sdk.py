@@ -4,12 +4,14 @@ from mexc import MEXC as Client
 from .spot import Spot
 from .streams import Streams
 from .wallet import Wallet
+from .futures import Futures
 
 @dataclass
 class MEXC:
   spot: Spot
   streams: Streams
   wallet: Wallet
+  futures: Futures
   client: Client = field(kw_only=True)
 
   @classmethod
@@ -22,6 +24,7 @@ class MEXC:
       spot=Spot(client=client, validate=validate, recvWindow=recvWindow),
       streams=Streams(client=client, validate=validate, recvWindow=recvWindow),
       wallet=Wallet(client=client, validate=validate, recvWindow=recvWindow),
+      futures=Futures(client=client, validate=validate, recvWindow=recvWindow),
       client=client,
     )
   
