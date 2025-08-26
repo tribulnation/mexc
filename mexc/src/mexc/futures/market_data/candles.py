@@ -30,7 +30,7 @@ class Candles(FuturesMixin):
   ) -> FuturesResponse[CandleData]:
     """Get klines (candles) for a given symbol. Returns at most 2000 candles.
     
-    - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
+    - `symbol`: The symbol being traded, e.g. `BTC_USDT`.
     - `interval`: The interval of the klines (default: 1m).
     - `start`: The start time to query. If given, only klines after this time will be returned.
     - `end`: The end time to query. If given, only klines before this time will be returned.

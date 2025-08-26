@@ -15,10 +15,10 @@ Response: type[FuturesResponse[Data]] = FuturesResponse[Data] # type: ignore
 validate_response = validator(Response)
 
 class FundingRate(FuturesMixin):
-  async def funding_rate(self, symbol: str, validate: bool | None = None) -> FuturesResponse[Data]:
+  async def funding_rate(self, symbol: str, *, validate: bool | None = None) -> FuturesResponse[Data]:
     """Get the funding rate for a given symbol.
     
-    - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
+    - `symbol`: The symbol being traded, e.g. `BTC_USDT`.
     - `validate`: Whether to validate the response against the expected schema (default: True).
 
     > [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate)
