@@ -31,20 +31,25 @@ validate_response = validator(Response)
 @dataclass
 class FundingRateHistory(AuthFuturesMixin):
   async def funding_rate_history(
-    self, symbol: str, *,
+    self, symbol: str | None = None, *,
     position_id: int | None = None,
     page_num: int | None = None,
     page_size: int | None = None,
     validate: bool | None = None,
   ) -> FuturesResponse[Data]:
-    """
-    - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
+    """Fetch the funding rate history.
+
+    - `symbol`: The symbol being traded, e.g. `BTCUSDT`. If not provided, all symbols will be returned.
     - `position_id`: The position ID.
     - `page_num`: The page number (default: 1).
     - `page_size`: The page size (default: 20, max: 100).
     - `validate`: Whether to validate the response against the expected schema (default: True).
+
+    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-details-of-user-s-funding-rate)
     """
-    params: dict = {'symbol': symbol}
+    params = {}
+    if symbol is not None:
+      params['symbol'] = symbol
     if position_id is not None:
       params['positionId'] = position_id
     if page_num is not None:
