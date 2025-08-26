@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, AsyncIterable
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
@@ -33,7 +33,7 @@ validate_response = validator(Deal)
 
 @dataclass
 class MyTrades(AuthedStreamsMixin):
-  async def my_trades(self, *, validate: bool = True):
+  async def my_trades(self, *, validate: bool = True) -> AsyncIterable[Deal]:
     """Subscribe to your future trades.
 
     - `validate`: Whether to validate the response against the expected schema (default: True).

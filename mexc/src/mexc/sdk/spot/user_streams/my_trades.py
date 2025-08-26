@@ -1,22 +1,11 @@
-from typing_extensions import Literal
 from dataclasses import dataclass, field
 from decimal import Decimal
 from collections import defaultdict
 import asyncio
-from trading_sdk.streams.my_trades import MyTrades as MyTradesTDK, Trade
+from trading_sdk.spot.user_streams.my_trades import MyTrades as MyTradesTDK, Trade
 from mexc.core import timestamp as ts
 from mexc.spot.streams.user.my_trades import TradeType
 from mexc.sdk.util import SdkMixin, wrap_exceptions
-
-def level(limit: int | None) -> Literal[5, 10, 20]:
-  if limit is None:
-    return 20
-  elif limit < 5:
-    return 5
-  elif limit < 10:
-    return 10
-  else:
-    return 20
 
 @dataclass
 class MyTrades(MyTradesTDK, SdkMixin):
@@ -46,4 +35,9 @@ class MyTrades(MyTradesTDK, SdkMixin):
       self._listener = asyncio.create_task(listener())
 
     while True:
-      yield await self._queues[symbol].get()
+      # propagate exceptions raised in the listener
+      t = asyncio.create_task(self._queues[symbol].get())
+      await asyncio.wait([t, self._listener], return_when='FIRST_COMPLETED')
+      if self._listener.done() and (exc := self._listener.exception()) is not None:
+        raise exc
+      yield await t

@@ -1,5 +1,6 @@
 from ._sdk import MEXC
 from .spot import Spot
-from .streams import Streams
+from .wallet import Wallet
+from .futures import Futures
 
-__all__ = ['MEXC', 'Spot', 'Streams']
+__all__ = ['MEXC', 'Spot', 'Wallet', 'Futures']
