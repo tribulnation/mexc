@@ -9,9 +9,10 @@ from mexc.spot.wallet.withdrawal_history import WithdrawalHistory as Client, Sta
 from mexc.sdk.util import SdkMixin, wrap_exceptions, parse_network, parse_asset
 
 async def _withdrawal_history(
-  client: Client, *, start: datetime, end: datetime,
+  client: Client, *, asset: str | None = None,
+  start: datetime, end: datetime,
 ) -> list[Withdrawal]:
-  r = await client.withdrawal_history(start=start, end=end)
+  r = await client.withdrawal_history(start=start, end=end, coin=asset)
   match r:
     case list(withdrawals):
       return [
@@ -34,14 +35,15 @@ async def _withdrawal_history(
       raise ApiError(err)
     
 async def _paginate_withdrawals_forward(
-  client: Client, *, start: datetime, end: datetime | None = None,
+  client: Client, *, asset: str | None = None,
+  start: datetime, end: datetime | None = None,
   delta: timedelta = timedelta(days=7),
 ) -> AsyncIterable[Sequence[Withdrawal]]:
   """Paginate withdrawals forwards from the `start`"""
   ids = set()
   end = end or datetime.now()
   while start < end:
-    withdrawals = await _withdrawal_history(client, start=start, end=start + delta)
+    withdrawals = await _withdrawal_history(client, start=start, end=start + delta, asset=asset)
     new_withdrawals = [w for w in reversed(withdrawals) if w.id not in ids] # ordered by time
     if new_withdrawals:
       ids.update(w.id for w in new_withdrawals)
@@ -50,39 +52,29 @@ async def _paginate_withdrawals_forward(
     else:
       start += delta
 
-async def _paginate_withdrawals_backward(
-  client: Client, *,
-  start: datetime | None = None, end: datetime,
-  delta: timedelta = timedelta(days=7),
-) -> AsyncIterable[Sequence[Withdrawal]]:
-  """Paginate withdrawals backwards from the `end`"""
-  ids = set()
-  while start is None or start < end:
-    withdrawals = await _withdrawal_history(client, start=end-delta, end=end)
-    new_withdrawals = [w for w in withdrawals if w.id not in ids] # ordered backwards by time
-    if new_withdrawals:
-      ids.update(w.id for w in new_withdrawals)
-      yield new_withdrawals
-      end = new_withdrawals[-1].time
-    else:
-      end -= delta
+# async def _paginate_withdrawals_backward(
+#   client: Client, *, asset: str | None = None,
+#   start: datetime | None = None, end: datetime,
+#   delta: timedelta = timedelta(days=7),
+# ) -> AsyncIterable[Sequence[Withdrawal]]:
+#   """Paginate withdrawals backwards from the `end`"""
+#   ids = set()
+#   while start is None or start < end:
+#     withdrawals = await _withdrawal_history(client, start=end-delta, end=end, asset=asset)
+#     new_withdrawals = [w for w in withdrawals if w.id not in ids] # ordered backwards by time
+#     if new_withdrawals:
+#       ids.update(w.id for w in new_withdrawals)
+#       yield new_withdrawals
+#       end = new_withdrawals[-1].time
+#     else:
+#       end -= delta
 
 @dataclass
 class WithdrawalHistory(WithdrawalHistoryTDK, SdkMixin):
   @wrap_exceptions
   async def withdrawal_history(
-    self, *, start: datetime | None = None,
-    end: datetime | None = None
+    self, *, asset: str | None = None,
+    start: datetime, end: datetime
   ) -> AsyncIterable[Sequence[Withdrawal]]:
-    if start and end:
-      async for withdrawals in _paginate_withdrawals_forward(self.client.spot, start=start, end=end):
-        yield withdrawals
-    elif start:
-      async for withdrawals in _paginate_withdrawals_forward(self.client.spot, start=start):
-        yield withdrawals
-    elif end:
-      async for withdrawals in _paginate_withdrawals_backward(self.client.spot, end=end):
-        yield withdrawals
-    else:
-      async for withdrawals in _paginate_withdrawals_backward(self.client.spot, end=datetime.now()):
-        yield withdrawals
+    async for withdrawals in _paginate_withdrawals_forward(self.client.spot, start=start, end=end, asset=asset):
+      yield withdrawals

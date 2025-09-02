@@ -9,9 +9,9 @@ from mexc.spot.wallet.deposit_history import DepositHistory as Client, Status
 from mexc.sdk.util import SdkMixin, wrap_exceptions, parse_network, parse_asset
 
 async def _deposit_history(
-  client: Client, *, start: datetime, end: datetime,
+  client: Client, *, start: datetime, end: datetime, asset: str | None = None,
 ) -> list[Deposit]:
-  r = await client.deposit_history(start=start, end=end)
+  r = await client.deposit_history(start=start, end=end, coin=asset)
   match r:
     case list(deposits):
       return [
@@ -30,14 +30,15 @@ async def _deposit_history(
       raise ApiError(err)
     
 async def _paginate_deposits_forward(
-  client: Client, *, start: datetime, end: datetime | None = None,
+  client: Client, *, asset: str | None = None,
+  start: datetime, end: datetime | None = None,
   delta: timedelta = timedelta(days=7),
 ) -> AsyncIterable[Sequence[Deposit]]:
   """Paginate deposits forwards from the `start`"""
   ids = set()
   end = end or datetime.now()
   while start < end:
-    deposits = await _deposit_history(client, start=start, end=start + delta)
+    deposits = await _deposit_history(client, start=start, end=start + delta, asset=asset)
     new_deposits = [d for d in reversed(deposits) if d.id not in ids] # ordered by time
     if new_deposits:
       ids.update(d.id for d in new_deposits)
@@ -46,39 +47,29 @@ async def _paginate_deposits_forward(
     else:
       start += delta
 
-async def _paginate_deposits_backward(
-  client: Client, *,
-  start: datetime | None = None, end: datetime,
-  delta: timedelta = timedelta(days=7),
-) -> AsyncIterable[Sequence[Deposit]]:
-  """Paginate deposits backwards from the `end`"""
-  ids = set()
-  while start is None or start < end:
-    deposits = await _deposit_history(client, start=end-delta, end=end)
-    new_deposits = [d for d in deposits if d.id not in ids] # ordered backwards by time
-    if new_deposits:
-      ids.update(d.id for d in new_deposits)
-      yield new_deposits
-      end = new_deposits[-1].time
-    else:
-      end -= delta
+# async def _paginate_deposits_backward(
+#   client: Client, *, asset: str | None = None,
+#   start: datetime | None = None, end: datetime,
+#   delta: timedelta = timedelta(days=7),
+# ) -> AsyncIterable[Sequence[Deposit]]:
+#   """Paginate deposits backwards from the `end`"""
+#   ids = set()
+#   while start is None or start < end:
+#     deposits = await _deposit_history(client, start=end-delta, end=end, asset=asset)
+#     new_deposits = [d for d in deposits if d.id not in ids] # ordered backwards by time
+#     if new_deposits:
+#       ids.update(d.id for d in new_deposits)
+#       yield new_deposits
+#       end = new_deposits[-1].time
+#     else:
+#       end -= delta
 
 @dataclass
 class DepositHistory(DepositHistoryTDK, SdkMixin):
   @wrap_exceptions
   async def deposit_history(
-    self, *, start: datetime | None = None,
-    end: datetime | None = None
+    self, *, asset: str | None = None,
+    start: datetime, end: datetime
   ) -> AsyncIterable[Sequence[Deposit]]:
-    if start and end:
-      async for deposits in _paginate_deposits_forward(self.client.spot, start=start, end=end):
-        yield deposits
-    elif start:
-      async for deposits in _paginate_deposits_forward(self.client.spot, start=start):
-        yield deposits
-    elif end:
-      async for deposits in _paginate_deposits_backward(self.client.spot, end=end):
-        yield deposits
-    else:
-      async for deposits in _paginate_deposits_backward(self.client.spot, end=datetime.now()):
-        yield deposits
+    async for deposits in _paginate_deposits_forward(self.client.spot, start=start, end=end, asset=asset):
+      yield deposits
