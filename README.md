@@ -17,7 +17,7 @@ pip install mexc-trading-sdk
 from mexc import MEXC
 
 async with MEXC.new(API_KEY, API_SECRET) as client:
-  candles = await client.spot.place_order('BTCUSDT', {
+  r = await client.spot.place_order('BTCUSDT', {
     'price': '50000',
     'quantity': '0.001',
     'type': 'LIMIT',
