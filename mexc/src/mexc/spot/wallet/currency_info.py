@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class Network(TypedDict):
   depositEnable: bool
@@ -19,14 +19,14 @@ class Currency(TypedDict):
   name: str
   networkList: list[Network]
 
-Response: type[list[Currency] | ApiError] = list[Currency] | ApiError # type: ignore
+Response: type[list[Currency] | ErrorResponse] = list[Currency] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class CurrencyInfo(AuthSpotMixin):
   async def currency_info(
     self, *, timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Currency]:
+  ) -> ErrorResponse | list[Currency]:
     """Query currency information, of all supported currencies.
     
     - `timestamp`: The timestamp for the request, in milliseconds (default: now).

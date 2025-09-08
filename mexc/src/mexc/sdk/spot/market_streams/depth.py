@@ -1,8 +1,10 @@
 from typing_extensions import Literal
 from dataclasses import dataclass
 from decimal import Decimal
-from trading_sdk.spot.market_streams.depth import Depth as DepthTDK, Book
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+
+from trading_sdk.market.market_streams.depth import SpotDepth, Book
+
+from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 def level(limit: int | None) -> Literal[5, 10, 20]:
   if limit is None:
@@ -15,12 +17,16 @@ def level(limit: int | None) -> Literal[5, 10, 20]:
     return 20
 
 @dataclass
-class Depth(DepthTDK, SdkMixin):
+class Depth(SpotDepth, SdkMixin):
   @wrap_exceptions
-  async def depth(self, base: str, quote: str, *, limit: int | None = None):
-    symbol = f'{base}{quote}'
-    async for book in self.client.spot.streams.depth(symbol, level(limit)):
+  async def depth(self, instrument: str, /, *, limit: int | None = None):
+    async for book in self.client.spot.streams.depth(instrument, level(limit)):
       yield Book(
         bids=[Book.Entry(price=Decimal(e.price), qty=Decimal(e.qty)) for e in book.bids],
         asks=[Book.Entry(price=Decimal(e.price), qty=Decimal(e.qty)) for e in book.asks]
       )
+
+  async def spot_depth(self, base: str, quote: str, /, *, limit: int | None = None):
+    instrument = spot_name(base, quote)
+    async for book in self.depth(instrument, limit=limit):
+      yield book

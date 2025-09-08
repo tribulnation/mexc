@@ -1,11 +1,11 @@
 from typing_extensions import TypedDict
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class WithdrawId(TypedDict):
   id: str
 
-Response: type[WithdrawId | ApiError] = WithdrawId | ApiError # type: ignore
+Response: type[WithdrawId | ErrorResponse] = WithdrawId | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class Withdraw(AuthSpotMixin):
@@ -17,7 +17,7 @@ class Withdraw(AuthSpotMixin):
     memo: str | None = None,
     remark: str | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ApiError | WithdrawId:
+  ) -> ErrorResponse | WithdrawId:
     """Withdraw assets from your account.
     
     - `coin`: The coin to withdraw, e.g. `USDT`.

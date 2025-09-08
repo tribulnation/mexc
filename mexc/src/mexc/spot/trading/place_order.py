@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, Literal
 from mexc.core import timestamp as ts, validator, OrderSide, OrderType
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class BaseOrder(TypedDict):
   side: OrderSide
@@ -30,7 +30,7 @@ class NewOrder(TypedDict):
   side: OrderSide
   transactTime: int
 
-Response: type[NewOrder | ApiError] = NewOrder | ApiError # type: ignore
+Response: type[NewOrder | ErrorResponse] = NewOrder | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class PlaceOrder(AuthSpotMixin):
@@ -39,7 +39,7 @@ class PlaceOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | NewOrder:
+  ) -> ErrorResponse | NewOrder:
     """Place a new order on the spot market.
     
     - `symbol`: The symbol to trade, e.g. `BTCUSDT`

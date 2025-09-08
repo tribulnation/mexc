@@ -9,7 +9,7 @@ class PositionType(Enum):
   long = 1
   short = 2
 
-class Result(TypedDict):
+class Funding(TypedDict):
   id: int
   symbol: str
   positionType: PositionType
@@ -23,14 +23,14 @@ class Data(TypedDict):
   totalCount: int
   totalPage: int
   currentPage: int
-  resultList: list[Result]
+  resultList: list[Funding]
 
 Response: type[FuturesResponse[Data]] = FuturesResponse[Data] # type: ignore
 validate_response = validator(Response)
 
 @dataclass
-class FundingRateHistory(AuthFuturesMixin):
-  async def funding_rate_history(
+class MyFundingHistory(AuthFuturesMixin):
+  async def my_funding_history(
     self, symbol: str | None = None, *,
     position_id: int | None = None,
     page_num: int | None = None,

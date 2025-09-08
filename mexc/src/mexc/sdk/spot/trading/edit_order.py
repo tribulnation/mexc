@@ -1,24 +1,38 @@
 from dataclasses import dataclass
-from trading_sdk.spot.trading.edit_order import EditOrder as EditOrderTDK
+from decimal import Decimal
+
 from trading_sdk.types import Num, fmt_num, ApiError
+from trading_sdk.market.trading.edit_order import SpotEditOrder
+
 from mexc.spot.trading.place_order import LimitOrder
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 @dataclass
-class EditOrder(EditOrderTDK, SdkMixin):
+class EditOrder(SpotEditOrder, SdkMixin):
   @wrap_exceptions
-  async def edit_order(self, base: str, quote: str, *, id: str, qty: Num) -> str:
-    symbol = f'{base}{quote}'
-    state = await self.client.spot.cancel_order(symbol, orderId=id)
+  async def edit_order(self, instrument: str, /, *, id: str, qty: Num | None = None, price: Num | None = None) -> str:
+    state = await self.client.spot.cancel_order(instrument, orderId=id)
     if 'code' in state:
       raise ApiError(state)
-    r = await self.client.spot.place_order(symbol, LimitOrder(
+
+    if price is None:
+      price = state['price']
+
+    if qty is None:
+      qty = Decimal(state['origQty']) - Decimal(state['executedQty'])
+
+    r = await self.client.spot.place_order(instrument, LimitOrder(
       type='LIMIT',
       side=state['side'],
-      price=state['price'],
+      price=fmt_num(price),
       quantity=fmt_num(qty)
     ))
     if 'code' in r:
       raise ApiError(r)
     else:
       return r['orderId']
+
+  
+  async def spot_edit_order(self, base: str, quote: str, /, *, id: str, qty: Num | None = None, price: Num | None = None) -> str:
+    instrument = spot_name(base, quote)
+    return await self.edit_order(instrument, id=id, qty=qty, price=price)

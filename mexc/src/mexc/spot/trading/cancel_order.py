@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import timestamp as ts, validator, OrderSide, OrderType, OrderStatus, TimeInForce
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class CanceledOrder(TypedDict):
   symbol: str
@@ -17,7 +17,7 @@ class CanceledOrder(TypedDict):
   type: OrderType
   side: OrderSide
 
-Response: type[CanceledOrder | ApiError] = CanceledOrder | ApiError # type: ignore
+Response: type[CanceledOrder | ErrorResponse] = CanceledOrder | ErrorResponse # type: ignore
 validate_response = validator(Response)
   
 class CancelOrder(AuthSpotMixin):
@@ -26,7 +26,7 @@ class CancelOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | CanceledOrder:
+  ) -> ErrorResponse | CanceledOrder:
     """Cancel an open order (of your account) by ID.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`

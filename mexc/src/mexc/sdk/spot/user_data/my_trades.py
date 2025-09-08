@@ -2,17 +2,19 @@ from typing_extensions import Sequence, AsyncIterable
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+
 from trading_sdk.types import ApiError
-from trading_sdk.spot.user_data.my_trades import MyTrades as MyTradesTDK, Trade
+from trading_sdk.market.user_data.my_trades import SpotMyTrades, Trade
+
 from mexc.spot.user_data import MyTrades as Client
 from mexc.core import timestamp
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 async def _my_trades(
-  client: Client, symbol: str, *,
+  client: Client, instrument: str, *,
   start: datetime | None = None, end: datetime | None = None
 ) -> list[Trade]:
-  r = await client.my_trades(symbol, start=start, end=end)
+  r = await client.my_trades(instrument, start=start, end=end)
   match r:
     case list(trades):
       return [
@@ -34,13 +36,13 @@ async def _my_trades(
       raise ApiError(err)
 
 async def _paginate_trades_forward(
-  client: Client, symbol: str, *,
+  client: Client, instrument: str, *,
   start: datetime, end: datetime | None = None,
 ) -> AsyncIterable[Sequence[Trade]]:
   """Paginate trades forwards from the `start`"""
   ids = set()
   while end is None or start < end:
-    trades = await _my_trades(client, symbol, start=start, end=end)
+    trades = await _my_trades(client, instrument, start=start, end=end)
     new_trades = [t for t in reversed(trades) if t.id not in ids] # ordered by time
     if not new_trades:
       break
@@ -49,13 +51,13 @@ async def _paginate_trades_forward(
     start = new_trades[-1].time
 
 async def _paginate_trades_backward(
-  client: Client, symbol: str, *,
+  client: Client, instrument: str, *,
   start: datetime | None = None, end: datetime,
 ) -> AsyncIterable[Sequence[Trade]]:
   """Paginate trades backwards from the `end`"""
   ids = set()
   while start is None or start < end:
-    trades = await _my_trades(client, symbol, start=start, end=end)
+    trades = await _my_trades(client, instrument, start=start, end=end)
     new_trades = [t for t in trades if t.id not in ids] # ordered backwards by time
     if not new_trades:
       break
@@ -64,23 +66,28 @@ async def _paginate_trades_backward(
     end = new_trades[-1].time
 
 @dataclass
-class MyTrades(MyTradesTDK, SdkMixin):
+class MyTrades(SpotMyTrades, SdkMixin):
   @wrap_exceptions
   async def my_trades(
-    self, base: str, quote: str, *,
+    self, instrument: str, /, *,
     start: datetime | None = None, end: datetime | None = None
   ) -> AsyncIterable[Sequence[Trade]]:
-    symbol = f'{base}{quote}'
     spot = self.client.spot
     if start and end:
-      async for trades in _paginate_trades_forward(spot, symbol, start=start, end=end):
+      async for trades in _paginate_trades_forward(spot, instrument, start=start, end=end):
         yield trades
     elif start:
-      async for trades in _paginate_trades_forward(spot, symbol, start=start):
+      async for trades in _paginate_trades_forward(spot, instrument, start=start):
         yield trades
     elif end:
-      async for trades in _paginate_trades_backward(spot, symbol, end=end):
+      async for trades in _paginate_trades_backward(spot, instrument, end=end):
         yield trades
     else:
-      async for trades in _paginate_trades_backward(spot, symbol, end=datetime.now()):
+      async for trades in _paginate_trades_backward(spot, instrument, end=datetime.now()):
         yield trades
+
+
+  async def spot_my_trades(self, base: str, quote: str, /, *, start: datetime | None = None, end: datetime | None = None) -> AsyncIterable[Sequence[Trade]]:
+    instrument = spot_name(base, quote)
+    async for trades in self.my_trades(instrument, start=start, end=end):
+      yield trades

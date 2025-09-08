@@ -1,7 +1,7 @@
-from typing_extensions import NamedTuple, Literal
+from typing_extensions import NamedTuple, Literal, AsyncIterable
 from datetime import datetime
-from mexc.core import timestamp as ts, validator
-from mexc.spot.core import SpotMixin, ApiError
+from mexc.core import timestamp as ts, validator, ApiError
+from mexc.spot.core import SpotMixin, ErrorResponse, is_error_response
 
 class Candle(NamedTuple):
   open_time: int
@@ -13,7 +13,7 @@ class Candle(NamedTuple):
   close_time: int
   quote_volume: str
 
-Response: type[list[Candle] | ApiError] = list[Candle] | ApiError # type: ignore
+Response: type[list[Candle] | ErrorResponse] = list[Candle] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 Interval = Literal['1m', '5m', '15m', '30m', '60m', '4h', '1d', '1W', '1M']
@@ -25,7 +25,7 @@ class Candles(SpotMixin):
     start: datetime | None = None, end: datetime | None = None,
     limit: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Candle]:
+  ) -> ErrorResponse | list[Candle]:
     """Get klines (candles) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
@@ -46,3 +46,24 @@ class Candles(SpotMixin):
       params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/klines', params=params)
     return validate_response(r.text) if self.validate(validate) else r.json()
+
+  
+  async def candles_paged(
+    self, symbol: str, *,
+    interval: Interval,
+    start: datetime, end: datetime,
+    limit: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterable[list[Candle]]:
+    last_time = ts.dump(start)
+    while True:
+      r = await self.candles(symbol, interval=interval, start=ts.parse(last_time), end=end, limit=limit, validate=validate)
+      match r:
+        case list(candles):
+          candles = [c for c in candles if c.close_time > last_time]
+          if not candles:
+            break
+          yield candles
+          last_time = candles[-1].close_time
+        case err:
+          raise ApiError(err)

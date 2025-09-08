@@ -1,15 +1,16 @@
 from dataclasses import dataclass
 from decimal import Decimal
+
 from trading_sdk.types import ApiError
-from trading_sdk.spot.market_data.depth import Depth as DepthTDK, Book
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from trading_sdk.market.market_data.depth import SpotDepth, Book
+
+from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 @dataclass
-class Depth(DepthTDK, SdkMixin):
+class Depth(SpotDepth, SdkMixin):
   @wrap_exceptions
-  async def depth(self, base: str, quote: str, *, limit: int | None = None) -> Book:
-    symbol = f'{base}{quote}'
-    r = await self.client.spot.depth(symbol, limit=limit)
+  async def depth(self, instrument: str, /, *, limit: int | None = None) -> Book:
+    r = await self.client.spot.depth(instrument, limit=limit)
     if 'code' in r:
       raise ApiError(r)
     else:
@@ -23,3 +24,7 @@ class Depth(DepthTDK, SdkMixin):
           qty=Decimal(p.qty)
         ) for p in r['bids']],
       )
+
+  async def spot_depth(self, base: str, quote: str, /, *, limit: int | None = None) -> Book:
+    instrument = spot_name(base, quote)
+    return await self.depth(instrument, limit=limit)

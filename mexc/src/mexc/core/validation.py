@@ -1,6 +1,7 @@
 from typing_extensions import TypeVar, Generic, Any, is_typeddict
 from dataclasses import dataclass, field, is_dataclass
-from mexc.core.exc import ValidationError
+
+from mexc.core import ValidationError
 
 T = TypeVar('T')
 

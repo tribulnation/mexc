@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class Balance(TypedDict):
   asset: str
@@ -17,14 +17,14 @@ class AccountInfo(TypedDict):
   balances: list[Balance]
 
 
-Response: type[AccountInfo | ApiError] = AccountInfo | ApiError # type: ignore
+Response: type[AccountInfo | ErrorResponse] = AccountInfo | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class Account(AuthSpotMixin):
   async def account(
     self, *, recvWindow: int | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ApiError | AccountInfo:
+  ) -> ErrorResponse | AccountInfo:
     """Get account information (of your account), including trading/deposit/withdrawal permissions and asset balances.
     
     - `recvWindow`: If the server receives the request after `timestamp + recvWindow`, it will be rejected (default: 5000).

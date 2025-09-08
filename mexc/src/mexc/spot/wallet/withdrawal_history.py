@@ -2,7 +2,7 @@ from typing_extensions import TypedDict, NotRequired
 from enum import Enum
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class TransferType(Enum):
   outside = 0
@@ -36,7 +36,7 @@ class Withdrawal(TypedDict):
   coinId: NotRequired[str|None]
   vcoinId: NotRequired[str|None]
 
-Response: type[list[Withdrawal] | ApiError] = list[Withdrawal] | ApiError # type: ignore
+Response: type[list[Withdrawal] | ErrorResponse] = list[Withdrawal] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class WithdrawalHistory(AuthSpotMixin):
@@ -48,7 +48,7 @@ class WithdrawalHistory(AuthSpotMixin):
     limit: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Withdrawal]:
+  ) -> ErrorResponse | list[Withdrawal]:
     """Query withdrawal history.
     
     - `coin`: The coin to query the withdrawal history for, e.g. `USDT`. (if not given, returns all coins)

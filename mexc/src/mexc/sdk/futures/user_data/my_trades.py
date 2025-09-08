@@ -4,11 +4,11 @@ from functools import cache
 from datetime import datetime
 from decimal import Decimal
 from trading_sdk.types import ApiError
-from trading_sdk.spot.user_data.my_trades import MyTrades as MyTradesTDK, Trade, Side as SideTDK
+from trading_sdk.market.user_data.my_trades import PerpMyTrades, Trade, Side as SideTDK
 
 from mexc.core import timestamp
 from mexc.futures.user_data.my_trades import Side
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from mexc.sdk.core import SdkMixin, wrap_exceptions, perp_name
 
 def parse_side(side: Side) -> SideTDK:
   match side:
@@ -18,24 +18,23 @@ def parse_side(side: Side) -> SideTDK:
       return 'SELL'
 
 @dataclass
-class MyTrades(MyTradesTDK, SdkMixin):
+class MyTrades(PerpMyTrades, SdkMixin):
   @wrap_exceptions
   async def my_trades(
-    self, base: str, quote: str, *,
+    self, instrument: str, /, *,
     start: datetime | None = None, end: datetime | None = None
   ) -> AsyncIterable[Sequence[Trade]]:
-    symbol = f'{base}_{quote}'
     page_size = 100
     page_num = 1
 
-    r = await self.client.futures.contract_info(symbol)
+    r = await self.client.futures.contract_info(instrument)
     if not 'data' in r:
       raise ApiError(r)
     else:
       contract_size = r['data']['contractSize']
 
     while True:
-      r = await self.client.futures.my_trades(symbol, start=start, end=end, page_size=page_size, page_num=page_num)
+      r = await self.client.futures.my_trades(instrument, start=start, end=end, page_size=page_size, page_num=page_num)
       if not 'data' in r:
         raise ApiError(r)
       else:
@@ -59,3 +58,7 @@ class MyTrades(MyTradesTDK, SdkMixin):
           break
         page_num += 1
     
+  async def perp_my_trades(self, base: str, quote: str, /, *, start: datetime | None = None, end: datetime | None = None) -> AsyncIterable[Sequence[Trade]]:
+    instrument = perp_name(base, quote)
+    async for trades in self.my_trades(instrument, start=start, end=end):
+      yield trades

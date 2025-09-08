@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NamedTuple 
 from mexc.core import validator
-from mexc.spot.core import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ErrorResponse
 
 class BookEntry(NamedTuple):
   price: str
@@ -11,11 +11,11 @@ class OrderBook(TypedDict):
   bids: list[BookEntry]
   asks: list[BookEntry]
 
-Response: type[OrderBook | ApiError] = OrderBook | ApiError # type: ignore
+Response: type[OrderBook | ErrorResponse] = OrderBook | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class Depth(SpotMixin):
-  async def depth(self, symbol: str, *, limit: int | None = None, validate: bool | None = None) -> ApiError | OrderBook:
+  async def depth(self, symbol: str, *, limit: int | None = None, validate: bool | None = None) -> ErrorResponse | OrderBook:
     """Get the order book for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.

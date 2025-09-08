@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, TypeVar
 from mexc.core import validator
-from mexc.spot.core import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ErrorResponse
 
 S = TypeVar('S', bound=str, default=str)
 
@@ -20,11 +20,11 @@ class OkResponse(TypedDict):
   serverTime: int
   symbols: list[Info]
 
-Response: type[OkResponse | ApiError] = OkResponse | ApiError # type: ignore
+Response: type[OkResponse | ErrorResponse] = OkResponse | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class ExchangeInfo(SpotMixin):
-  async def exchange_info(self, *symbols: S, validate: bool | None = None) -> ApiError | dict[S, Info]:
+  async def exchange_info(self, *symbols: S, validate: bool | None = None) -> ErrorResponse | dict[S, Info]:
     """Get the exchange information for the given symbol, symbols, or all symbols (if none provided)
     
     - `symbols`: The symbols to get information for. If none provided, all symbols are returned.

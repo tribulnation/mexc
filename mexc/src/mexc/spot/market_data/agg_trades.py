@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ErrorResponse
 
 class AggTrade(TypedDict):
   """Aggregate tradeId"""
@@ -22,7 +22,7 @@ class AggTrade(TypedDict):
   M: bool
 
 
-Response: type[list[AggTrade] | ApiError] = list[AggTrade] | ApiError # type: ignore
+Response: type[list[AggTrade] | ErrorResponse] = list[AggTrade] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class AggTrades(SpotMixin):
@@ -30,7 +30,7 @@ class AggTrades(SpotMixin):
     self, symbol: str, *, limit: int | None = None,
     start: datetime | None = None, end: datetime | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[AggTrade]:
+  ) -> ErrorResponse | list[AggTrade]:
     """Get aggregate trades for a given symbol, between two timestamps. There must be at most 1h between `start` and `end`.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.

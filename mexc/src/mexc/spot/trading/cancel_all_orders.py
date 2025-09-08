@@ -1,8 +1,8 @@
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from .cancel_order import CanceledOrder
 
-Response: type[list[CanceledOrder] | ApiError] = list[CanceledOrder] | ApiError # type: ignore
+Response: type[list[CanceledOrder] | ErrorResponse] = list[CanceledOrder] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class CancelAllOrders(AuthSpotMixin):
@@ -11,7 +11,7 @@ class CancelAllOrders(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[CanceledOrder]:
+  ) -> ErrorResponse | list[CanceledOrder]:
     """Cancel all open orders (of your account) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`

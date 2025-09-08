@@ -1,10 +1,11 @@
-from typing_extensions import TypedDict, Literal
+from typing_extensions import TypedDict, Literal, AsyncIterable
 from datetime import datetime
-from mexc.core import timestamp as ts, validator
+from mexc.core import timestamp as ts, validator, ApiError
 from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class CandleData(TypedDict):
   time: list[int]
+  """Start times of the candles. UNIX timestamp in **seconds** (not milliseconds as most endpoints)."""
   open: list[float]
   close: list[float]
   high: list[float]
@@ -42,8 +43,66 @@ class Candles(FuturesMixin):
     if interval is not None:
       params['interval'] = interval
     if start is not None:
-      params['start'] = ts.dump(start)
+      params['start'] = int(start.timestamp())
     if end is not None:
-      params['end'] = ts.dump(end)
+      params['end'] = int(end.timestamp())
     r = await self.request('GET', f'/api/v1/contract/kline/{symbol}', params=params)
     return validate_response(r.text) if self.validate(validate) else r.json()
+
+  async def candles_paged(
+    self, symbol: str, *,
+    interval: Interval,
+    start: datetime, end: datetime,
+    validate: bool | None = None,
+  ) -> AsyncIterable[CandleData]:
+    end_time = int(end.timestamp())
+    while True:
+      r = await self.candles(symbol, start=start, end=datetime.fromtimestamp(end_time), interval=interval, validate=validate)
+      if not 'data' in r:
+        raise ApiError(r)
+      c = r['data']
+      out = CandleData(
+        time=[],
+        open=[],
+        close=[],
+        high=[],
+        low=[],
+        vol=[],
+        amount=[],
+        realOpen=[],
+        realClose=[],
+        realHigh=[],
+        realLow=[],
+      )
+      for i in range(len(c['close'])):
+        if c['time'][i] < end_time:
+          out['close'].append(c['close'][i])
+          out['high'].append(c['high'][i])
+          out['low'].append(c['low'][i])
+          out['open'].append(c['open'][i])
+          out['vol'].append(c['vol'][i])
+          out['amount'].append(c['amount'][i])
+          out['realOpen'].append(c['realOpen'][i])
+          out['realClose'].append(c['realClose'][i])
+          out['realHigh'].append(c['realHigh'][i])
+          out['realLow'].append(c['realLow'][i])
+          out['time'].append(c['time'][i])
+
+      if len(out['time']) == 0:
+        break
+      
+      out['close'].reverse()
+      out['high'].reverse()
+      out['realClose'].reverse()
+      out['realHigh'].reverse()
+      out['realLow'].reverse()
+      out['low'].reverse()
+      out['open'].reverse()
+      out['vol'].reverse()
+      out['amount'].reverse()
+      out['realOpen'].reverse()
+      out['realClose'].reverse()
+      out['realHigh'].reverse()
+      out['realLow'].reverse()
+      yield out
+      end_time = min(out['time'])

@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from decimal import Decimal
+
 from trading_sdk.types import ApiError
-from trading_sdk.spot.user_data.balances import Balances as BalancesTDK, Balance
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from trading_sdk.market.user_data.balances import Balances as BalancesTDK, Balance
+
+from mexc.sdk.core import SdkMixin, wrap_exceptions
 
 @dataclass
 class Balances(BalancesTDK, SdkMixin):

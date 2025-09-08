@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict, NotRequired
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class Chain(TypedDict):
   coin: str
@@ -12,14 +12,14 @@ class Chain(TypedDict):
   netWork: str
   memo: NotRequired[str | None]
 
-Response: type[list[Chain] | ApiError] = list[Chain] | ApiError # type: ignore
+Response: type[list[Chain] | ErrorResponse] = list[Chain] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class DepositAddresses(AuthSpotMixin):
   async def deposit_addresses(
     self, coin: str, *, network: str | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ApiError | list[Chain]:
+  ) -> ErrorResponse | list[Chain]:
     """Get deposit addresses for a given coin.
     
     - `coin`: The coin to get the deposit addresses for, e.g. `USDT`.

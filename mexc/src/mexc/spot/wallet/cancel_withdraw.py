@@ -1,18 +1,18 @@
 from typing_extensions import TypedDict
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class WithdrawId(TypedDict):
   id: str
 
-Response: type[WithdrawId | ApiError] = WithdrawId | ApiError # type: ignore
+Response: type[WithdrawId | ErrorResponse] = WithdrawId | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class CancelWithdraw(AuthSpotMixin):
   async def cancel_withdraw(
     self, id: str, *,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ApiError | WithdrawId:
+  ) -> ErrorResponse | WithdrawId:
     """Cancel a withdrawal, given its ID.
     
     - `id`: The ID of the withdrawal to cancel. Will be returned by the `withdraw` endpoint.

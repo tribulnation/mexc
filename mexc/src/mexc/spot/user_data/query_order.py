@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from mexc.core import timestamp as ts, validator, OrderSide, OrderType, OrderStatus, TimeInForce
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class OrderState(TypedDict):
   symbol: str
@@ -19,7 +19,7 @@ class OrderState(TypedDict):
   updateTime: int | None
   isWorking: bool
 
-Response: type[OrderState | ApiError] = OrderState | ApiError # type: ignore
+Response: type[OrderState | ErrorResponse] = OrderState | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class QueryOrder(AuthSpotMixin):
@@ -28,7 +28,7 @@ class QueryOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | OrderState:
+  ) -> ErrorResponse | OrderState:
     """Query an order (of your account) by ID.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`

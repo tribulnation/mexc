@@ -2,11 +2,13 @@ from datetime import datetime, timedelta
 from typing_extensions import AsyncIterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+
 from trading_sdk.types import ApiError
 from trading_sdk.wallet.deposit_history import Deposit, DepositHistory as DepositHistoryTDK
+
 from mexc.core import timestamp
 from mexc.spot.wallet.deposit_history import DepositHistory as Client, Status
-from mexc.sdk.util import SdkMixin, wrap_exceptions, parse_network, parse_asset
+from mexc.sdk.core import SdkMixin, wrap_exceptions, parse_network, parse_asset
 
 async def _deposit_history(
   client: Client, *, start: datetime, end: datetime, asset: str | None = None,

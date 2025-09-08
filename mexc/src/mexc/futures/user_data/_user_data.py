@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from .funding_rate_history import FundingRateHistory
+from .my_funding_history import MyFundingHistory
 from .my_trades import MyTrades
 
 @dataclass
-class UserData(FundingRateHistory, MyTrades):
+class UserData(MyFundingHistory, MyTrades):
   ...

@@ -2,7 +2,7 @@ from typing_extensions import TypedDict, NotRequired
 from enum import Enum
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class TransferType(Enum):
   outside = 0
@@ -34,7 +34,7 @@ class Deposit(TypedDict):
   confirmTimes: str
   memo: NotRequired[str|None]
 
-Response: type[list[Deposit] | ApiError] = list[Deposit] | ApiError # type: ignore
+Response: type[list[Deposit] | ErrorResponse] = list[Deposit] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class DepositHistory(AuthSpotMixin):
@@ -46,7 +46,7 @@ class DepositHistory(AuthSpotMixin):
     limit: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Deposit]:
+  ) -> ErrorResponse | list[Deposit]:
     """Query deposit history.
     
     - `coin`: The coin to query the deposit history for, e.g. `USDT`. (if not given, returns all coins)

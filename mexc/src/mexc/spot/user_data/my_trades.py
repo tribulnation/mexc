@@ -1,7 +1,7 @@
 from typing_extensions import TypedDict, NotRequired
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class Trade(TypedDict):
   id: str
@@ -18,7 +18,7 @@ class Trade(TypedDict):
   isSelfTrade: bool
   clientOrderId: NotRequired[str|None]
 
-Response: type[list[Trade] | ApiError] = list[Trade] | ApiError # type: ignore
+Response: type[list[Trade] | ErrorResponse] = list[Trade] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class MyTrades(AuthSpotMixin):
@@ -31,7 +31,7 @@ class MyTrades(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Trade]:
+  ) -> ErrorResponse | list[Trade]:
     """Get all trades (of your account) for a given symbol.
 
     Only the transaction records in the past 1 month can be queried. If you want to view more transaction records, please use the export function on the web side, which supports exporting transaction records of the past 3 years at most.

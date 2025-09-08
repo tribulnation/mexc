@@ -2,14 +2,14 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from collections import defaultdict
 import asyncio
-from trading_sdk.spot.user_streams.my_trades import MyTrades as MyTradesTDK, Trade
+from trading_sdk.market.user_streams.my_trades import PerpMyTrades, Trade
 from trading_sdk.types import ApiError
 
 from mexc.core import timestamp as ts
-from mexc.sdk.util import SdkMixin, wrap_exceptions
+from mexc.sdk.core import SdkMixin, wrap_exceptions, perp_name
 
 @dataclass
-class MyTrades(MyTradesTDK, SdkMixin):
+class MyTrades(PerpMyTrades, SdkMixin):
   _queues: defaultdict[str, asyncio.Queue[Trade]] = field(default_factory=lambda: defaultdict(asyncio.Queue))
   _listener: asyncio.Task | None = None
 
@@ -20,9 +20,8 @@ class MyTrades(MyTradesTDK, SdkMixin):
     await super().__aexit__(exc_type, exc_value, traceback)
 
   @wrap_exceptions
-  async def my_trades(self, base: str, quote: str):
-    symbol = f'{base}_{quote}'
-    r = await self.client.futures.contract_info(symbol)
+  async def my_trades(self, instrument: str, /):
+    r = await self.client.futures.contract_info(instrument)
     if not 'data' in r:
       raise ApiError(r)
     
@@ -46,10 +45,16 @@ class MyTrades(MyTradesTDK, SdkMixin):
             self._queues[trade['symbol']].put_nowait(t)
       self._listener = asyncio.create_task(listener())
 
+    self._queues[instrument] # ensure the queue exists
     while True:
       # propagate exceptions raised in the listener
-      t = asyncio.create_task(self._queues[symbol].get())
+      t = asyncio.create_task(self._queues[instrument].get())
       await asyncio.wait([t, self._listener], return_when='FIRST_COMPLETED')
       if self._listener.done() and (exc := self._listener.exception()) is not None:
         raise exc
       yield await t
+
+  async def perp_my_trades(self, base: str, quote: str, /):
+    instrument = perp_name(base, quote)
+    async for trade in self.my_trades(instrument):
+      yield trade

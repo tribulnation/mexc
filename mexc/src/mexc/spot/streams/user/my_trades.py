@@ -1,38 +1,46 @@
 from dataclasses import dataclass
 from enum import Enum
+from mexc.core import OrderSide
 from mexc.spot.streams.core import UserStreamsMixin
 
 class TradeType(Enum):
   BUY = 1
   SELL = 2
 
+  def fmt(self) -> OrderSide:
+    match self:
+      case TradeType.BUY:
+        return 'BUY'
+      case TradeType.SELL:
+        return 'SELL'
+
 @dataclass
 class Trade:
   symbol: str
   price: str
-  quantity: str
-  amount: str
-  tradeType: TradeType
+  quote_amount: str
+  base_qty: str
+  side: OrderSide
   tradeId: str
   orderId: str
-  feeAmount: str
-  feeCurrency: str
+  fee_amount: str
+  fee_currency: str
   time: int
 
   @classmethod
   def from_proto(cls, proto):
-    deals = proto.privateDeals
+    deal = proto.privateDeals
     return cls(
       symbol=proto.symbol,
-      price=deals.price,
-      quantity=deals.quantity,
-      amount=deals.amount,
-      tradeType=TradeType(deals.tradeType),
-      tradeId=deals.tradeId,
-      orderId=deals.orderId,
-      feeAmount=deals.feeAmount,
-      feeCurrency=deals.feeCurrency,
-      time=deals.time
+      price=deal.price,
+      base_qty=deal.quantity,
+      quote_amount=deal.amount,
+      side=TradeType(deal.tradeType).fmt(),
+      tradeId=deal.tradeId,
+      orderId=deal.orderId,
+      fee_amount=deal.feeAmount,
+      fee_currency=deal.feeCurrency,
+      time=deal.time
     )
 
 @dataclass

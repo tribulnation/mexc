@@ -1,9 +1,9 @@
 from datetime import datetime
 from mexc.core import timestamp as ts, validator
-from mexc.spot.core import AuthSpotMixin, ApiError
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from .query_order import OrderState
 
-Response: type[list[OrderState] | ApiError] = list[OrderState] | ApiError # type: ignore
+Response: type[list[OrderState] | ErrorResponse] = list[OrderState] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class MyOrders(AuthSpotMixin):
@@ -15,7 +15,7 @@ class MyOrders(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[OrderState]:
+  ) -> ErrorResponse | list[OrderState]:
     """Query orders (open or not, of your account) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`

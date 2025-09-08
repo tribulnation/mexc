@@ -2,7 +2,8 @@ from typing_extensions import Any, Mapping
 from dataclasses import dataclass, field
 from functools import wraps
 import httpx
-from mexc.core.exc import UserError
+
+from mexc.core import UserError, NetworkError
 
 class HttpClient:
   async def __aenter__(self):
@@ -49,15 +50,18 @@ class HttpClient:
     timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
     extensions: httpx._types.RequestExtensions | None = None,
   ):
-    return await self.client.request(
-      method, url, params=params, cookies=cookies, json=json,
-      content=content, data=data, files=files, auth=auth, follow_redirects=follow_redirects,
-      timeout=timeout, extensions=extensions,
-      headers={
-        'User-Agent': 'trading-sdk',
-        **(headers or {})
-      }
-    )
+    try:
+      return await self.client.request(
+        method, url, params=params, cookies=cookies, json=json,
+        content=content, data=data, files=files, auth=auth, follow_redirects=follow_redirects,
+        timeout=timeout, extensions=extensions,
+        headers={
+          'User-Agent': 'trading-sdk',
+          **(headers or {})
+        }
+      )
+    except httpx.HTTPError as e:
+      raise NetworkError from e
 
 @dataclass
 class HttpMixin:

@@ -1,4 +1,4 @@
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, Mapping, TypeGuard
 from dataclasses import dataclass, field
 from mexc.core import HttpMixin, ValidationMixin
 from .auth import AuthHttpMixin
@@ -22,6 +22,9 @@ class AuthSpotMixin(AuthHttpMixin, ValidationMixin):
       base_url=MEXC_SPOT_API_BASE,
     )
   
-class ApiError(TypedDict):
+class ErrorResponse(TypedDict):
   msg: str
   code: int
+
+def is_error_response(r) -> TypeGuard[ErrorResponse]:
+  return isinstance(r, Mapping) and 'msg' in r and 'code' in r

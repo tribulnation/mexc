@@ -1,6 +1,6 @@
 from typing_extensions import TypedDict
 from mexc.core import validator
-from mexc.spot.core import SpotMixin, ApiError
+from mexc.spot.core import SpotMixin, ErrorResponse
 
 class Trade(TypedDict):
   id: str | None
@@ -11,7 +11,7 @@ class Trade(TypedDict):
   isBuyerMaker: bool
   isBestMatch: bool
 
-Response: type[list[Trade] | ApiError] = list[Trade] | ApiError # type: ignore
+Response: type[list[Trade] | ErrorResponse] = list[Trade] | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
 class Trades(SpotMixin):
@@ -19,7 +19,7 @@ class Trades(SpotMixin):
     self, symbol: str, *,
     limit: int | None = None,
     validate: bool | None = None,
-  ) -> ApiError | list[Trade]:
+  ) -> ErrorResponse | list[Trade]:
     """Get recent trades for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.

@@ -2,11 +2,13 @@ from datetime import datetime, timedelta
 from typing_extensions import AsyncIterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+
 from trading_sdk.types import ApiError
 from trading_sdk.wallet.withdrawal_history import Withdrawal, WithdrawalHistory as WithdrawalHistoryTDK
+
 from mexc.core import timestamp
 from mexc.spot.wallet.withdrawal_history import WithdrawalHistory as Client, Status
-from mexc.sdk.util import SdkMixin, wrap_exceptions, parse_network, parse_asset
+from mexc.sdk.core import SdkMixin, wrap_exceptions, parse_network, parse_asset
 
 async def _withdrawal_history(
   client: Client, *, asset: str | None = None,
