@@ -18,11 +18,11 @@ class Depth(SpotDepth, SdkMixin):
         asks=[Book.Entry(
           price=Decimal(p.price),
           qty=Decimal(p.qty)
-        ) for p in r['asks']],
+        ) for p in r['asks'][:limit]],
         bids=[Book.Entry(
           price=Decimal(p.price),
           qty=Decimal(p.qty)
-        ) for p in r['bids']],
+        ) for p in r['bids'][:limit]],
       )
 
   async def spot_depth(self, base: str, quote: str, /, *, limit: int | None = None) -> Book:

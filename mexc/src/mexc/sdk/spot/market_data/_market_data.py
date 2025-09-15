@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from .depth import Depth
-from .exchange_info import ExchangeInfo
+from .instrument_info import InstrumentInfo
 from .candles import Candles
 
 @dataclass
-class MarketData(Depth, ExchangeInfo, Candles):
+class MarketData(Depth, InstrumentInfo, Candles):
   ...

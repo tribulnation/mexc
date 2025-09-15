@@ -1,6 +1,6 @@
 from ._market_data import MarketData
 from .depth import Depth
-from .exchange_info import ExchangeInfo
+from .instrument_info import InstrumentInfo
 from .candles import Candles
 
-__all__ = ['MarketData', 'Depth', 'ExchangeInfo', 'Candles']
+__all__ = ['MarketData', 'Depth', 'InstrumentInfo', 'Candles']

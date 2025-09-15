@@ -7,9 +7,9 @@ from trading_sdk.market.market_data.instrument_info import SpotInfo, Info
 from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 @dataclass
-class ExchangeInfo(SpotInfo, SdkMixin):
+class InstrumentInfo(SpotInfo, SdkMixin):
   @wrap_exceptions
-  async def exchange_info(self, instrument: str, /) -> Info:
+  async def instrument_info(self, instrument: str, /) -> Info:
     r = await self.client.spot.exchange_info(instrument)
     if 'code' in r:
       raise ApiError(r)
@@ -20,6 +20,6 @@ class ExchangeInfo(SpotInfo, SdkMixin):
         step_size=Decimal(info['baseSizePrecision']),
       )
 
-  async def spot_exchange_info(self, base: str, quote: str, /) -> Info:
+  async def spot_info(self, base: str, quote: str, /) -> Info:
     instrument = spot_name(base, quote)
-    return await self.exchange_info(instrument)
+    return await self.instrument_info(instrument)

@@ -11,10 +11,10 @@ from mexc.core import timestamp
 from mexc.sdk.core import SdkMixin, wrap_exceptions, spot_name
 
 async def _my_trades(
-  client: Client, instrument: str, *,
+  client: Client, instrument: str, *, recvWindow: int | None = 60000,
   start: datetime | None = None, end: datetime | None = None
 ) -> list[Trade]:
-  r = await client.my_trades(instrument, start=start, end=end)
+  r = await client.my_trades(instrument, start=start, end=end, recvWindow=recvWindow)
   match r:
     case list(trades):
       return [
@@ -36,7 +36,7 @@ async def _my_trades(
       raise ApiError(err)
 
 async def _paginate_trades_forward(
-  client: Client, instrument: str, *,
+  client: Client, instrument: str, *, recvWindow: int | None = None,
   start: datetime, end: datetime | None = None,
 ) -> AsyncIterable[Sequence[Trade]]:
   """Paginate trades forwards from the `start`"""
@@ -51,7 +51,7 @@ async def _paginate_trades_forward(
     start = new_trades[-1].time
 
 async def _paginate_trades_backward(
-  client: Client, instrument: str, *,
+  client: Client, instrument: str, *, recvWindow: int | None = None,
   start: datetime | None = None, end: datetime,
 ) -> AsyncIterable[Sequence[Trade]]:
   """Paginate trades backwards from the `end`"""
@@ -74,16 +74,16 @@ class MyTrades(SpotMyTrades, SdkMixin):
   ) -> AsyncIterable[Sequence[Trade]]:
     spot = self.client.spot
     if start and end:
-      async for trades in _paginate_trades_forward(spot, instrument, start=start, end=end):
+      async for trades in _paginate_trades_forward(spot, instrument, start=start, end=end, recvWindow=self.recvWindow):
         yield trades
     elif start:
-      async for trades in _paginate_trades_forward(spot, instrument, start=start):
+      async for trades in _paginate_trades_forward(spot, instrument, start=start, recvWindow=self.recvWindow):
         yield trades
     elif end:
-      async for trades in _paginate_trades_backward(spot, instrument, end=end):
+      async for trades in _paginate_trades_backward(spot, instrument, end=end, recvWindow=self.recvWindow):
         yield trades
     else:
-      async for trades in _paginate_trades_backward(spot, instrument, end=datetime.now()):
+      async for trades in _paginate_trades_backward(spot, instrument, end=datetime.now(), recvWindow=self.recvWindow):
         yield trades
 
 

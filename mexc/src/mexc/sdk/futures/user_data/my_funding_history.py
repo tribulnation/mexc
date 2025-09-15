@@ -11,7 +11,7 @@ from mexc.sdk.core import SdkMixin, wrap_exceptions, perp_name
 from mexc.futures.user_data.my_funding_history import PositionType
 
 @dataclass
-class FundingRateHistory(PerpMyFundingHistory, SdkMixin):
+class MyFundingHistory(PerpMyFundingHistory, SdkMixin):
   @wrap_exceptions
   async def my_funding_history(
     self, instrument: str, /, *,

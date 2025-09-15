@@ -24,14 +24,14 @@ def parse_order(order: OrderTDK) -> Order:
 @dataclass
 class PlaceOrder(SpotPlaceOrder, SdkMixin):
   @wrap_exceptions
-  async def place_order(self, instrument: str, /, order: OrderTDK) -> str:
+  async def place_order(self, instrument: str, /, *, order: OrderTDK) -> str:
     r = await self.client.spot.place_order(instrument, parse_order(order))
     if 'code' in r:
       raise ApiError(r)
     else:
       return r['orderId']
 
-  async def spot_place_order(self, base: str, quote: str, /, order: OrderTDK) -> str:
+  async def spot_place_order(self, base: str, quote: str, /, *, order: OrderTDK) -> str:
     instrument = spot_name(base, quote)
-    return await self.place_order(instrument, order)
+    return await self.place_order(instrument, order=order)
   
