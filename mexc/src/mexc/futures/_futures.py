@@ -1,6 +1,8 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
 import asyncio
+import os
+
 from mexc.core.ws.base import SocketClient
 from mexc.futures.core import MEXC_FUTURES_API_BASE, AuthHttpClient
 from .market_data import MarketData
@@ -32,32 +34,18 @@ class Futures(MarketData, Trading, UserData):
 
   @classmethod
   def new(
-    cls, api_key: str, api_secret: str, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     base_url: str = MEXC_FUTURES_API_BASE,
     ws_url: str = MEXC_FUTURES_SOCKET_URL,
     default_validate: bool = True,
     **kwargs: Unpack[SocketClient.Config],
   ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
     return cls(api_url=base_url, ws_url=ws_url, auth_http=auth_http, default_validate=default_validate, **kwargs)
-  
-  @classmethod
-  def env(
-    cls, *,
-    base_url: str = MEXC_FUTURES_API_BASE,
-    ws_url: str = MEXC_FUTURES_SOCKET_URL,
-    default_validate: bool = True,
-    **kwargs: Unpack[SocketClient.Config],
-  ):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'],
-      api_secret=os.environ['MEXC_SECRET_KEY'],
-      base_url=base_url,
-      ws_url=ws_url,
-      default_validate=default_validate,
-      **kwargs,
-    )
   
   async def __aexit__(self, exc_type, exc_value, traceback):
     await asyncio.gather(

@@ -1,5 +1,7 @@
+import os
 from dataclasses import dataclass
 import asyncio
+
 from .spot import Spot
 from .futures import Futures
 
@@ -10,19 +12,18 @@ class MEXC:
 
   @classmethod
   def new(
-    cls, api_key: str, api_secret: str, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     validate: bool = True,
   ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     return cls(
       spot=Spot.new(api_key=api_key, api_secret=api_secret, default_validate=validate),
       futures=Futures.new(api_key=api_key, api_secret=api_secret, default_validate=validate),
     )
   
-  @classmethod
-  def env(cls, *, validate: bool = True):
-    import os
-    return cls.new(api_key=os.environ['MEXC_ACCESS_KEY'], api_secret=os.environ['MEXC_SECRET_KEY'], validate=validate)
-
   async def __aenter__(self):
     await asyncio.gather(
       self.spot.__aenter__(),

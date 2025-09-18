@@ -4,7 +4,9 @@ from urllib.parse import quote
 import json as jsonlib
 import hashlib
 import hmac
+import os
 import httpx
+
 from mexc.core import HttpClient, HttpMixin, timestamp
 
 def sign(payload: str, *, secret: str) -> str:
@@ -94,7 +96,11 @@ class AuthHttpMixin(HttpMixin):
     self.http = self.auth_http = auth_http
 
   @classmethod
-  def new(cls, api_key: str, api_secret: str, *, base_url: str):
+  def new(cls, api_key: str | None = None, api_secret: str | None = None, *, base_url: str):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     client = AuthHttpClient(api_key=api_key, api_secret=api_secret)
     return cls(base_url=base_url, auth_http=client)
   

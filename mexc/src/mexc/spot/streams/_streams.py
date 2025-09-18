@@ -1,5 +1,7 @@
 from typing_extensions import Unpack
 from dataclasses import dataclass
+import os
+
 from mexc.core import filter_kwargs
 from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .core import StreamsClient, UserStreamsClient, MEXC_SPOT_SOCKET_URL
@@ -26,26 +28,15 @@ class Streams(MarketStreams, UserStreams):
 
   @classmethod
   def new(
-    cls, api_key: str, api_secret: str, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     api_url: str = MEXC_SPOT_API_BASE,
     ws_url: str = MEXC_SPOT_SOCKET_URL,
     **kwargs: Unpack[Config],
   ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
     return cls(api_url=api_url, ws_url=ws_url, auth_http=auth_http, **kwargs)
   
-  @classmethod
-  def env(
-    cls, *,
-    api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SPOT_SOCKET_URL,
-    **kwargs: Unpack[Config],
-  ):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'],
-      api_secret=os.environ['MEXC_SECRET_KEY'],
-      api_url=api_url,
-      ws_url=ws_url,
-      **kwargs,
-    )

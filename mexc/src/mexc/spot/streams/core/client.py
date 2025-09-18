@@ -1,7 +1,8 @@
 from typing_extensions import Any, TypedDict
 from dataclasses import dataclass, field
 from mexc.core import json, validator, ValidationError
-from mexc.core.ws.streams_rpc import StreamsRPCSocketClient
+
+from .streams_rpc import StreamsRPCSocketClient, Message
 from .proto import parse_proto
 
 MEXC_SPOT_SOCKET_URL = 'wss://wbs-api.mexc.com/ws'
@@ -35,18 +36,15 @@ class StreamsClient(StreamsRPCSocketClient):
   async def request_unsubscription(self, channel: str):
     await self.send_request('UNSUBSCRIPTION', [channel])
 
-  def parse_msg(self, msg: str | bytes) -> tuple[str|None, Any]:
+  def parse_msg(self, msg: str | bytes) -> Message:
     try:
       data = validate_response(msg)
-      return None, data
+      return {'kind': 'response', 'response': data}
     except ValidationError:
       proto = parse_proto(msg)
       channel: str = proto.channel # type: ignore
-      return channel, proto
+      return {'kind': 'subscription', 'channel': channel, 'data': proto}
     
-  async def open(self):
-    return await super().open()
-
 @dataclass
 class StreamsMixin:
   ws: StreamsClient = field(default_factory=StreamsClient, kw_only=True)

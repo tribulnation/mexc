@@ -26,12 +26,3 @@ class FuturesMixin(HttpMixin, ValidationMixin):
 @dataclass
 class AuthFuturesMixin(AuthHttpMixin, ValidationMixin):
   base_url: str = field(default=MEXC_FUTURES_API_BASE, kw_only=True)
-
-  @classmethod
-  def env(cls):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'],
-      api_secret=os.environ['MEXC_SECRET_KEY'],
-      base_url=MEXC_FUTURES_API_BASE,
-    )

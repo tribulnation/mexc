@@ -1,7 +1,9 @@
 from typing_extensions import TypedDict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import timedelta
 import asyncio
+import os
+
 from mexc.core import timestamp as ts, validator
 from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .client import StreamsClient, MEXC_SPOT_SOCKET_URL
@@ -23,36 +25,30 @@ class UserStreamsClient:
   api_url: str = MEXC_SPOT_API_BASE
   ws_url: str = MEXC_SPOT_SOCKET_URL
   keep_alive_every: timedelta = timedelta(minutes=30)
-  ctx: Context | None = None
+  ctx_future: asyncio.Future[Context] = field(default_factory=asyncio.Future, init=False)
+  open_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
+  close_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
 
   class Config(TypedDict, total=False):
     keep_alive_every: timedelta
 
+  @property
+  async def ctx(self) -> Context:
+    return await self.open()
+
   @classmethod
   def new(
-    cls, api_key: str, api_secret: str, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     api_url: str = MEXC_SPOT_API_BASE,
     ws_url: str = MEXC_SPOT_SOCKET_URL,
     keep_alive_every: timedelta = timedelta(minutes=30),
   ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
     return cls(auth_http=auth_http, api_url=api_url, ws_url=ws_url, keep_alive_every=keep_alive_every)
-  
-  @classmethod
-  def env(
-    cls, *,
-    api_url: str = MEXC_SPOT_API_BASE,
-    ws_url: str = MEXC_SPOT_SOCKET_URL,
-    keep_alive_every: timedelta = timedelta(minutes=30),
-  ):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'],
-      api_secret=os.environ['MEXC_SECRET_KEY'],
-      api_url=api_url,
-      ws_url=ws_url,
-      keep_alive_every=keep_alive_every,
-    )
   
   async def listen_key(self):
     r = await self.auth_http.signed_request('POST', self.api_url + '/api/v3/userDataStream', params={
@@ -74,24 +70,37 @@ class UserStreamsClient:
     })
     return validate_listen_response(r.text)['listenKey']
 
-  async def start(self):
-    if self.ctx is None:
-      key = await self.listen_key()
-      ws = await StreamsClient(url=self.ws_url + f'?listenKey={key}').__aenter__()
-      pinger = asyncio.create_task(self.pinger(key))
-      self.ctx = Context(ws=ws, listen_key=key, pinger=pinger)
-    return self.ctx
+  async def force_open(self):
+    key = await self.listen_key()
+    ws = await StreamsClient(url=self.ws_url + f'?listenKey={key}').__aenter__()
+    pinger = asyncio.create_task(self.pinger(key))
+    return Context(ws=ws, listen_key=key, pinger=pinger)
+
+  async def open(self) -> Context:
+    if self.open_lock.locked() or self.ctx_future.done():
+      return await self.ctx_future
+
+    async with self.open_lock:
+      ctx = await self.force_open()
+      self.ctx_future.set_result(ctx)
+      return ctx
   
   async def __aenter__(self):
-    await self.start()
+    await self.open()
     return self
   
+  async def force_close(self, ctx: Context, exc_type=None, exc_value=None, traceback=None):
+    ctx.pinger.cancel()
+    await ctx.ws.__aexit__(exc_type, exc_value, traceback)
+    await self.delete_key(ctx.listen_key)
+
+  async def close(self, ctx: Context, exc_type=None, exc_value=None, traceback=None):
+    if not self.close_lock.locked():
+      async with self.close_lock:
+        await self.force_close(ctx, exc_type, exc_value, traceback)
+
   async def __aexit__(self, exc_type, exc_value, traceback):
-    if self.ctx is not None:
-      self.ctx.pinger.cancel()
-      await self.ctx.ws.__aexit__(exc_type, exc_value, traceback)
-      await self.delete_key(self.ctx.listen_key)
-      self.ctx = None
+    await self.close(await self.ctx, exc_type, exc_value, traceback)
 
   async def pinger(self, key: str):
     while True:
@@ -99,7 +108,7 @@ class UserStreamsClient:
       await self.refresh_key(key)
 
   async def subscribe(self, channel: str):
-    ctx = await self.start()
+    ctx = await self.ctx
     async for msg in ctx.ws.subscribe(channel):
       yield msg
 

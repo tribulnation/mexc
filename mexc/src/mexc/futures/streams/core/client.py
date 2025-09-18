@@ -1,8 +1,9 @@
-from typing_extensions import Any, TypedDict
+from typing_extensions import Any, TypedDict, Unpack
 import asyncio
 from dataclasses import dataclass, field
+
 from mexc.core import json, validator, ValidationMixin
-from mexc.core.ws.streams_rpc import StreamsRPCSocketClient
+from .streams_rpc import StreamsRPCSocketClient, Message
 
 MEXC_FUTURES_SOCKET_URL = 'wss://contract.mexc.com/edge'
 
@@ -38,22 +39,28 @@ class StreamsClient(StreamsRPCSocketClient):
   async def request_unsubscription(self, channel: str):
     await self.send_request(f'unsub.{channel}')
 
-  def parse_msg(self, msg: str | bytes) -> tuple[str|None, Any]:
+  def parse_msg(self, msg: str | bytes) -> Message:
     r = validate_response(msg)
     if r['channel'].startswith('push.'):
       channel = r['channel'].removeprefix('push.')
-      return channel, r['data']
+      return {'kind': 'subscription', 'channel': channel, 'data': r['data']}
     elif r['channel'] == 'pong':
-      return 'pong', r
+      return {'kind': 'subscription', 'channel': 'pong', 'data': r}
     else:
-      return None, r
+      return {'kind': 'response', 'response': r}
     
-  async def open(self):
-    return await super().open()
-
 @dataclass
 class StreamsMixin(ValidationMixin):
   ws: StreamsClient
+
+  @classmethod
+  def new(
+    cls, *, url: str = MEXC_FUTURES_SOCKET_URL,
+    default_validate: bool = True,
+    **kwargs: Unpack[StreamsClient.Config],
+  ):
+    ws = StreamsClient(url=url, **kwargs)
+    return cls(ws=ws, default_validate=default_validate)
 
   async def __aenter__(self):
     await self.ws.__aenter__()

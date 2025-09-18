@@ -1,5 +1,8 @@
 from typing_extensions import Unpack
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import asyncio
+import os
+
 from mexc.core import timestamp as ts, AuthError, ValidationMixin
 from mexc.futures.core import sign
 from .client import StreamsClient, Response, MEXC_FUTURES_SOCKET_URL
@@ -8,30 +11,33 @@ from .client import StreamsClient, Response, MEXC_FUTURES_SOCKET_URL
 class AuthedStreamsClient(StreamsClient):
   api_key: str
   api_secret: str
+  auth_lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False)
+  authorized: asyncio.Event = field(default_factory=asyncio.Event, init=False)
 
   @classmethod
   def new(
-    cls, api_key: str, api_secret: str, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     url: str = MEXC_FUTURES_SOCKET_URL,
     **kwargs: Unpack[StreamsClient.Config],
   ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     return cls(api_key=api_key, api_secret=api_secret, url=url, **kwargs)
-  
-  @classmethod
-  def env(cls, *, url: str = MEXC_FUTURES_SOCKET_URL, **kwargs: Unpack[StreamsClient.Config]):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'],
-      api_secret=os.environ['MEXC_SECRET_KEY'],
-      url=url,
-      **kwargs,
-    )
 
-  async def open(self):
-    ctx = await super().open()
-    await self.login()
-    return ctx
-  
+  @property
+  async def authed(self):
+    await self.authenticate()
+
+  async def authenticate(self):
+    if self.auth_lock.locked() or self.authorized.is_set():
+      return
+
+    async with self.auth_lock:
+      await self.login()
+      self.authorized.set()
+
   async def login(self):
     t = ts.now()
     signature = sign(f'{self.api_key}{t}', secret=self.api_secret)
@@ -48,11 +54,15 @@ class AuthedStreamsClient(StreamsClient):
     return r
   
   async def request_subscription(self, channel: str, params=None):
-    await self.ctx # ensure connection is open
-    # all channels are auto-subscribed
+    await self.authed
+    return await super().request_subscription(channel, params)
+  #   await self.ctx # ensure connection is open
+  #   # all channels are auto-subscribed
   
   async def request_unsubscription(self, channel: str):
-    await self.ctx # ensure connection is open
+    await self.authed
+    return await super().request_unsubscription(channel)
+  #   await self.ctx # ensure connection is open
 
 @dataclass
 class AuthedStreamsMixin(ValidationMixin):

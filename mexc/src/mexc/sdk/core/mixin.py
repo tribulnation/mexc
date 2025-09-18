@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 
 from mexc import MEXC
@@ -10,15 +11,14 @@ class SdkMixin:
   recvWindow: int | None = None
 
   @classmethod
-  def env(cls, *, validate: bool = True, recvWindow: int | None = None):
-    import os
-    return cls.new(
-      api_key=os.environ['MEXC_ACCESS_KEY'], api_secret=os.environ['MEXC_SECRET_KEY'],
-      validate=validate, recvWindow=recvWindow
-    )
-
-  @classmethod
-  def new(cls, api_key: str, api_secret: str, *, validate: bool = True, recvWindow: int | None = None):
+  def new(
+    cls, api_key: str | None, api_secret: str | None, *,
+    validate: bool = True, recvWindow: int | None = None
+  ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
     client = MEXC.new(api_key=api_key, api_secret=api_secret)
     return cls(client=client, validate=validate, recvWindow=recvWindow)
 
