@@ -1,7 +1,8 @@
-from typing_extensions import TypedDict, NotRequired
+from typing_extensions import NotRequired
 from enum import Enum
 from datetime import datetime
-from mexc.core import timestamp as ts, validator
+
+from mexc.core import timestamp as ts, validator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class TransferType(Enum):

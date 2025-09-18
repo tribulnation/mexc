@@ -1,5 +1,4 @@
-from typing_extensions import TypedDict
-from mexc.core import timestamp as ts, validator
+from mexc.core import timestamp as ts, validator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class WithdrawId(TypedDict):

@@ -1,8 +1,9 @@
-from typing_extensions import TypedDict, AsyncIterable
+from typing_extensions import AsyncIterable
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from mexc.core import validator
+
+from mexc.core import validator, TypedDict
 from mexc.futures.streams.core import AuthedStreamsMixin
 
 class Side(Enum):

@@ -1,5 +1,6 @@
-from typing_extensions import TypedDict, NamedTuple 
-from mexc.core import validator
+from typing_extensions import NamedTuple 
+
+from mexc.core import validator, TypedDict
 from mexc.spot.core import SpotMixin, ErrorResponse
 
 class BookEntry(NamedTuple):

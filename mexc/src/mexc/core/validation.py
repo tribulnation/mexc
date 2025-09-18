@@ -1,7 +1,12 @@
-from typing_extensions import TypeVar, Generic, Any, is_typeddict
+from typing_extensions import TypeVar, Generic, Any, is_typeddict, TypedDict as _TypedDict
 from dataclasses import dataclass, field, is_dataclass
+from pydantic import with_config, ConfigDict
 
-from mexc.core import ValidationError
+from .exc import ValidationError
+
+@with_config(ConfigDict(extra='allow'))
+class TypedDict(_TypedDict):
+  ...
 
 T = TypeVar('T')
 

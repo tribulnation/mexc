@@ -1,6 +1,7 @@
 from ._market_data import MarketData
 from .candles import Candles
-from .funding_rate import FundingRate
 from .contract_info import ContractInfo
+from .funding_rate import FundingRate
+from .funding_rate_history import FundingRateHistory
 
-__all__ = ['MarketData', 'Candles', 'FundingRate', 'ContractInfo']
+__all__ = ['MarketData', 'Candles', 'FundingRate', 'ContractInfo', 'FundingRateHistory']

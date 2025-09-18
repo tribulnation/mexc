@@ -1,5 +1,4 @@
-from typing_extensions import TypedDict
-from mexc.core import validator
+from mexc.core import validator, TypedDict
 from mexc.spot.core import SpotMixin, ErrorResponse
 
 class Trade(TypedDict):

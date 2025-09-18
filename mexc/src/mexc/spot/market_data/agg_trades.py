@@ -1,6 +1,6 @@
-from typing_extensions import TypedDict
 from datetime import datetime
-from mexc.core import timestamp as ts, validator
+
+from mexc.core import timestamp as ts, validator, TypedDict
 from mexc.spot.core import SpotMixin, ErrorResponse
 
 class AggTrade(TypedDict):

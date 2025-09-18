@@ -1,12 +1,14 @@
 from dataclasses import dataclass
 from .candles import Candles
-from .funding_rate import FundingRate
 from .contract_info import ContractInfo
+from .funding_rate import FundingRate
+from .funding_rate_history import FundingRateHistory
 
 @dataclass
 class MarketData(
-  FundingRate,
   Candles,
   ContractInfo,
+  FundingRate,
+  FundingRateHistory,
 ):
   ...

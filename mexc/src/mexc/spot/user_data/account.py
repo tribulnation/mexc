@@ -1,5 +1,6 @@
-from typing_extensions import TypedDict, NotRequired
-from mexc.core import timestamp as ts, validator
+from typing_extensions import NotRequired
+
+from mexc.core import timestamp as ts, validator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class Balance(TypedDict):

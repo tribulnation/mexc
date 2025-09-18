@@ -1,6 +1,7 @@
-from typing_extensions import TypedDict, Literal, AsyncIterable
+from typing_extensions import Literal, AsyncIterable
 from datetime import datetime
-from mexc.core import timestamp as ts, validator, ApiError
+
+from mexc.core import TypedDict, validator, ApiError
 from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class CandleData(TypedDict):

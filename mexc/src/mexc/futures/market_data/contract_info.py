@@ -1,7 +1,7 @@
-from typing_extensions import TypedDict
 from decimal import Decimal
 from enum import Enum
-from mexc.core import validator
+
+from mexc.core import validator, TypedDict
 from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class OpenType(Enum):

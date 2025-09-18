@@ -1,8 +1,8 @@
-from typing_extensions import TypedDict
 from dataclasses import dataclass
 from decimal import Decimal
 from enum import Enum
-from mexc.core import validator
+
+from mexc.core import validator, TypedDict
 from mexc.futures.core import AuthFuturesMixin, FuturesResponse
 
 class PositionType(Enum):

@@ -1,5 +1,9 @@
-from typing_extensions import TypedDict, NotRequired
-from mexc.core import timestamp as ts, validator, OrderSide, OrderType, OrderStatus, TimeInForce
+from typing_extensions import NotRequired
+
+from mexc.core import (
+  timestamp as ts, validator, TypedDict,
+  OrderSide, OrderType, OrderStatus, TimeInForce
+)
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 
 class CanceledOrder(TypedDict):
