@@ -45,4 +45,3 @@ class ValidationMixin:
 
   def validate(self, validate: bool | None) -> bool:
     return self.default_validate if validate is None else validate
-  

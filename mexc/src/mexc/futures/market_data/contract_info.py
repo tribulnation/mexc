@@ -37,7 +37,7 @@ Response: type[FuturesResponse[Info]] = FuturesResponse[Info] # type: ignore
 validate_response = validator(Response)
 
 class ContractInfo(FuturesMixin):
-  async def contract_info(self, symbol: str, *, validate: bool | None = None) -> FuturesResponse[Info]:
+  async def contract_info(self, symbol: str, *, validate: bool | None = None) -> Info:
     """Get information about a futures contract.
     
     - `symbol`: The symbol to retrieve information for, e.g. `BTC_USDT`.
@@ -46,4 +46,4 @@ class ContractInfo(FuturesMixin):
     > [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-information)
     """
     r = await self.request('GET', '/api/v1/contract/detail', params={'symbol': symbol})
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

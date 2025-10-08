@@ -1,7 +1,7 @@
 from typing_extensions import NamedTuple, Literal, AsyncIterable
 from datetime import datetime
-from mexc.core import timestamp as ts, validator, ApiError
-from mexc.spot.core import SpotMixin, ErrorResponse, is_error_response
+from mexc.core import timestamp as ts, validator
+from mexc.spot.core import SpotMixin, ErrorResponse, raise_on_error
 
 class Candle(NamedTuple):
   open_time: int
@@ -25,7 +25,7 @@ class Candles(SpotMixin):
     start: datetime | None = None, end: datetime | None = None,
     limit: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Candle]:
+  ) -> list[Candle]:
     """Get klines (candles) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
@@ -45,7 +45,7 @@ class Candles(SpotMixin):
     if end is not None:
       params['endTime'] = ts.dump(end)
     r = await self.request('GET', '/api/v3/klines', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)
 
   
   async def candles_paged(
@@ -57,13 +57,9 @@ class Candles(SpotMixin):
   ) -> AsyncIterable[list[Candle]]:
     last_time = ts.dump(start)
     while True:
-      r = await self.candles(symbol, interval=interval, start=ts.parse(last_time), end=end, limit=limit, validate=validate)
-      match r:
-        case list(candles):
-          candles = [c for c in candles if c.close_time > last_time]
-          if not candles:
-            break
-          yield candles
-          last_time = candles[-1].close_time
-        case err:
-          raise ApiError(err)
+      candles = await self.candles(symbol, interval=interval, start=ts.parse(last_time), end=end, limit=limit, validate=validate)
+      candles = [c for c in candles if c.close_time > last_time]
+      if not candles:
+        break
+      yield candles
+      last_time = candles[-1].close_time

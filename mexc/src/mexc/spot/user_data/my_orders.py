@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from mexc.core import timestamp as ts, validator
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from .query_order import OrderState
@@ -15,7 +16,7 @@ class MyOrders(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[OrderState]:
+  ) -> list[OrderState]:
     """Query orders (open or not, of your account) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`
@@ -41,4 +42,4 @@ class MyOrders(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/allOrders', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

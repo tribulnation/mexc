@@ -36,7 +36,7 @@ class MyFundingHistory(AuthFuturesMixin):
     page_num: int | None = None,
     page_size: int | None = None,
     validate: bool | None = None,
-  ) -> FuturesResponse[Data]:
+  ) -> Data:
     """Fetch the funding rate history.
 
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`. If not provided, all symbols will be returned.
@@ -57,4 +57,4 @@ class MyFundingHistory(AuthFuturesMixin):
     if page_size is not None:
       params['pageSize'] = page_size
     r = await self.signed_request('GET', '/api/v1/private/position/funding_records', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

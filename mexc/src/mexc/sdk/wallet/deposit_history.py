@@ -3,7 +3,6 @@ from typing_extensions import AsyncIterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
-from trading_sdk.types import ApiError
 from trading_sdk.wallet.deposit_history import Deposit, DepositHistory as DepositHistoryTDK
 
 from mexc.core import timestamp
@@ -13,23 +12,19 @@ from mexc.sdk.core import SdkMixin, wrap_exceptions, parse_network, parse_asset
 async def _deposit_history(
   client: Client, *, start: datetime, end: datetime, asset: str | None = None,
 ) -> list[Deposit]:
-  r = await client.deposit_history(start=start, end=end, coin=asset)
-  match r:
-    case list(deposits):
-      return [
-        Deposit(
-          id=d['txId'],
-          address=d['address'],
-          memo=d.get('memo'),
-          amount=Decimal(d['amount']),
-          asset=parse_asset(d['coin']),
-          network=parse_network(d['netWork']),
-          time=timestamp.parse(d['insertTime']),
-        )
-        for d in deposits if d.get('status') == Status.success
-      ]
-    case err:
-      raise ApiError(err)
+  deposits = await client.deposit_history(start=start, end=end, coin=asset)
+  return [
+    Deposit(
+      id=d['txId'],
+      address=d['address'],
+      memo=d.get('memo'),
+      amount=Decimal(d['amount']),
+      asset=parse_asset(d['coin']),
+      network=parse_network(d['netWork']),
+      time=timestamp.parse(d['insertTime']),
+    )
+    for d in deposits if d.get('status') == Status.success
+  ]
     
 async def _paginate_deposits_forward(
   client: Client, *, asset: str | None = None,

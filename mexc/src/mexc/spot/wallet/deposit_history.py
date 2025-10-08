@@ -47,7 +47,7 @@ class DepositHistory(AuthSpotMixin):
     limit: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Deposit]:
+  ) -> list[Deposit]:
     """Query deposit history.
     
     - `coin`: The coin to query the deposit history for, e.g. `USDT`. (if not given, returns all coins)
@@ -72,4 +72,4 @@ class DepositHistory(AuthSpotMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.signed_request('GET', '/api/v3/capital/deposit/hisrec', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

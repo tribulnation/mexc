@@ -11,19 +11,16 @@ class Depth(SpotDepth, SdkMixin):
   @wrap_exceptions
   async def depth(self, instrument: str, /, *, limit: int | None = None) -> Book:
     r = await self.client.spot.depth(instrument, limit=limit)
-    if 'code' in r:
-      raise ApiError(r)
-    else:
-      return Book(
-        asks=[Book.Entry(
-          price=Decimal(p.price),
-          qty=Decimal(p.qty)
-        ) for p in r['asks'][:limit]],
-        bids=[Book.Entry(
-          price=Decimal(p.price),
-          qty=Decimal(p.qty)
-        ) for p in r['bids'][:limit]],
-      )
+    return Book(
+      asks=[Book.Entry(
+        price=Decimal(p.price),
+        qty=Decimal(p.qty)
+      ) for p in r['asks'][:limit]],
+      bids=[Book.Entry(
+        price=Decimal(p.price),
+        qty=Decimal(p.qty)
+      ) for p in r['bids'][:limit]],
+    )
 
   async def spot_depth(self, base: str, quote: str, /, *, limit: int | None = None) -> Book:
     instrument = spot_name(base, quote)

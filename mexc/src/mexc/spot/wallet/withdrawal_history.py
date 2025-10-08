@@ -49,7 +49,7 @@ class WithdrawalHistory(AuthSpotMixin):
     limit: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Withdrawal]:
+  ) -> list[Withdrawal]:
     """Query withdrawal history.
     
     - `coin`: The coin to query the withdrawal history for, e.g. `USDT`. (if not given, returns all coins)
@@ -74,4 +74,4 @@ class WithdrawalHistory(AuthSpotMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.signed_request('GET', '/api/v3/capital/withdraw/history', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

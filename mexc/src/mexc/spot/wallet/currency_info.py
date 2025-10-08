@@ -27,7 +27,7 @@ class CurrencyInfo(AuthSpotMixin):
   async def currency_info(
     self, *, timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Currency]:
+  ) -> list[Currency]:
     """Query currency information, of all supported currencies.
     
     - `timestamp`: The timestamp for the request, in milliseconds (default: now).
@@ -37,4 +37,4 @@ class CurrencyInfo(AuthSpotMixin):
     """
     params = {'timestamp': timestamp or ts.now()}
     r = await self.signed_request('GET', '/api/v3/capital/config/getall', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

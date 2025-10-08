@@ -11,7 +11,7 @@ class OpenOrders(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[OrderState]:
+  ) -> list[OrderState]:
     """Query open orders (of your account) for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`
@@ -28,4 +28,4 @@ class OpenOrders(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/openOrders', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

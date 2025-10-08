@@ -45,7 +45,7 @@ class MyTrades(AuthFuturesMixin):
     page_num: int | None = None,
     page_size: int | None = None,
     validate: bool | None = None,
-  ) -> FuturesResponse[list[Trade]]:
+  ) -> list[Trade]:
     """Get futures trades of your account.
 
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`. If not provided, all symbols will be returned.
@@ -69,4 +69,4 @@ class MyTrades(AuthFuturesMixin):
     if page_size is not None:
       params['page_size'] = page_size
     r = await self.signed_request('GET', '/api/v1/private/order/list/order_deals', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

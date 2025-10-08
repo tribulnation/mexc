@@ -30,7 +30,7 @@ class QueryOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | OrderState:
+  ) -> OrderState:
     """Query an order (of your account) by ID.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`
@@ -50,4 +50,4 @@ class QueryOrder(AuthSpotMixin):
     if orderId is not None:
       params['orderId'] = orderId
     r = await self.signed_request('GET', '/api/v3/order', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

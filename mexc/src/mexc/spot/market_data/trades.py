@@ -18,7 +18,7 @@ class Trades(SpotMixin):
     self, symbol: str, *,
     limit: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Trade]:
+  ) -> list[Trade]:
     """Get recent trades for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
@@ -31,4 +31,4 @@ class Trades(SpotMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.request('GET', '/api/v3/trades', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

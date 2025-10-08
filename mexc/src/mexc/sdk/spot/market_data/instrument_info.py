@@ -11,14 +11,11 @@ class InstrumentInfo(SpotInfo, SdkMixin):
   @wrap_exceptions
   async def instrument_info(self, instrument: str, /) -> Info:
     r = await self.client.spot.exchange_info(instrument)
-    if 'code' in r:
-      raise ApiError(r)
-    else:
-      info = r[instrument]
-      return Info(
-        tick_size=Decimal(1) / Decimal(10 ** info['quotePrecision']),
-        step_size=Decimal(info['baseSizePrecision']),
-      )
+    info = r[instrument]
+    return Info(
+      tick_size=Decimal(1) / Decimal(10 ** info['quotePrecision']),
+      step_size=Decimal(info['baseSizePrecision']),
+    )
 
   async def spot_info(self, base: str, quote: str, /) -> Info:
     instrument = spot_name(base, quote)

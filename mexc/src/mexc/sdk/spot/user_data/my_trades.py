@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from trading_sdk.types import ApiError
 from trading_sdk.market.user_data.my_trades import SpotMyTrades, Trade
 
 from mexc.spot.user_data import MyTrades as Client
@@ -14,26 +13,22 @@ async def _my_trades(
   client: Client, instrument: str, *, recvWindow: int | None = 60000,
   start: datetime | None = None, end: datetime | None = None
 ) -> list[Trade]:
-  r = await client.my_trades(instrument, start=start, end=end, recvWindow=recvWindow)
-  match r:
-    case list(trades):
-      return [
-        Trade(
-          id=t['id'],
-          price=Decimal(t['price']),
-          qty=Decimal(t['qty']),
-          time=timestamp.parse(t['time']),
-          side='BUY' if t['isBuyer'] else 'SELL',
-          maker=t['isMaker'],
-          fee=Trade.Fee(
-            asset=a,
-            amount=Decimal(c),
-          ) if (a := t.get('commissionAsset')) and (c := t.get('commission')) else None,
-        )
-        for t in trades
-      ]
-    case err:
-      raise ApiError(err)
+  trades = await client.my_trades(instrument, start=start, end=end, recvWindow=recvWindow)
+  return [
+    Trade(
+      id=t['id'],
+      price=Decimal(t['price']),
+      qty=Decimal(t['qty']),
+      time=timestamp.parse(t['time']),
+      side='BUY' if t['isBuyer'] else 'SELL',
+      maker=t['isMaker'],
+      fee=Trade.Fee(
+        asset=a,
+        amount=Decimal(c),
+      ) if (a := t.get('commissionAsset')) and (c := t.get('commission')) else None,
+    )
+    for t in trades
+  ]
 
 async def _paginate_trades_forward(
   client: Client, instrument: str, *, recvWindow: int | None = None,

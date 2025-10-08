@@ -3,7 +3,6 @@ from typing_extensions import AsyncIterable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
-from trading_sdk.types import ApiError
 from trading_sdk.wallet.withdrawal_history import Withdrawal, WithdrawalHistory as WithdrawalHistoryTDK
 
 from mexc.core import timestamp
@@ -14,27 +13,23 @@ async def _withdrawal_history(
   client: Client, *, asset: str | None = None,
   start: datetime, end: datetime,
 ) -> list[Withdrawal]:
-  r = await client.withdrawal_history(start=start, end=end, coin=asset)
-  match r:
-    case list(withdrawals):
-      return [
-        Withdrawal(
-          id=w['id'],
-          address=w['address'],
-          memo=w.get('memo'),
-          amount=Decimal(w['amount']),
-          asset=parse_asset(w['coin']),
-          network=parse_network(w['netWork']),
-          time=timestamp.parse(w['applyTime']),
-          fee=Withdrawal.Fee(
-            asset=w['coin'],
-            amount=Decimal(w['transactionFee']),
-          ) if w.get('transactionFee') else None,
-        )
-        for w in withdrawals if w.get('status') == Status.success
-      ]
-    case err:
-      raise ApiError(err)
+  withdrawals = await client.withdrawal_history(start=start, end=end, coin=asset)
+  return [
+    Withdrawal(
+      id=w['id'],
+      address=w['address'],
+      memo=w.get('memo'),
+      amount=Decimal(w['amount']),
+      asset=parse_asset(w['coin']),
+      network=parse_network(w['netWork']),
+      time=timestamp.parse(w['applyTime']),
+      fee=Withdrawal.Fee(
+        asset=w['coin'],
+        amount=Decimal(w['transactionFee']),
+      ) if w.get('transactionFee') else None,
+    )
+    for w in withdrawals if w.get('status') == Status.success
+  ]
     
 async def _paginate_withdrawals_forward(
   client: Client, *, asset: str | None = None,

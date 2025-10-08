@@ -40,7 +40,7 @@ class PlaceOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | NewOrder:
+  ) -> NewOrder:
     """Place a new order on the spot market.
     
     - `symbol`: The symbol to trade, e.g. `BTCUSDT`
@@ -58,4 +58,4 @@ class PlaceOrder(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('POST', '/api/v3/order', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

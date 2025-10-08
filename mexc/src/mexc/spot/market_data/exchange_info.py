@@ -25,7 +25,9 @@ Response: type[OkResponse | ErrorResponse] = OkResponse | ErrorResponse # type: 
 validate_response = validator(Response)
 
 class ExchangeInfo(SpotMixin):
-  async def exchange_info(self, *symbols: S, validate: bool | None = None) -> ErrorResponse | dict[S, Info]:
+  async def exchange_info(
+    self, *symbols: S, validate: bool | None = None,
+  ) -> dict[S, Info]:
     """Get the exchange information for the given symbol, symbols, or all symbols (if none provided)
     
     - `symbols`: The symbols to get information for. If none provided, all symbols are returned.
@@ -37,9 +39,6 @@ class ExchangeInfo(SpotMixin):
     elif len(symbols) > 1:
       params['symbols'] = ','.join(symbols)
     r = await self.request('GET', '/api/v3/exchangeInfo', params=params)
-    obj = validate_response(r.text) if validate else r.json()
-    if 'symbols' in obj:
-      dct: dict[str, Info] = {s['symbol']: s for s in obj['symbols']}
-      return dct # type: ignore
-    else:
-      return obj
+    obj = self.output(r.text, validate_response, validate)
+    dct: dict[str, Info] = {s['symbol']: s for s in obj['symbols']}
+    return dct # type: ignore

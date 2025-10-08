@@ -32,7 +32,7 @@ class MyTrades(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | list[Trade]:
+  ) -> list[Trade]:
     """Get all trades (of your account) for a given symbol.
 
     Only the transaction records in the past 1 month can be queried. If you want to view more transaction records, please use the export function on the web side, which supports exporting transaction records of the past 3 years at most.
@@ -63,4 +63,4 @@ class MyTrades(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/myTrades', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

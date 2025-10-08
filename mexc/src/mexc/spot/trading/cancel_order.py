@@ -30,7 +30,7 @@ class CancelOrder(AuthSpotMixin):
     recvWindow: int | None = None,
     timestamp: int | None = None,
     validate: bool | None = None,
-  ) -> ErrorResponse | CanceledOrder:
+  ) -> CanceledOrder:
     """Cancel an open order (of your account) by ID.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`
@@ -48,4 +48,4 @@ class CancelOrder(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('DELETE', '/api/v3/order', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

@@ -16,7 +16,7 @@ class Withdraw(AuthSpotMixin):
     memo: str | None = None,
     remark: str | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ErrorResponse | WithdrawId:
+  ) -> WithdrawId:
     """Withdraw assets from your account.
     
     - `coin`: The coin to withdraw, e.g. `USDT`.
@@ -44,4 +44,4 @@ class Withdraw(AuthSpotMixin):
     if remark is not None:
       params['remark'] = remark
     r = await self.signed_request('POST', '/api/v3/capital/withdraw', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

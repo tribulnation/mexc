@@ -11,7 +11,7 @@ class CancelWithdraw(AuthSpotMixin):
   async def cancel_withdraw(
     self, id: str, *,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ErrorResponse | WithdrawId:
+  ) -> WithdrawId:
     """Cancel a withdrawal, given its ID.
     
     - `id`: The ID of the withdrawal to cancel. Will be returned by the `withdraw` endpoint.
@@ -24,4 +24,4 @@ class CancelWithdraw(AuthSpotMixin):
       'id': id, 'timestamp': timestamp or ts.now(),
     }
     r = await self.signed_request('DELETE', '/api/v3/capital/withdraw', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

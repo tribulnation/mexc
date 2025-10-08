@@ -20,7 +20,7 @@ class DepositAddresses(AuthSpotMixin):
   async def deposit_addresses(
     self, coin: str, *, network: str | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ErrorResponse | list[Chain]:
+  ) -> list[Chain]:
     """Get deposit addresses for a given coin.
     
     - `coin`: The coin to get the deposit addresses for, e.g. `USDT`.
@@ -36,4 +36,4 @@ class DepositAddresses(AuthSpotMixin):
     if network is not None:
       params['network'] = network
     r = await self.signed_request('GET', '/api/v3/capital/deposit/address', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

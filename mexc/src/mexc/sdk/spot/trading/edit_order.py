@@ -12,8 +12,6 @@ class EditOrder(SpotEditOrder, SdkMixin):
   @wrap_exceptions
   async def edit_order(self, instrument: str, /, *, id: str, qty: Num | None = None, price: Num | None = None) -> str:
     state = await self.client.spot.cancel_order(instrument, orderId=id)
-    if 'code' in state:
-      raise ApiError(state)
 
     if price is None:
       price = state['price']
@@ -27,10 +25,7 @@ class EditOrder(SpotEditOrder, SdkMixin):
       price=fmt_num(price),
       quantity=fmt_num(qty)
     ))
-    if 'code' in r:
-      raise ApiError(r)
-    else:
-      return r['orderId']
+    return r['orderId']
 
   
   async def spot_edit_order(self, base: str, quote: str, /, *, id: str, qty: Num | None = None, price: Num | None = None) -> str:

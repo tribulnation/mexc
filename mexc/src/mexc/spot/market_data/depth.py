@@ -1,7 +1,7 @@
-from typing_extensions import NamedTuple 
+from typing_extensions import NamedTuple, overload, Literal
 
 from mexc.core import validator, TypedDict
-from mexc.spot.core import SpotMixin, ErrorResponse
+from mexc.spot.core import SpotMixin, ErrorResponse, raise_on_error
 
 class BookEntry(NamedTuple):
   price: str
@@ -16,7 +16,10 @@ Response: type[OrderBook | ErrorResponse] = OrderBook | ErrorResponse # type: ig
 validate_response = validator(Response)
 
 class Depth(SpotMixin):
-  async def depth(self, symbol: str, *, limit: int | None = None, validate: bool | None = None) -> ErrorResponse | OrderBook:
+  async def depth(
+    self, symbol: str, *, limit: int | None = None,
+    validate: bool | None = None,
+  ) -> OrderBook:
     """Get the order book for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTCUSDT`.
@@ -29,4 +32,4 @@ class Depth(SpotMixin):
     if limit is not None:
       params['limit'] = limit
     r = await self.request('GET', f'/api/v3/depth', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)

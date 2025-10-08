@@ -1,8 +1,7 @@
-from gc import collect
 from typing_extensions import AsyncIterable
 from decimal import Decimal
 
-from mexc.core import validator, TypedDict, ApiError
+from mexc.core import validator, TypedDict
 from mexc.futures.core import FuturesMixin, FuturesResponse
 
 class FundingRate(TypedDict):
@@ -28,7 +27,7 @@ class FundingRateHistory(FuturesMixin):
     page_num: int | None = None,
     page_size: int | None = None,
     validate: bool | None = None
-  ) -> FuturesResponse[Data]:
+  ) -> Data:
     """Get the funding rate history for a given symbol.
     
     - `symbol`: The symbol being traded, e.g. `BTC_USDT`.
@@ -44,7 +43,7 @@ class FundingRateHistory(FuturesMixin):
     if page_size is not None:
       params['page_size'] = page_size
     r = await self.request('GET', '/api/v1/contract/funding_rate/history', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)
 
   
   async def funding_rate_history_paged(
@@ -55,9 +54,7 @@ class FundingRateHistory(FuturesMixin):
     page_num = 1
     while True:
       r = await self.funding_rate_history(symbol, page_num=page_num, page_size=page_size, validate=validate)
-      if not 'data' in r:
-        raise ApiError(r)
-      yield r['data']['resultList']
+      yield r['resultList']
       page_num += 1
-      if page_num >= r['data']['totalPage']:
+      if page_num >= r['totalPage']:
         break

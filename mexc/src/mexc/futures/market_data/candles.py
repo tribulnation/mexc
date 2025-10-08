@@ -29,7 +29,7 @@ class Candles(FuturesMixin):
     interval: Interval | None = None,
     start: datetime | None = None, end: datetime | None = None,
     validate: bool | None = None,
-  ) -> FuturesResponse[CandleData]:
+  ) -> CandleData:
     """Get klines (candles) for a given symbol. Returns at most 2000 candles.
     
     - `symbol`: The symbol being traded, e.g. `BTC_USDT`.
@@ -48,7 +48,7 @@ class Candles(FuturesMixin):
     if end is not None:
       params['end'] = int(end.timestamp())
     r = await self.request('GET', f'/api/v1/contract/kline/{symbol}', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)
 
   async def candles_paged(
     self, symbol: str, *,
@@ -58,10 +58,7 @@ class Candles(FuturesMixin):
   ) -> AsyncIterable[CandleData]:
     end_time = int(end.timestamp())
     while True:
-      r = await self.candles(symbol, start=start, end=datetime.fromtimestamp(end_time), interval=interval, validate=validate)
-      if not 'data' in r:
-        raise ApiError(r)
-      c = r['data']
+      c = await self.candles(symbol, start=start, end=datetime.fromtimestamp(end_time), interval=interval, validate=validate)
       out = CandleData(
         time=[],
         open=[],

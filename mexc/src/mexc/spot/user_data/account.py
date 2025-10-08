@@ -17,7 +17,6 @@ class AccountInfo(TypedDict):
   permissions: list[str]
   balances: list[Balance]
 
-
 Response: type[AccountInfo | ErrorResponse] = AccountInfo | ErrorResponse # type: ignore
 validate_response = validator(Response)
 
@@ -25,7 +24,7 @@ class Account(AuthSpotMixin):
   async def account(
     self, *, recvWindow: int | None = None,
     timestamp: int | None = None, validate: bool | None = None,
-  ) -> ErrorResponse | AccountInfo:
+  ) -> AccountInfo:
     """Get account information (of your account), including trading/deposit/withdrawal permissions and asset balances.
     
     - `recvWindow`: If the server receives the request after `timestamp + recvWindow`, it will be rejected (default: 5000).
@@ -40,4 +39,4 @@ class Account(AuthSpotMixin):
     if recvWindow is not None:
       params['recvWindow'] = recvWindow
     r = await self.signed_request('GET', '/api/v3/account', params=params)
-    return validate_response(r.text) if self.validate(validate) else r.json()
+    return self.output(r.text, validate_response, validate)
