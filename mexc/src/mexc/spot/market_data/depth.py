@@ -1,7 +1,7 @@
 from typing_extensions import NamedTuple, overload, Literal
 
 from mexc.core import validator, TypedDict
-from mexc.spot.core import SpotMixin, ErrorResponse, raise_on_error
+from mexc.spot.core import SpotMixin, ErrorResponse
 
 class BookEntry(NamedTuple):
   price: str
@@ -31,5 +31,5 @@ class Depth(SpotMixin):
     params: dict = {'symbol': symbol}
     if limit is not None:
       params['limit'] = limit
-    r = await self.request('GET', f'/api/v3/depth', params=params)
+    r = await self.request('GET', '/api/v3/depth', params=params)
     return self.output(r.text, validate_response, validate)

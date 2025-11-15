@@ -3,6 +3,7 @@ from .time import Time
 from .depth import Depth
 from .trades import Trades
 from .agg_trades import AggTrades
+from .avg_price import AvgPrice
 from .candles import Candles
 from .exchange_info import ExchangeInfo
 
@@ -12,6 +13,7 @@ class MarketData(
   Depth,
   Trades,
   AggTrades,
+  AvgPrice,
   Candles,
   ExchangeInfo,
 ):

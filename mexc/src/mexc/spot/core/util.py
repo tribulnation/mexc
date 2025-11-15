@@ -1,5 +1,7 @@
 from typing_extensions import TypedDict, Mapping, TypeGuard, TypeVar
 from dataclasses import dataclass, field
+import json
+
 from mexc.core import HttpMixin, ValidationMixin, validator
 from .auth import AuthHttpMixin
 
@@ -21,9 +23,9 @@ def raise_on_error(r: T | ErrorResponse) -> T:
   return r # type: ignore
 
 class BaseMixin(ValidationMixin):
-  def output(self, data, validator: validator[T | ErrorResponse], validate: bool | None) -> T:
+  def output(self, data: str | bytes, validator: validator[T | ErrorResponse], validate: bool | None) -> T:
     """Parse the data (optionally validating) and raise if the response is an error."""
-    obj = validator(data) if self.validate(validate) else data
+    obj = validator(data) if self.validate(validate) else json.loads(data)
     return raise_on_error(obj)
 
 @dataclass
