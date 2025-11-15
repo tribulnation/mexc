@@ -1,9 +1,10 @@
+from typing_extensions import NotRequired
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import datetime
 from enum import Enum
 
-from mexc.core import validator, timestamp as ts, TypedDict
+from mexc.core import validator, TypedDict
 from mexc.futures.core import AuthFuturesMixin, FuturesResponse
 
 class PositionType(Enum):
@@ -29,7 +30,7 @@ class Position(TypedDict):
   im: Decimal
   holdFee: Decimal
   realised: Decimal
-  adlLevel: int
+  adlLevel: NotRequired[int]
   leverage: int
   createTime: datetime
   updateTime: datetime
