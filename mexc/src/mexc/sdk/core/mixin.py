@@ -12,7 +12,7 @@ class SdkMixin:
 
   @classmethod
   def new(
-    cls, api_key: str | None, api_secret: str | None, *,
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
     validate: bool = True, recvWindow: int | None = None
   ):
     if api_key is None:

@@ -9,12 +9,12 @@ from mexc.sdk.core import SdkMixin, wrap_exceptions
 class Balances(BalancesTDK, SdkMixin):
   @wrap_exceptions
   async def balances(self, *currencies: str) -> dict[str, Balance]:
-    r = await self.client.spot.account(recvWindow=self.recvWindow)
+    r = await self.client.futures.assets(recvWindow=self.recvWindow)
     return {
-      b['asset']: Balance(
-        free=Decimal(b['free']),
-        locked=Decimal(b['locked'])
+      b['currency']: Balance(
+        free=Decimal(b['availableBalance']),
+        locked=Decimal(b['positionMargin'])
       )
-      for b in r['balances']
+      for b in r
     }
     

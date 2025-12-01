@@ -1,9 +1,9 @@
-from typing_extensions import TypeVar, Mapping
+from typing_extensions import TypeVar, Mapping, Callable, Awaitable
 import time
-from functools import cache
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_DOWN, ROUND_FLOOR
 
+T = TypeVar('T')
 D = TypeVar('D', bound=Mapping)
 
 def filter_kwargs(Params: type[D], params: D | dict) -> D:
@@ -30,7 +30,6 @@ def trunc2tick(x: Decimal, tick_size: Decimal) -> Decimal:
   r = (x / tick_size).to_integral_value(rounding=ROUND_FLOOR) * tick_size
   return r.normalize()
 
-@cache
 def json():
   try:
     import orjson
@@ -38,3 +37,15 @@ def json():
   except ImportError:
     import json
     return json
+    
+def cacher(ttl: timedelta = timedelta(seconds=10)):
+  value = None
+  last = None
+  async def cached_fn(fn: Callable[[], Awaitable[T]]) -> T:
+    nonlocal value, last
+    if last is None or datetime.now() - last > ttl:
+      value = await fn()
+      last = datetime.now()
+    return value # type: ignore
+
+  return cached_fn

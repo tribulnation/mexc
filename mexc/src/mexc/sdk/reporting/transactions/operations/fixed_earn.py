@@ -1,0 +1,74 @@
+from typing_extensions import Literal
+from dataclasses import dataclass
+from decimal import Decimal
+from datetime import timedelta, timezone
+import re
+import pandas as pd
+from trading_sdk.reporting import Posting, Yield
+
+from .. import util
+
+creation_time_regex = re.compile(r'Creation Time\(UTC\+(\d{2}):(\d{2})\)')
+
+def parse_timezone(key: str) -> timedelta:
+  match = creation_time_regex.match(key)
+  assert match is not None
+  hours, minutes = match.groups()
+  return timedelta(hours=int(hours), minutes=int(minutes))
+
+def parse_entry(row: pd.Series) -> Yield:
+  return Yield(
+    asset=str(row['Crypto']),
+    qty=Decimal(str(row['Quantity'])),
+    time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
+    tag='Spot ' + str(row['Transaction Type']),
+  )
+
+class fixed_earn:
+  """Parsing MEXC's fixed earn log.
+
+  *This data is already included in the spot statement.*
+
+    It must be downloaded as an Excel file from:
+    
+    > [Data Export](https://www.mexc.com/support/data-export) > `Earn` > `Fixed` > `Excel`
+
+    **Expected schema:**
+
+    - `Creation Time(<timezone>)`, e.g. `Creation Time(UTC+03:00)`
+    - `Crypto`
+    - `Transaction Type`
+    - `Quantity`
+    """
+
+  matching_mode: Literal['eq'] = 'eq'
+
+  schema: util.Schema = {
+    creation_time_regex: str,
+    'Crypto': str,
+    'Transaction Type': str,
+    'Quantity': str,
+  }
+
+  @staticmethod
+  def load(path: str, *, skip_zero_changes: bool = True) -> pd.DataFrame:
+    df = pd.read_excel(path, dtype={'Quantity': str})
+    util.validate_schema(df, fixed_earn.schema)
+    key = util.find_key(dict(df.iloc[0]), creation_time_regex)
+    assert key is not None
+    df['Creation Time'] = pd.to_datetime(df[key]) - parse_timezone(key)
+    if skip_zero_changes:
+      df.drop(df[df['Quantity'].astype(float) == 0].index, inplace=True) # type: ignore
+      df.reset_index(drop=True, inplace=True)
+    return df
+
+  @staticmethod
+  def parse(path: str, *_, skip_zero_changes: bool = True):
+    df = fixed_earn.load(path, skip_zero_changes=skip_zero_changes)
+    for posting in fixed_earn.parse_df(df):
+      yield posting
+
+  @staticmethod
+  def parse_df(df: pd.DataFrame):
+    for _, row in df.iterrows():
+      yield parse_entry(row)
