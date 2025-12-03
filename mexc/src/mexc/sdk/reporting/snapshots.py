@@ -13,7 +13,7 @@ from mexc.sdk.futures.user_data import Balances as FuturesBalances, Positions
 
 @dataclass
 class Snapshots(SnapshotsTDK, SdkMixin):
-  async def snapshots(self) -> dict[str, Snapshot]:
+  async def snapshots(self, assets: Sequence[str] = []) -> dict[str, Snapshot]:
     spot_r, future_r = await asyncio.gather(
       SpotBalances.balances(self), # type: ignore
       FuturesBalances.balances(self), # type: ignore

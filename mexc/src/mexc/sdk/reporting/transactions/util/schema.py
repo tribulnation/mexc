@@ -1,22 +1,6 @@
-from typing_extensions import TypedDict, Literal, Mapping, Any, Iterable, Protocol
+from typing_extensions import Mapping, Any
 import re
-from datetime import datetime, timezone
 import pandas as pd
-
-from trading_sdk.reporting import Operation
-
-class Module(Protocol):
-  matching_mode: Literal['eq', 'ge']
-
-  def parse(self, path: str, tz: timezone, /, *, skip_zero_changes: bool = True) -> Iterable[Operation]:
-    ...
-
-class Details(TypedDict):
-  source: Literal['spot', 'futures']
-  type: str
-
-def ensure_datetime(x) -> datetime:
-  return x if isinstance(x, datetime) else datetime.fromisoformat(str(x))
 
 Schema = Mapping[str|re.Pattern, type|re.Pattern]
 

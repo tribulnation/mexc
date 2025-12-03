@@ -1,13 +1,12 @@
 from typing_extensions import TypedDict, Required, Iterable
 from datetime import timezone
 
-from trading_sdk.reporting import (
-  Transaction, Operation, PostingMatcher,
-  Bonus, Yield, InternalTransfer,
+from trading_sdk.reporting.types import (
+  Transaction, Bonus, Yield, InternalTransfer,
+  SinglePostingOperation, Other
 )
-from trading_sdk.reporting.types import SinglePostingOperation, Other
 
-from .util import Module
+from .util import Module, PostingMatcher
 from .postings import spot_statement
 from .operations import fixed_earn, flexible_earn, deposits, withdrawals, spot_trades, fiat_otc_orders
 
@@ -86,7 +85,7 @@ def spot_transactions(
         from_account='Futures', to_account='Spot',
       )
     else:
-      op = Other(tag=p.tag)
+      op = Other(tag=p.tag, time=p.time)
     others.append(Transaction(operation=op, postings=[p]))
 
   yield others

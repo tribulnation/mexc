@@ -1,14 +1,14 @@
 from typing_extensions import TypedDict, Required, Iterable
 from datetime import timezone
 
-from trading_sdk.reporting import (
-  Transaction, Operation, PostingMatcher,
-  Bonus, PerpetualSettlement, PerpetualFunding, InternalTransfer,
+from trading_sdk.reporting.types import (
+  Transaction, Bonus, PerpetualSettlement, PerpetualFunding, InternalTransfer,
+  SinglePostingOperation, Other,
 )
-from trading_sdk.reporting.types import SinglePostingOperation, Other
 
 from .postings import futures_capital_flow
 from .operations import futures_trades
+from .util import PostingMatcher
 
 class FuturesPaths(TypedDict, total=False):
   futures_capital_flow: Required[str]
