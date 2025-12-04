@@ -6,7 +6,7 @@ from trading_sdk.reporting.types import (
   SinglePostingOperation, Other, Operation
 )
 
-from .util import Module, PostingMatcher
+from .util import Module, PostingMatcher, TaggedPosting, UniqueIds
 from .postings import spot_statement
 from .operations import fixed_earn, flexible_earn, deposits, withdrawals, spot_trades, fiat_otc_orders
 
@@ -39,32 +39,10 @@ transaction_types: dict[str, type[SinglePostingOperation]] = {
   'Spot Launchpool Airdrop': Yield,
 }
 
-def spot_transactions(
-  paths: SpotPaths, tz: timezone, *,
-  skip_zero_changes: bool = True
-) -> Iterable[list[Transaction]]:
+def other_transactions(postings: Iterable[TaggedPosting]) -> Iterable[Transaction]:
+  ids = UniqueIds()
 
-  postings = list(spot_statement.parse(paths['spot_statement'], skip_zero_changes=skip_zero_changes))
-  matcher = PostingMatcher.of(postings)
-  used = set[int]()
-
-  for key, module in spot_modules.items():
-    if (path := paths.get(key)) is not None:
-      chunk: list[Transaction] = []
-      for op in module.parse(path, tz, skip_zero_changes=skip_zero_changes):
-        if (matches := matcher.match(op.expected_postings, time_mode=module.matching_mode)) is None:
-          raise ValueError(f'Could not match the postings for the operation: {op}')
-        used.update(matches)
-        chunk.append(Transaction(
-          operation=cast(Operation, op),
-          postings=[postings[i] for i in matches] + list(op.fixed_postings)
-        ))
-      yield chunk
-
-  unused = set(range(len(postings))) - used
-  others: list[Transaction] = []
-  for i in unused:
-    p = postings[i]
+  for p in postings:
     if (cls := transaction_types.get(p.tag)) is not None:
       op = cls(time=p.time, asset=p.asset, qty=p.change, details=p.tag) # type: ignore
     elif p.tag == 'Spot To Fiat Account':
@@ -89,6 +67,34 @@ def spot_transactions(
       )
     else:
       op = Other(details=p.tag, time=p.time)
-    others.append(Transaction(operation=cast(Operation, op), postings=[p]))
+    
+    id = ids.new(f'{p.tag};{p.time:%Y-%m-%d %H:%M:%S}')
+    yield Transaction(id=id, operation=cast(Operation, op), postings=[p])
 
-  yield others
+
+def spot_transactions(
+  paths: SpotPaths, tz: timezone, *,
+  skip_zero_changes: bool = True
+) -> Iterable[list[Transaction]]:
+
+  postings = list(spot_statement.parse(paths['spot_statement'], skip_zero_changes=skip_zero_changes))
+  matcher = PostingMatcher.of(postings)
+  used = set[int]()
+
+  for key, module in spot_modules.items():
+    if (path := paths.get(key)) is not None:
+      chunk: list[Transaction] = []
+      for op in module.parse(path, tz, skip_zero_changes=skip_zero_changes):
+        if (matches := matcher.match(op.expected_postings, time_mode=module.matching_mode)) is None:
+          raise ValueError(f'Could not match the postings for the operation: {op}')
+        used.update(matches)
+        chunk.append(Transaction(
+          id=op.id,
+          operation=cast(Operation, op),
+          postings=[postings[i] for i in matches] + list(op.fixed_postings)
+        ))
+      yield chunk
+
+  unused = set(range(len(postings))) - used
+  other_postings = [postings[i] for i in unused]
+  yield list(other_transactions(other_postings))

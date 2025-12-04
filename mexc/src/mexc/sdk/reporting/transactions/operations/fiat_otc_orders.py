@@ -4,7 +4,7 @@ from decimal import Decimal
 from datetime import timezone, timedelta
 import re
 import pandas as pd
-from trading_sdk.reporting import FiatDeposit, FiatWithdrawal
+from trading_sdk.reporting import FiatDeposit as BaseFiatDeposit, FiatWithdrawal as BaseFiatWithdrawal
 
 from .. import util
 
@@ -17,22 +17,27 @@ def parse_timezone(key: str) -> timezone:
   return timezone(timedelta(hours=int(hours), minutes=int(minutes)))
 
 # The Spot Statement doesn't include postings for fiat deposits and withdrawals, so we expect them to not match.
-@dataclass
-class ZeroPostingFiatDeposit(FiatDeposit, util.Operation):
+@dataclass(kw_only=True)
+class FiatDeposit(BaseFiatDeposit, util.Operation):
   tag: str = 'Spot From Fiat Account'
-  @property
-  def expected_postings(self):
-    return []
+  order_id: str
 
-@dataclass
-class ZeroPostingFiatWithdrawal(FiatWithdrawal, util.Operation):
-  tag: str = 'Spot To Fiat Account'
   @property
-  def expected_postings(self):
-    return []
+  def id(self) -> str:
+    return f'spot2fiat;{self.order_id}'
+
+@dataclass(kw_only=True)
+class FiatWithdrawal(BaseFiatWithdrawal, util.Operation):
+  tag: str = 'Spot To Fiat Account'
+  order_id: str
+  
+  @property
+  def id(self) -> str:
+    return f'fiat2spot;{self.order_id}'
 
 def parse_entry(row: pd.Series):
-  cls = ZeroPostingFiatDeposit if row['Trading Direction'] == 'Buy' else ZeroPostingFiatWithdrawal
+  cls = FiatDeposit if row['Trading Direction'] == 'Buy' else FiatWithdrawal
+  order_id = str(row['Order ID'])
   return cls(
     asset=str(row['Trading Token']),
     qty=Decimal(str(row['Order Quantity'])),
@@ -40,7 +45,8 @@ def parse_entry(row: pd.Series):
     fiat_currency=str(row['Settlement Token']),
     fiat_amount=Decimal(str(row['Order Amount'])),
     method=str(row['Payment Method']),
-    details={'order_id': str(row['Order ID'])},
+    details={'order_id': order_id},
+    order_id=order_id,
   )
 
 class fiat_otc_orders(util.Module):

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
+from collections import Counter
 import re
 import pandas as pd
 from trading_sdk.reporting import Yield
@@ -18,6 +19,8 @@ def parse_timezone(key: str) -> timedelta:
 @dataclass
 class FlexibleYield(Yield, util.Operation):
   tag: str
+  time_idx: int = 0
+  """Index of the transaction within the same instant."""
   @property
   def expected_postings(self):
     return [
@@ -28,6 +31,13 @@ class FlexibleYield(Yield, util.Operation):
         tag=self.tag,
       )
     ]
+
+  @property
+  def id(self) -> str:
+    id = f'{self.tag};{self.asset};{self.time:%Y-%m-%d %H:%M:%S}'
+    if self.time_idx:
+      id += f';{self.time_idx}'
+    return id
 
 def parse_entry(row: pd.Series):
   return FlexibleYield(
@@ -83,5 +93,9 @@ class flexible_earn(util.Module):
 
   @staticmethod
   def parse_df(df: pd.DataFrame):
+    times = Counter[datetime]()
     for _, row in df.iterrows():
-      yield parse_entry(row)
+      entry = parse_entry(row)
+      times[entry.time] += 1
+      entry.time_idx = times[entry.time]
+      yield entry

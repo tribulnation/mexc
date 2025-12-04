@@ -1,7 +1,7 @@
-from typing_extensions import Literal
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
+from collections import Counter
 import re
 import pandas as pd
 from trading_sdk.reporting.types import Posting, Trade, Fee
@@ -20,6 +20,9 @@ pair_regex = re.compile(r'^(.+?)(USDT|USDC)$')
 
 @dataclass
 class FuturesTrade(Trade, util.Operation):
+  time_idx: int = 0
+  """Index of the transaction within the same instant."""
+
   @property
   def expected_postings(self) -> list[util.TaggedPosting]:
     if self.fee is not None:
@@ -44,6 +47,13 @@ class FuturesTrade(Trade, util.Operation):
         change=s*self.qty,
       )
     ]
+
+  @property
+  def id(self) -> str:
+    id = f'{self.base}_{self.quote}-PERPETUAL;{self.time:%Y-%m-%d %H:%M:%S}'
+    if self.time_idx:
+      id += f';{self.time_idx}'
+    return id
 
 def parse_entry(row: pd.Series):
   fee_amount = Decimal(str(row['Trading Fee']))
@@ -122,5 +132,9 @@ class futures_trades(util.Module):
 
   @staticmethod
   def parse_df(df: pd.DataFrame):
+    times = Counter[datetime]()
     for _, row in df.iterrows():
-      yield parse_entry(row)
+      entry = parse_entry(row)
+      times[entry.time] += 1
+      entry.time_idx = times[entry.time]
+      yield entry

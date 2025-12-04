@@ -8,7 +8,7 @@ from trading_sdk.reporting.types import (
 
 from .postings import futures_capital_flow
 from .operations import futures_trades
-from .util import PostingMatcher
+from .util import PostingMatcher, TaggedPosting, UniqueIds
 
 class FuturesPaths(TypedDict, total=False):
   futures_capital_flow: Required[str]
@@ -20,6 +20,23 @@ transaction_types: dict[str, type[SinglePostingOperation]] = {
   'Futures LIQUIDATION': PerpetualSettlement,
   'Futures FUNDING': PerpetualFunding,
 }
+
+def other_transactions(postings: Iterable[TaggedPosting]) -> Iterable[Transaction]:
+  ids = UniqueIds()
+  for p in postings:
+    if (cls := transaction_types.get(p.tag)) is not None:
+      op = cls(time=p.time, asset=p.asset, qty=p.change, details=p.tag) # type: ignore
+    elif p.tag == 'Futures TRANSFER':
+      op = InternalTransfer(
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
+        from_account='Spot' if p.change > 0 else 'Futures',
+        to_account='Futures' if p.change > 0 else 'Spot',
+      )
+    else:
+      op = Other(details=p.tag, time=p.time)
+    
+    id = ids.new(f'{p.tag};{p.time:%Y-%m-%d %H:%M:%S}')
+    yield Transaction(id=id, operation=cast(Operation, op), postings=[p])
 
 def futures_transactions(
   paths: FuturesPaths, tz: timezone, *,
@@ -37,24 +54,13 @@ def futures_transactions(
       if (matches := matcher.match(op.expected_postings, time_mode=futures_trades.matching_mode)) is None:
         raise ValueError(f'Could not match the postings for the operation: {op}')
       used.update(matches)
-      chunk.append(Transaction(operation=op, postings=[postings[i] for i in matches] + op.fixed_postings))
+      chunk.append(Transaction(
+        id=op.id,
+        operation=cast(Operation, op),
+        postings=[postings[i] for i in matches] + op.fixed_postings
+      ))
     yield chunk
 
   unused = set(range(len(postings))) - used
-  others: list[Transaction] = []
-  for i in unused:
-    p = postings[i]
-    if (cls := transaction_types.get(p.tag)) is not None:
-      op = cls(time=p.time, asset=p.asset, qty=p.change, details=p.tag) # type: ignore
-    elif p.tag == 'Futures TRANSFER':
-      op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
-        from_account='Spot' if p.change > 0 else 'Futures',
-        to_account='Futures' if p.change > 0 else 'Spot',
-      )
-    else:
-      op = Other(details=p.tag, time=p.time)
-    others.append(Transaction(operation=cast(Operation, op), postings=[p]))
-
-  yield others
+  other_postings = [postings[i] for i in unused]
 

@@ -1,7 +1,7 @@
-from typing_extensions import Literal
 from dataclasses import dataclass
 from decimal import Decimal
-from datetime import timezone
+from datetime import datetime, timezone
+from collections import Counter
 import re
 import pandas as pd
 from trading_sdk.reporting.types import Trade, Fee
@@ -12,6 +12,9 @@ fee_regex = re.compile(r'([-\d\.]+)([A-Z0-9]+)$')
 
 @dataclass
 class SpotTrade(Trade, util.Operation):
+  time_idx: int = 0
+  """Index of the transaction within the same instant."""
+
   @property
   def expected_postings(self) -> list[util.TaggedPosting]:
     s = 1 if self.side == 'BUY' else -1
@@ -37,6 +40,14 @@ class SpotTrade(Trade, util.Operation):
         tag='Spot Spot Trading Fees',
       ))
     return postings
+
+  @property
+  def id(self) -> str:
+    id = f'{self.base}_{self.quote};{self.time:%Y-%m-%d %H:%M:%S}'
+    if self.time_idx:
+      id += f';{self.time_idx}'
+    return id
+  
 
 def parse_entry(row: pd.Series):
   fee_amount = Decimal(str(row['fee_amount']))
@@ -112,5 +123,9 @@ class spot_trades(util.Module):
 
   @staticmethod
   def parse_df(df: pd.DataFrame):
+    times = Counter[datetime]()
     for _, row in df.iterrows():
-      yield parse_entry(row)
+      entry = parse_entry(row)
+      times[entry.time] += 1
+      entry.time_idx = times[entry.time]
+      yield entry

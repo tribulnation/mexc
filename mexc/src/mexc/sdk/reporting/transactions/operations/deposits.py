@@ -20,11 +20,17 @@ class Deposit(CryptoDeposit, util.Operation):
       )
     ]
 
+  @property
+  def id(self) -> str:
+    return f'Deposit;{self.network};{self.tx_hash}:{self.idx or 0}'
+
 def parse_entry(row: pd.Series):
+  tx_hash, *rest = str(row['TxID']).split(':')
+  idx = int(rest[0]) if rest else None
   return Deposit(
     asset=str(row['Crypto']),
     qty=Decimal(str(row['Deposit Amount'])),
-    tx_id=str(row['TxID']),
+    tx_hash=tx_hash, idx=idx,
     network=str(row['Network']),
     time=util.ensure_datetime(row['Time(UTC)']),
   )

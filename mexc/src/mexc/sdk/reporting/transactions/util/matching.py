@@ -11,7 +11,11 @@ TimeMode = Literal['eq', 'ge', 'le']
 class TaggedPosting(Posting):
   tag: str
 
-class Operation:
+class Operation(Protocol):
+  @property
+  def id(self) -> str:
+    ...
+
   @property
   def expected_postings(self) -> Sequence[TaggedPosting]:
     """Postings expected to be matched."""

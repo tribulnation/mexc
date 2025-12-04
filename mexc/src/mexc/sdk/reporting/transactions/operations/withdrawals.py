@@ -28,6 +28,10 @@ class Withdrawal(CryptoWithdrawal, util.Operation):
       ))
     return postings
 
+  @property
+  def id(self) -> str:
+    return f'Withdrawal;{self.network};{self.tx_hash}:{self.idx or 0}'
+
 def parse_entry(row: pd.Series):
   asset = str(row['Crypto'])
   fee_amount = Decimal(str(row['Trading Fee']))
@@ -35,10 +39,13 @@ def parse_entry(row: pd.Series):
   memo = str(row['memo'])
   if memo == '--':
     memo = None
+
+  tx_hash, *rest = str(row['TxID']).split(':')
+  idx = int(rest[0]) if rest else None
   return Withdrawal(
     asset=asset,
     qty=Decimal(str(row['Settlement Amount'])),
-    tx_id=str(row['TxID']),
+    tx_hash=tx_hash, idx=idx,
     network=str(row['Network']),
     time=util.ensure_datetime(row['Time(UTC)']),
     address=str(row['Withdrawal Address']),
