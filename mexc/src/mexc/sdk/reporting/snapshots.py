@@ -13,7 +13,7 @@ from mexc.sdk.futures.user_data import Balances as FuturesBalances, Positions
 
 @dataclass
 class Snapshots(SnapshotsTDK, SdkMixin):
-  async def snapshots(self, assets: Sequence[str] = []) -> dict[str, Snapshot]:
+  async def snapshots(self, assets: Sequence[str] = []) -> list[Snapshot]:
     spot_r, future_r = await asyncio.gather(
       SpotBalances.balances(self), # type: ignore
       FuturesBalances.balances(self), # type: ignore
@@ -23,17 +23,17 @@ class Snapshots(SnapshotsTDK, SdkMixin):
     future_balances = { k: v.total for k, v in future_r.items() }
     balances: dict[str, Decimal] = Counter(spot_balances) + Counter(future_balances) # type: ignore
 
-    currency_snapshots = {
-      currency: Snapshot(time=time, asset=currency, qty=balance)
+    currency_snapshots = [
+      Snapshot(time=time, asset=currency, qty=balance)
       for currency, balance in balances.items()
-    }
+    ]
 
     positions = await Positions.positions(self) # type: ignore
     time = datetime.now(timezone.utc)
 
-    futures_snapshots = {
-      symbol: Snapshot(time=time, asset=symbol, qty=p.size, avg_price=p.entry_price)
+    futures_snapshots = [
+      Snapshot(time=time, asset=symbol, qty=p.size, avg_price=p.entry_price)
       for symbol, p in positions.items()
-    }
+    ]
 
-    return currency_snapshots | futures_snapshots
+    return currency_snapshots + futures_snapshots
