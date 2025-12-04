@@ -1,4 +1,4 @@
-from typing_extensions import Literal, Any
+from typing_extensions import Any
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone, timedelta
@@ -18,24 +18,21 @@ def parse_timezone(key: str) -> timezone:
 
 # The Spot Statement doesn't include postings for fiat deposits and withdrawals, so we expect them to not match.
 @dataclass
-class ZeroPostingFiatDeposit(FiatDeposit):
+class ZeroPostingFiatDeposit(FiatDeposit, util.Operation):
+  tag: str = 'Spot From Fiat Account'
   @property
   def expected_postings(self):
     return []
 
 @dataclass
-class ZeroPostingFiatWithdrawal(FiatWithdrawal):
+class ZeroPostingFiatWithdrawal(FiatWithdrawal, util.Operation):
+  tag: str = 'Spot To Fiat Account'
   @property
   def expected_postings(self):
     return []
 
-def parse_entry(row: pd.Series) -> FiatDeposit | FiatWithdrawal:
-  if row['Trading Direction'] == 'Buy':
-    cls = ZeroPostingFiatDeposit
-    tag = 'Spot From Fiat Account'
-  else:
-    cls = ZeroPostingFiatWithdrawal
-    tag = 'Spot To Fiat Account'
+def parse_entry(row: pd.Series):
+  cls = ZeroPostingFiatDeposit if row['Trading Direction'] == 'Buy' else ZeroPostingFiatWithdrawal
   return cls(
     asset=str(row['Trading Token']),
     qty=Decimal(str(row['Order Quantity'])),
@@ -44,10 +41,9 @@ def parse_entry(row: pd.Series) -> FiatDeposit | FiatWithdrawal:
     fiat_amount=Decimal(str(row['Order Amount'])),
     method=str(row['Payment Method']),
     details={'order_id': str(row['Order ID'])},
-    tag=tag,
   )
 
-class fiat_otc_orders:
+class fiat_otc_orders(util.Module):
   """Parsing MEXC's fiat OTC orders.
 
   *This data is already included in the spot statement.*
@@ -69,7 +65,7 @@ class fiat_otc_orders:
     - `Payment Method`
     """
 
-  matching_mode: Literal['ge'] = 'ge' # doesn't matter since we're not matching at all
+  matching_mode = 'ge' # doesn't matter since we're not matching at all
 
   schema: util.Schema = {
     'Status': str,

@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone
 import pandas as pd
@@ -6,17 +6,30 @@ from trading_sdk.reporting import CryptoDeposit
 
 from .. import util
 
-def parse_entry(row: pd.Series) -> CryptoDeposit:
-  return CryptoDeposit(
+@dataclass
+class Deposit(CryptoDeposit, util.Operation):
+  tag: str = 'Spot Deposit'
+  @property
+  def expected_postings(self) -> list[util.TaggedPosting]:
+    return [
+      util.TaggedPosting(
+        time=self.time,
+        asset=self.asset,
+        change=self.qty,
+        tag=self.tag,
+      )
+    ]
+
+def parse_entry(row: pd.Series):
+  return Deposit(
     asset=str(row['Crypto']),
     qty=Decimal(str(row['Deposit Amount'])),
     tx_id=str(row['TxID']),
     network=str(row['Network']),
     time=util.ensure_datetime(row['Time(UTC)']),
-    tag='Spot Deposit'
   )
 
-class deposits:
+class deposits(util.Module):
   """Parsing MEXC's (crypto) deposits log.
 
   *This data is already included in the spot statement.*
@@ -35,7 +48,7 @@ class deposits:
     - `TxID`
     """
 
-  matching_mode: Literal['ge'] = 'ge'
+  matching_mode = 'ge'
 
   schema: util.Schema = {
     'Status': str,

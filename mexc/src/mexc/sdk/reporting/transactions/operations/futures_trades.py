@@ -1,9 +1,10 @@
 from typing_extensions import Literal
+from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone, timedelta
 import re
 import pandas as pd
-from trading_sdk.reporting.types import PerpetualTrade, Fee
+from trading_sdk.reporting.types import Posting, Trade, Fee
 
 from .. import util
 
@@ -17,13 +18,40 @@ def parse_timezone(key: str) -> timezone:
 
 pair_regex = re.compile(r'^(.+?)(USDT|USDC)$')
 
-def parse_entry(row: pd.Series) -> PerpetualTrade:
+@dataclass
+class FuturesTrade(Trade, util.Operation):
+  @property
+  def expected_postings(self) -> list[util.TaggedPosting]:
+    if self.fee is not None:
+      return [
+        util.TaggedPosting(
+          time=self.time,
+          asset=self.fee.asset,
+          change=-self.fee.amount,
+          tag='Futures FEE'
+        )
+      ]
+    else:
+      return []
+
+  @property
+  def fixed_postings(self) -> list[Posting]:
+    s = 1 if self.side == 'BUY' else -1
+    return [
+      Posting(
+        time=self.time,
+        asset=f'{self.base}_{self.quote}-PERPETUAL',
+        change=s*self.qty,
+      )
+    ]
+
+def parse_entry(row: pd.Series):
   fee_amount = Decimal(str(row['Trading Fee']))
   if fee_amount == 0:
     fee = None
   else:
     fee = Fee(fee_amount, str(row['Fee-payment Crypto']))
-  return PerpetualTrade(
+  return FuturesTrade(
     base=str(row['base']),
     quote=str(row['quote']),
     qty=Decimal(str(row['Filled Qty (Crypto)'])),
@@ -32,10 +60,9 @@ def parse_entry(row: pd.Series) -> PerpetualTrade:
     time=util.ensure_datetime(row['Time(UTC)']),
     side='BUY' if row['Direction'] in ('sell short', 'buy long') else 'SELL',
     fee=fee,
-    fee_tag='Futures FEE',
   )
 
-class futures_trades:
+class futures_trades(util.Module):
   """Parsing MEXC's futures trades log.
 
   *This data is already included in the futures capital flow.*
@@ -56,7 +83,7 @@ class futures_trades:
     - `Role :: Taker | Maker`
     """
 
-  matching_mode: Literal['eq'] = 'eq'
+  matching_mode = 'eq'
 
   schema: util.Schema = {
     time_regex: str,

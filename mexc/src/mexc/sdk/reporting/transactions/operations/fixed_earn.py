@@ -1,10 +1,9 @@
-from typing_extensions import Literal
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timedelta, timezone
 import re
 import pandas as pd
-from trading_sdk.reporting import Posting, Yield
+from trading_sdk.reporting import Yield
 
 from .. import util
 
@@ -16,15 +15,29 @@ def parse_timezone(key: str) -> timedelta:
   hours, minutes = match.groups()
   return timedelta(hours=int(hours), minutes=int(minutes))
 
-def parse_entry(row: pd.Series) -> Yield:
-  return Yield(
+@dataclass
+class FixedYield(Yield, util.Operation):
+  tag: str
+  @property
+  def expected_postings(self):
+    return [
+      util.TaggedPosting(
+        time=self.time,
+        asset=self.asset,
+        change=self.qty,
+        tag=self.tag,
+      )
+    ]
+
+def parse_entry(row: pd.Series):
+  return FixedYield(
     asset=str(row['Crypto']),
     qty=Decimal(str(row['Quantity'])),
     time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
     tag='Spot ' + str(row['Transaction Type']),
   )
 
-class fixed_earn:
+class fixed_earn(util.Module):
   """Parsing MEXC's fixed earn log.
 
   *This data is already included in the spot statement.*
@@ -41,7 +54,7 @@ class fixed_earn:
     - `Quantity`
     """
 
-  matching_mode: Literal['eq'] = 'eq'
+  matching_mode = 'eq'
 
   schema: util.Schema = {
     creation_time_regex: str,

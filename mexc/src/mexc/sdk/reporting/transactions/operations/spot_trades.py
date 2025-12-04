@@ -1,4 +1,5 @@
 from typing_extensions import Literal
+from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone
 import re
@@ -9,13 +10,41 @@ from .. import util
 
 fee_regex = re.compile(r'([-\d\.]+)([A-Z0-9]+)$')
 
-def parse_entry(row: pd.Series) -> Trade:
+@dataclass
+class SpotTrade(Trade, util.Operation):
+  @property
+  def expected_postings(self) -> list[util.TaggedPosting]:
+    s = 1 if self.side == 'BUY' else -1
+    postings = [
+      util.TaggedPosting(
+        time=self.time,
+        asset=self.base,
+        change=s * self.qty,
+        tag='Spot Spot Trading',
+      ),
+      util.TaggedPosting(
+        time=self.time,
+        asset=self.quote,
+        change=-s * self.qty * self.price,
+        tag='Spot Spot Trading',
+      ),
+    ]
+    if self.fee is not None:
+      postings.append(util.TaggedPosting(
+        time=self.time,
+        asset=self.fee.asset,
+        change=-self.fee.amount,
+        tag='Spot Spot Trading Fees',
+      ))
+    return postings
+
+def parse_entry(row: pd.Series):
   fee_amount = Decimal(str(row['fee_amount']))
   if fee_amount == 0:
     fee = None
   else:
     fee = Fee(fee_amount, str(row['fee_asset']))
-  return Trade(
+  return SpotTrade(
     base=str(row['base']),
     quote=str(row['quote']),
     qty=Decimal(str(row['Executed Amount'])),
@@ -24,12 +53,9 @@ def parse_entry(row: pd.Series) -> Trade:
     time=util.ensure_datetime(row['Time(UTC)']),
     side='BUY' if row['Side'] == 'Buy' else 'SELL',
     fee=fee,
-    base_tag='Spot Spot Trading',
-    quote_tag='Spot Spot Trading',
-    fee_tag='Spot Spot Trading Fees',
   )
 
-class spot_trades:
+class spot_trades(util.Module):
   """Parsing MEXC's spot trades log.
 
   *This data is already included in the spot statement.*
@@ -49,7 +75,7 @@ class spot_trades:
     - `Role :: Taker | Maker`
     """
 
-  matching_mode: Literal['eq'] = 'eq'
+  matching_mode = 'eq'
 
   schema: util.Schema = {
     'Pairs': re.compile(r"^.+_.+$"),

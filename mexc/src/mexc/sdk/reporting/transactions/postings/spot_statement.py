@@ -14,8 +14,8 @@ def parse_timezone(key: str) -> timezone:
   hours, minutes = match.groups()
   return timezone(timedelta(hours=int(hours), minutes=int(minutes)))
 
-def parse_posting(row: pd.Series) -> Posting:
-  return Posting(
+def parse_posting(row: pd.Series) -> util.TaggedPosting:
+  return util.TaggedPosting(
     asset=str(row['Crypto']),
     change=Decimal(str(row['Quantity'])),
     time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),

@@ -1,4 +1,5 @@
 from typing_extensions import Literal
+from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone
 import pandas as pd
@@ -6,14 +7,35 @@ from trading_sdk.reporting.types import CryptoWithdrawal, Fee
 
 from .. import util
 
-def parse_entry(row: pd.Series) -> CryptoWithdrawal:
+@dataclass
+class Withdrawal(CryptoWithdrawal, util.Operation):
+  @property
+  def expected_postings(self) -> list[util.TaggedPosting]:
+    postings = [
+      util.TaggedPosting(
+        time=self.time,
+        asset=self.asset,
+        change=-self.qty,
+        tag='Spot Withdraw',
+      )
+    ]
+    if self.fee:
+      postings.append(util.TaggedPosting(
+        time=self.time,
+        asset=self.fee.asset,
+        change=-self.fee.amount,
+        tag='Spot Withdrawal Fees',
+      ))
+    return postings
+
+def parse_entry(row: pd.Series):
   asset = str(row['Crypto'])
   fee_amount = Decimal(str(row['Trading Fee']))
   fee = Fee(fee_amount, asset) if fee_amount > 0 else None
   memo = str(row['memo'])
   if memo == '--':
     memo = None
-  return CryptoWithdrawal(
+  return Withdrawal(
     asset=asset,
     qty=Decimal(str(row['Settlement Amount'])),
     tx_id=str(row['TxID']),
@@ -22,11 +44,9 @@ def parse_entry(row: pd.Series) -> CryptoWithdrawal:
     address=str(row['Withdrawal Address']),
     memo=memo,
     fee=fee,
-    tag='Spot Withdraw',
-    fee_tag='Spot Withdrawal Fees',
   )
 
-class withdrawals:
+class withdrawals(util.Module):
   """Parsing MEXC's withdrawals log.
 
   *This data is already included in the spot statement.*
@@ -48,7 +68,7 @@ class withdrawals:
     - `TxID`
     """
 
-  matching_mode: Literal['ge'] = 'ge'
+  matching_mode = 'ge'
 
   schema: util.Schema = {
     'Status': str,

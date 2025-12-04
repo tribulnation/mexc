@@ -1,9 +1,9 @@
-from typing_extensions import TypedDict, Required, Iterable
+from typing_extensions import TypedDict, Required, Iterable, cast
 from datetime import timezone
 
 from trading_sdk.reporting.types import (
   Transaction, Bonus, Yield, InternalTransfer,
-  SinglePostingOperation, Other
+  SinglePostingOperation, Other, Operation
 )
 
 from .util import Module, PostingMatcher
@@ -55,7 +55,10 @@ def spot_transactions(
         if (matches := matcher.match(op.expected_postings, time_mode=module.matching_mode)) is None:
           raise ValueError(f'Could not match the postings for the operation: {op}')
         used.update(matches)
-        chunk.append(Transaction(operation=op, postings=[postings[i] for i in matches] + op.fixed_postings))
+        chunk.append(Transaction(
+          operation=cast(Operation, op),
+          postings=[postings[i] for i in matches] + list(op.fixed_postings)
+        ))
       yield chunk
 
   unused = set(range(len(postings))) - used
@@ -63,29 +66,29 @@ def spot_transactions(
   for i in unused:
     p = postings[i]
     if (cls := transaction_types.get(p.tag)) is not None:
-      op = cls(time=p.time, asset=p.asset, qty=p.change, tag=p.tag) # type: ignore
+      op = cls(time=p.time, asset=p.asset, qty=p.change, details=p.tag) # type: ignore
     elif p.tag == 'Spot To Fiat Account':
       op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, tag=p.tag,
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
         from_account='Spot', to_account='Fiat',
       )
     elif p.tag == 'Spot To Futures Account':
       op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, tag=p.tag,
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
         from_account='Spot', to_account='Futures',
       )
     elif p.tag == 'Spot From Fiat Account':
       op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, tag=p.tag,
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
         from_account='Fiat', to_account='Spot',
       )
     elif p.tag == 'Spot From Futures Account':
       op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, tag=p.tag,
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
         from_account='Futures', to_account='Spot',
       )
     else:
-      op = Other(tag=p.tag, time=p.time)
-    others.append(Transaction(operation=op, postings=[p]))
+      op = Other(details=p.tag, time=p.time)
+    others.append(Transaction(operation=cast(Operation, op), postings=[p]))
 
   yield others

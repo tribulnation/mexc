@@ -1,9 +1,9 @@
-from typing_extensions import TypedDict, Required, Iterable
+from typing_extensions import TypedDict, Required, Iterable, cast
 from datetime import timezone
 
 from trading_sdk.reporting.types import (
   Transaction, Bonus, PerpetualSettlement, PerpetualFunding, InternalTransfer,
-  SinglePostingOperation, Other,
+  SinglePostingOperation, Other, Operation
 )
 
 from .postings import futures_capital_flow
@@ -45,16 +45,16 @@ def futures_transactions(
   for i in unused:
     p = postings[i]
     if (cls := transaction_types.get(p.tag)) is not None:
-      op = cls(time=p.time, asset=p.asset, qty=p.change, tag=p.tag) # type: ignore
+      op = cls(time=p.time, asset=p.asset, qty=p.change, details=p.tag) # type: ignore
     elif p.tag == 'Futures TRANSFER':
       op = InternalTransfer(
-        time=p.time, asset=p.asset, qty=p.change, tag=p.tag,
+        time=p.time, asset=p.asset, qty=p.change, details=p.tag,
         from_account='Spot' if p.change > 0 else 'Futures',
         to_account='Futures' if p.change > 0 else 'Spot',
       )
     else:
-      op = Other(tag=p.tag)
-    others.append(Transaction(operation=op, postings=[p]))
+      op = Other(details=p.tag, time=p.time)
+    others.append(Transaction(operation=cast(Operation, op), postings=[p]))
 
   yield others
 
