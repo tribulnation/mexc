@@ -14,14 +14,6 @@ def parse_timezone(key: str) -> timezone:
   hours, minutes = match.groups()
   return timezone(timedelta(hours=int(hours), minutes=int(minutes)))
 
-def parse_posting(row: pd.Series):
-  return util.TaggedPosting(
-    asset=str(row['Crypto']),
-    change=Decimal(str(row['Amount'])),
-    time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
-    tag='Futures ' + str(row['Fund Type']),
-  )
-
 class futures_capital_flow:
   """Parsing MEXC's futures capital flow.
 
@@ -36,6 +28,37 @@ class futures_capital_flow:
   - `Amount`
   """  
 
+  TRANSACTION_TYPES: dict[str, Posting.Type] = {
+    'BONUS': 'bonus',
+    'CLOSE_POSITION': 'settlement',
+    'LIQUIDATION': 'settlement',
+    'FUNDING': 'funding',
+    'FEE': 'fee',
+  }
+
+  IGNORE_TYPES: set[str] = {
+    'TRANSFER'
+  }
+
+  @staticmethod
+  def transaction_type(type: str) -> Posting.Type | None:
+    if type in futures_capital_flow.IGNORE_TYPES:
+      return None
+    if type not in futures_capital_flow.TRANSACTION_TYPES:
+      raise ValueError(f'Unknown transaction type: {type}')
+    return futures_capital_flow.TRANSACTION_TYPES[type]
+
+  @staticmethod
+  def parse_posting(row: pd.Series) -> Posting | None:
+    if (type := futures_capital_flow.transaction_type(str(row['Fund Type']))) is not None:
+      return Posting(
+        kind='currency', type=type,
+        time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
+        asset=str(row['Crypto']),
+        change=Decimal(str(row['Amount'])),
+        details=dict(row),
+      )
+
   schema: util.Schema = {
     time_regex: str,
     'Crypto': str,
@@ -47,7 +70,7 @@ class futures_capital_flow:
   def load(path: str, *, skip_zero_changes: bool = True) -> pd.DataFrame:
     df = pd.read_excel(path, dtype={'Amount': str})
     util.validate_schema(df, futures_capital_flow.schema)
-    key = util.find_key(dict(df.iloc[0]), time_regex)
+    key = util.find_key(df, time_regex)
     assert key is not None
     df['Creation Time'] = pd.to_datetime(df[key]).dt.tz_localize(parse_timezone(key)).dt.tz_convert(timezone.utc)
     if skip_zero_changes:
@@ -65,4 +88,5 @@ class futures_capital_flow:
   @staticmethod
   def parse_df(df: pd.DataFrame):
     for _, row in df.iterrows():
-      yield parse_posting(row)
+      if (posting := futures_capital_flow.parse_posting(row)) is not None:
+        yield posting

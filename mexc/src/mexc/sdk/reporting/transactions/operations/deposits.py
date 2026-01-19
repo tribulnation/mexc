@@ -1,38 +1,44 @@
-from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone
 import pandas as pd
-from trading_sdk.reporting import CryptoDeposit
+from trading_sdk.reporting.transactions import CryptoDeposit
 
 from .. import util
 
-@dataclass
-class Deposit(CryptoDeposit, util.Operation):
-  tag: str = 'Spot Deposit'
-  @property
-  def expected_postings(self) -> list[util.TaggedPosting]:
-    return [
-      util.TaggedPosting(
-        time=self.time,
-        asset=self.asset,
-        change=self.qty,
-        tag=self.tag,
-      )
-    ]
+# @dataclass
+# class Deposit(matching.MatchingOperation):
+#   operation: CryptoDeposit
+#   tag: str = 'Spot Deposit'
+#   @property
+#   def expected_postings(self) -> list[matching.MatchingPosting]:
+#     return [
+#       matching.MatchingPosting(
+#         time=self.time,
+#         tag=self.tag,
+#         posting=CurrencyPosting(
+#           asset=self.asset,
+#           change=self.qty,
+#         )
+#       )
+#     ]
 
-  @property
-  def id(self) -> str:
-    return f'Deposit;{self.network};{self.tx_hash}:{self.idx or 0}'
+#   @property
+#   def id(self) -> str:
+#     return f'Deposit;{self.network};{self.tx_hash}:{self.idx or 0}'
 
 def parse_entry(row: pd.Series):
   tx_hash, *rest = str(row['TxID']).split(':')
   idx = int(rest[0]) if rest else None
-  return Deposit(
+  network = str(row['Network'])
+  id = f'Deposit;{network};{tx_hash}:{idx or 0}'
+  return CryptoDeposit(
+    id=id,
     asset=str(row['Crypto']),
     qty=Decimal(str(row['Deposit Amount'])),
     tx_hash=tx_hash, idx=idx,
-    network=str(row['Network']),
+    network=network,
     time=util.ensure_datetime(row['Time(UTC)']),
+    details=dict(row)
   )
 
 class deposits(util.Module):

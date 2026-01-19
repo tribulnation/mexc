@@ -1,69 +1,80 @@
-from dataclasses import dataclass
+from typing_extensions import Callable
 from decimal import Decimal
 from datetime import datetime, timezone
 from collections import Counter
 import re
 import pandas as pd
-from trading_sdk.reporting.types import Trade, Fee
+from trading_sdk.reporting.transactions import Trade, Fee
 
 from .. import util
 
 fee_regex = re.compile(r'([-\d\.]+)([A-Z0-9]+)$')
 
-@dataclass
-class SpotTrade(Trade, util.Operation):
-  time_idx: int = 0
-  """Index of the transaction within the same instant."""
+# @dataclass
+# class SpotTrade(Trade, util.Operation):
+#   time_idx: int = 0
+#   """Index of the transaction within the same instant."""
 
-  @property
-  def expected_postings(self) -> list[util.TaggedPosting]:
-    s = 1 if self.side == 'BUY' else -1
-    postings = [
-      util.TaggedPosting(
-        time=self.time,
-        asset=self.base,
-        change=s * self.qty,
-        tag='Spot Spot Trading',
-      ),
-      util.TaggedPosting(
-        time=self.time,
-        asset=self.quote,
-        change=-s * self.qty * self.price,
-        tag='Spot Spot Trading',
-      ),
-    ]
-    if self.fee is not None:
-      postings.append(util.TaggedPosting(
-        time=self.time,
-        asset=self.fee.asset,
-        change=-self.fee.amount,
-        tag='Spot Spot Trading Fees',
-      ))
-    return postings
+#   @property
+#   def expected_postings(self) -> list[util.TaggedPosting]:
+#     s = 1 if self.side == 'BUY' else -1
+#     postings = [
+#       util.TaggedPosting(
+#         time=self.time,
+#         tag='Spot Spot Trading',
+#         posting=CurrencyPosting(
+#           asset=self.base,
+#           change=s * self.qty,
+#         )
+#       ),
+#       util.TaggedPosting(
+#         time=self.time,
+#         tag='Spot Spot Trading',
+#         posting=CurrencyPosting(
+#           asset=self.quote,
+#           change=-s * self.qty * self.price,
+#         )
+#       ),
+#     ]
+#     if self.fee is not None:
+#       postings.append(util.TaggedPosting(
+#         time=self.time,
+#         tag='Spot Spot Trading Fees',
+#         posting=CurrencyPosting(
+#           asset=self.fee.asset,
+#           change=-self.fee.amount,
+#         )
+#       ))
+#     return postings
 
-  @property
-  def id(self) -> str:
-    id = f'{self.base}_{self.quote};{self.time:%Y-%m-%d %H:%M:%S}'
-    if self.time_idx:
-      id += f';{self.time_idx}'
-    return id
+  # @property
+  # def id(self) -> str:
+  #   id = f'{self.base}_{self.quote};{self.time:%Y-%m-%d %H:%M:%S}'
+  #   if self.time_idx:
+  #     id += f';{self.time_idx}'
+  #   return id
   
 
-def parse_entry(row: pd.Series):
+def parse_entry(row: pd.Series, time_idx: Callable[[datetime], int]):
+  base = str(row['base'])
+  quote = str(row['quote'])
+  time = util.ensure_datetime(row['Time(UTC)'])
+  id = f'{base}_{quote};{time:%Y-%m-%d %H:%M:%S}'
+  if (idx := time_idx(time)) > 0:
+    id += f';{idx}'
   fee_amount = Decimal(str(row['fee_amount']))
   if fee_amount == 0:
     fee = None
   else:
     fee = Fee(fee_amount, str(row['fee_asset']))
-  return SpotTrade(
-    base=str(row['base']),
-    quote=str(row['quote']),
+  return Trade(
+    id=id, time=time, base=base, quote=quote,
     qty=Decimal(str(row['Executed Amount'])),
     price=Decimal(str(row['Filled Price'])),
     liquidity='TAKER' if row['Role'] == 'Taker' else 'MAKER',
-    time=util.ensure_datetime(row['Time(UTC)']),
     side='BUY' if row['Side'] == 'Buy' else 'SELL',
     fee=fee,
+    details=dict(row),
   )
 
 class spot_trades(util.Module):
@@ -125,7 +136,6 @@ class spot_trades(util.Module):
   def parse_df(df: pd.DataFrame):
     times = Counter[datetime]()
     for _, row in df.iterrows():
-      entry = parse_entry(row)
+      entry = parse_entry(row, time_idx=times.__getitem__)
       times[entry.time] += 1
-      entry.time_idx = times[entry.time]
       yield entry

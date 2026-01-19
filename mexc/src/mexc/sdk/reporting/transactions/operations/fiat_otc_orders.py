@@ -1,10 +1,9 @@
 from typing_extensions import Any
-from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone, timedelta
 import re
 import pandas as pd
-from trading_sdk.reporting import FiatDeposit as BaseFiatDeposit, FiatWithdrawal as BaseFiatWithdrawal
+from trading_sdk.reporting import FiatDeposit, FiatWithdrawal
 
 from .. import util
 
@@ -17,36 +16,38 @@ def parse_timezone(key: str) -> timezone:
   return timezone(timedelta(hours=int(hours), minutes=int(minutes)))
 
 # The Spot Statement doesn't include postings for fiat deposits and withdrawals, so we expect them to not match.
-@dataclass(kw_only=True)
-class FiatDeposit(BaseFiatDeposit, util.Operation):
-  tag: str = 'Spot From Fiat Account'
-  order_id: str
+# @dataclass(kw_only=True)
+# class FiatDeposit(BaseFiatDeposit, util.Operation):
+#   tag: str = 'Spot From Fiat Account'
+#   order_id: str
 
-  @property
-  def id(self) -> str:
-    return f'spot2fiat;{self.order_id}'
+#   @property
+#   def id(self) -> str:
+#     return f'spot2fiat;{self.order_id}'
 
-@dataclass(kw_only=True)
-class FiatWithdrawal(BaseFiatWithdrawal, util.Operation):
-  tag: str = 'Spot To Fiat Account'
-  order_id: str
+# @dataclass(kw_only=True)
+# class FiatWithdrawal(BaseFiatWithdrawal, util.Operation):
+#   tag: str = 'Spot To Fiat Account'
+#   order_id: str
   
-  @property
-  def id(self) -> str:
-    return f'fiat2spot;{self.order_id}'
+#   @property
+#   def id(self) -> str:
+#     return f'fiat2spot;{self.order_id}'
 
 def parse_entry(row: pd.Series):
   cls = FiatDeposit if row['Trading Direction'] == 'Buy' else FiatWithdrawal
   order_id = str(row['Order ID'])
+  prefix = 'spot2fiat' if row['Trading Direction'] == 'Buy' else 'fiat2spot'
+  id = f'{prefix};{order_id}'
   return cls(
+    id=id,
     asset=str(row['Trading Token']),
     qty=Decimal(str(row['Order Quantity'])),
     time=util.ensure_datetime(row['End Time']),
     fiat_currency=str(row['Settlement Token']),
     fiat_amount=Decimal(str(row['Order Amount'])),
     method=str(row['Payment Method']),
-    details={'order_id': order_id},
-    order_id=order_id,
+    details=dict(row),
   )
 
 class fiat_otc_orders(util.Module):
@@ -88,7 +89,7 @@ class fiat_otc_orders(util.Module):
   def load(path: str, *, skip_zero_changes: bool = True) -> pd.DataFrame:
     df = pd.read_excel(path, dtype={'Order Quantity': str, 'Order Amount': str})
     util.validate_schema(df, fiat_otc_orders.schema)
-    key = util.find_key(dict(df.iloc[0]), end_time_regex)
+    key = util.find_key(df, end_time_regex)
     assert key is not None
     df['End Time'] = pd.to_datetime(df[key]).dt.tz_localize(parse_timezone(key)).dt.tz_convert(timezone.utc)
     if skip_zero_changes:

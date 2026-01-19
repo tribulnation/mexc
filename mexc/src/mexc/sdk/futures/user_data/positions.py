@@ -3,13 +3,10 @@ from collections import defaultdict
 from decimal import Decimal
 import asyncio
 
-from trading_sdk.market.user_data.positions import Positions as PositionsTDK, Position
+from trading_sdk.market.user_data.positions import Position
 
-from mexc.core.util import cacher
 from mexc.sdk.core import SdkMixin, wrap_exceptions
 from mexc.futures.user_data.positions import PositionType
-
-cache = cacher()
 
 def merge_positions(positions: list[Position]) -> Position | None:
   if positions:
@@ -20,13 +17,13 @@ def merge_positions(positions: list[Position]) -> Position | None:
     )
 
 @dataclass
-class Positions(PositionsTDK, SdkMixin):
+class Positions(SdkMixin):
   @wrap_exceptions
   async def positions(self, *instruments: str) -> dict[str, Position]:
     r = await self.client.futures.positions()
     symbols = instruments or set(p['symbol'] for p in r)
     contracts = await asyncio.gather(*(
-      cache(lambda: self.client.futures.contract_info(s))
+      self.client.futures.contract_info(s)
       for s in symbols
     ))
     contract_sizes = {c['symbol']: c['contractSize'] for c in contracts}

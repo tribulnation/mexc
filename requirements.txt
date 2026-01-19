@@ -8,3 +8,6 @@ mkdocs
 mkdocs-material
 mkdocstrings[python]
 -e mexc
+pandas
+openpyxl
+duckdb

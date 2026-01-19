@@ -1,10 +1,11 @@
+from typing_extensions import Callable
 from dataclasses import dataclass
 from decimal import Decimal
 from datetime import datetime, timedelta, timezone
 from collections import Counter
 import re
 import pandas as pd
-from trading_sdk.reporting import Yield
+from trading_sdk.reporting.transactions import Yield
 
 from .. import util
 
@@ -16,35 +17,43 @@ def parse_timezone(key: str) -> timedelta:
   hours, minutes = match.groups()
   return timedelta(hours=int(hours), minutes=int(minutes))
 
-@dataclass
-class FixedYield(Yield, util.Operation):
-  tag: str
-  time_idx: int = 0
-  """Index of the transaction within the same instant."""
-  @property
-  def expected_postings(self):
-    return [
-      util.TaggedPosting(
-        time=self.time,
-        asset=self.asset,
-        change=self.qty,
-        tag=self.tag,
-      )
-    ]
+# @dataclass(kw_only=True)
+# class FixedYield(matching.MatchingOperation):
+#   matching_mode: Literal['eq'] = 'eq' # type: ignore
+#   operation: Yield # type: ignore
+#   tag: str
+#   time_idx: int = 0
+#   """Index of the transaction within the same instant."""
+#   @property
+#   def expected_postings(self):
+#     return [
+#       matching.MatchingPosting(
+#         time=self.time,
+#         tag=self.tag,
+#         posting=CurrencyPosting(
+#           asset=self.operation.asset,
+#           change=self.operation.qty,
+#         )
+#       )
+#     ]
 
-  @property
-  def id(self) -> str:
-    id = f'{self.tag};{self.asset};{self.time:%Y-%m-%d %H:%M:%S}'
-    if self.time_idx:
-      id += f';{self.time_idx}'
-    return id
+#   @property
+#   def id(self) -> str:
+#     id = f'{self.tag};{self.operation.asset};{self.time:%Y-%m-%d %H:%M:%S}'
+#     if self.time_idx:
+#       id += f';{self.time_idx}'
+#     return id
 
-def parse_entry(row: pd.Series):
-  return FixedYield(
-    asset=str(row['Crypto']),
+def parse_entry(row: pd.Series, time_idx: Callable[[datetime], int]):
+  asset = str(row['Crypto'])
+  time = util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc)
+  id = f'fixed-earn;{asset};{time:%Y-%m-%d %H:%M:%S}'
+  if (idx := time_idx(time)) > 0:
+    id += f';{idx}'
+  return Yield(
+    id=id, asset=asset, time=time,
     qty=Decimal(str(row['Quantity'])),
-    time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
-    tag='Spot ' + str(row['Transaction Type']),
+    details=dict(row),
   )
 
 class fixed_earn(util.Module):
@@ -64,8 +73,6 @@ class fixed_earn(util.Module):
     - `Quantity`
     """
 
-  matching_mode = 'eq'
-
   schema: util.Schema = {
     creation_time_regex: str,
     'Crypto': str,
@@ -77,7 +84,9 @@ class fixed_earn(util.Module):
   def load(path: str, *, skip_zero_changes: bool = True) -> pd.DataFrame:
     df = pd.read_excel(path, dtype={'Quantity': str})
     util.validate_schema(df, fixed_earn.schema)
-    key = util.find_key(dict(df.iloc[0]), creation_time_regex)
+    if len(df) == 0:
+      return df
+    key = util.find_key(df, creation_time_regex)
     assert key is not None
     df['Creation Time'] = pd.to_datetime(df[key]) - parse_timezone(key)
     if skip_zero_changes:
@@ -95,7 +104,6 @@ class fixed_earn(util.Module):
   def parse_df(df: pd.DataFrame):
     times = Counter[datetime]()
     for _, row in df.iterrows():
-      entry = parse_entry(row)
+      entry = parse_entry(row, time_idx=times.__getitem__)
       times[entry.time] += 1
-      entry.time_idx = times[entry.time]
       yield entry

@@ -1,39 +1,42 @@
-from typing_extensions import Literal
-from dataclasses import dataclass
 from decimal import Decimal
 from datetime import timezone
 import pandas as pd
-from trading_sdk.reporting.types import CryptoWithdrawal, Fee
+from trading_sdk.reporting.transactions import CryptoWithdrawal, Fee
 
 from .. import util
 
-@dataclass
-class Withdrawal(CryptoWithdrawal, util.Operation):
-  @property
-  def expected_postings(self) -> list[util.TaggedPosting]:
-    postings = [
-      util.TaggedPosting(
-        time=self.time,
-        asset=self.asset,
-        change=-self.qty,
-        tag='Spot Withdraw',
-      )
-    ]
-    if self.fee:
-      postings.append(util.TaggedPosting(
-        time=self.time,
-        asset=self.fee.asset,
-        change=-self.fee.amount,
-        tag='Spot Withdrawal Fees',
-      ))
-    return postings
+# @dataclass
+# class Withdrawal(CryptoWithdrawal, util.Operation):
+#   @property
+#   def expected_postings(self) -> list[util.TaggedPosting]:
+#     postings = [
+#       util.TaggedPosting(
+#         time=self.time,
+#         tag='Spot Withdraw',
+#         posting=CurrencyPosting(
+#           asset=self.asset,
+#           change=-self.qty,
+#         )
+#       )
+#     ]
+#     if self.fee:
+#       postings.append(util.TaggedPosting(
+#         time=self.time,
+#         tag='Spot Withdrawal Fees',
+#         posting=CurrencyPosting(
+#           asset=self.fee.asset,
+#           change=-self.fee.amount,
+#         )
+#       ))
+#     return postings
 
-  @property
-  def id(self) -> str:
-    return f'Withdrawal;{self.network};{self.tx_hash}:{self.idx or 0}'
+#   @property
+#   def id(self) -> str:
+#     return f'Withdrawal;{self.network};{self.tx_hash}:{self.idx or 0}'
 
 def parse_entry(row: pd.Series):
   asset = str(row['Crypto'])
+  network = str(row['Network'])
   fee_amount = Decimal(str(row['Trading Fee']))
   fee = Fee(fee_amount, asset) if fee_amount > 0 else None
   memo = str(row['memo'])
@@ -42,15 +45,17 @@ def parse_entry(row: pd.Series):
 
   tx_hash, *rest = str(row['TxID']).split(':')
   idx = int(rest[0]) if rest else None
-  return Withdrawal(
-    asset=asset,
+  id = f'withdrawal;{network};{tx_hash}:{idx or 0}'
+  return CryptoWithdrawal(
+    id=id, asset=asset,
     qty=Decimal(str(row['Settlement Amount'])),
     tx_hash=tx_hash, idx=idx,
-    network=str(row['Network']),
+    network=network,
     time=util.ensure_datetime(row['Time(UTC)']),
     address=str(row['Withdrawal Address']),
     memo=memo,
     fee=fee,
+    details=dict(row),
   )
 
 class withdrawals(util.Module):

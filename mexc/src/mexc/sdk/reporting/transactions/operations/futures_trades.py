@@ -1,10 +1,10 @@
-from dataclasses import dataclass
+from typing_extensions import Callable
 from decimal import Decimal
 from datetime import datetime, timezone, timedelta
 from collections import Counter
 import re
 import pandas as pd
-from trading_sdk.reporting.types import Posting, Trade, Fee
+from trading_sdk.reporting.transactions import FutureTrade, Fee
 
 from .. import util
 
@@ -18,58 +18,64 @@ def parse_timezone(key: str) -> timezone:
 
 pair_regex = re.compile(r'^(.+?)(USDT|USDC)$')
 
-@dataclass
-class FuturesTrade(Trade, util.Operation):
-  time_idx: int = 0
-  """Index of the transaction within the same instant."""
+# @dataclass
+# class FuturesTrade(Trade, util.Operation):
+#   time_idx: int = 0
+#   """Index of the transaction within the same instant."""
 
-  @property
-  def expected_postings(self) -> list[util.TaggedPosting]:
-    if self.fee is not None:
-      return [
-        util.TaggedPosting(
-          time=self.time,
-          asset=self.fee.asset,
-          change=-self.fee.amount,
-          tag='Futures FEE'
-        )
-      ]
-    else:
-      return []
+#   @property
+#   def expected_postings(self) -> list[util.TaggedPosting]:
+#     if self.fee is not None:
+#       return [
+#         util.TaggedPosting(
+#           time=self.time,
+#           tag='Futures FEE',
+#           posting=CurrencyPosting(
+#             asset=self.fee.asset,
+#             change=-self.fee.amount,
+#           )
+#         )
+#       ]
+#     else:
+#       return []
 
-  @property
-  def fixed_postings(self) -> list[Posting]:
-    s = 1 if self.side == 'BUY' else -1
-    return [
-      Posting(
-        time=self.time,
-        asset=f'{self.base}_{self.quote}-PERPETUAL',
-        change=s*self.qty,
-      )
-    ]
+#   @property
+#   def fixed_postings(self) -> list[Posting]:
+#     s = 1 if self.side == 'BUY' else -1
+#     return [
+#       FuturePosting(
+#         asset=f'{self.base}_{self.quote}',
+#         change=s*self.qty,
+#         price=self.price,
+#       )
+#     ]
 
-  @property
-  def id(self) -> str:
-    id = f'{self.base}_{self.quote}-PERPETUAL;{self.time:%Y-%m-%d %H:%M:%S}'
-    if self.time_idx:
-      id += f';{self.time_idx}'
-    return id
+#   @property
+#   def id(self) -> str:
+#     id = f'{self.base}_{self.quote}-PERPETUAL;{self.time:%Y-%m-%d %H:%M:%S}'
+#     if self.time_idx:
+#       id += f';{self.time_idx}'
+#     return id
 
-def parse_entry(row: pd.Series):
+def parse_entry(row: pd.Series, time_idx: Callable[[datetime], int]):
+  asset = f'{str(row["base"])}_{str(row["quote"])}'
+  time = util.ensure_datetime(row['Time(UTC)'])
+  id = f'{asset}-PERPETUAL;{time:%Y-%m-%d %H:%M:%S}'
+  if (idx := time_idx(time)) > 0:
+    id += f';{idx}'
   fee_amount = Decimal(str(row['Trading Fee']))
   if fee_amount == 0:
     fee = None
   else:
     fee = Fee(fee_amount, str(row['Fee-payment Crypto']))
-  return FuturesTrade(
-    base=str(row['base']),
-    quote=str(row['quote']),
-    qty=Decimal(str(row['Filled Qty (Crypto)'])),
+  return FutureTrade(
+    id=id, asset=asset, time=time,
+    size=Decimal(str(row['Filled Qty (Crypto)'])),
     price=Decimal(str(row['Filled Price'])),
     liquidity='TAKER' if row['Role'] == 'Taker' else 'MAKER',
-    time=util.ensure_datetime(row['Time(UTC)']),
     side='BUY' if row['Direction'] in ('sell short', 'buy long') else 'SELL',
     fee=fee,
+    details=dict(row),
   )
 
 class futures_trades(util.Module):
@@ -114,7 +120,7 @@ class futures_trades(util.Module):
       df.drop(df[df['Filled Qty (Crypto)'].astype(float) == 0].index, inplace=True) # type: ignore
       df.reset_index(drop=True, inplace=True)
     df[['base', 'quote']] = df['Futures Trading Pair'].str.extract(pair_regex)
-    key = util.find_key(dict(df.iloc[0]), time_regex)
+    key = util.find_key(df, time_regex)
     assert key is not None
     df['Time(UTC)'] = pd.to_datetime(df[key]).dt.tz_localize(parse_timezone(key)).dt.tz_convert(timezone.utc)
     return df
@@ -134,7 +140,6 @@ class futures_trades(util.Module):
   def parse_df(df: pd.DataFrame):
     times = Counter[datetime]()
     for _, row in df.iterrows():
-      entry = parse_entry(row)
+      entry = parse_entry(row, time_idx=times.__getitem__)
       times[entry.time] += 1
-      entry.time_idx = times[entry.time]
       yield entry

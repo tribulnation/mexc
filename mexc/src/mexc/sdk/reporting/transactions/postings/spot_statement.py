@@ -2,7 +2,7 @@ from decimal import Decimal
 from datetime import timedelta, timezone
 import re
 import pandas as pd
-from trading_sdk.reporting import Posting
+from trading_sdk.reporting.transactions import Posting
 
 from .. import util
 
@@ -13,14 +13,6 @@ def parse_timezone(key: str) -> timezone:
   assert match is not None
   hours, minutes = match.groups()
   return timezone(timedelta(hours=int(hours), minutes=int(minutes)))
-
-def parse_posting(row: pd.Series) -> util.TaggedPosting:
-  return util.TaggedPosting(
-    asset=str(row['Crypto']),
-    change=Decimal(str(row['Quantity'])),
-    time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
-    tag='Spot ' + str(row['Transaction Type']),
-  )
 
 class spot_statement:
   """Parsing MEXC's spot statement.
@@ -37,6 +29,50 @@ class spot_statement:
   - `Quantity`
   """
 
+  TRANSACTION_TYPES: dict[str, Posting.Type] = {
+    'Commission Sharing': 'bonus',
+    'Referral Commission': 'bonus',
+    'Flexible Savings Airdrop': 'bonus',
+    'Flexible Savings Staking': 'yield',
+    'Futures Earn Airdrop': 'yield',
+    'Kickstarter Airdrop': 'yield',
+    'Launchpad - Airdrop': 'yield',
+    'Launchpool Airdrop': 'yield',
+    'Hold and Earn Airdrop': 'yield',
+    'Hold and Earn Airdrops': 'yield',
+    'Spot Trading': 'trade',
+    'Spot Trading Fees': 'fee',
+    'Deposit': 'crypto_deposit',
+    'Withdraw': 'crypto_withdrawal',
+    'Withdrawal Fees': 'withdrawal_fee',
+  }
+
+  IGNORE_TYPES: set[str] = {
+    'To Fiat Account',
+    'To Futures Account',
+    'From Fiat Account',
+    'From Futures Account',
+  }
+
+  @staticmethod
+  def transaction_type(type: str) -> Posting.Type | None:
+    if type in spot_statement.IGNORE_TYPES:
+      return None
+    if type not in spot_statement.TRANSACTION_TYPES:
+      raise ValueError(f'Unknown transaction type: {type}')
+    return spot_statement.TRANSACTION_TYPES[type]
+
+  @staticmethod
+  def parse_posting(row: pd.Series) -> Posting | None:
+    if (type := spot_statement.transaction_type(str(row['Transaction Type']))) is not None:
+      return Posting(
+        kind='currency', type=type,
+        time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
+        asset=str(row['Crypto']),
+        change=Decimal(str(row['Quantity'])),
+        details=dict(row),
+      )
+
   schema: util.Schema = {
     creation_time_regex: str,
     'Crypto': str,
@@ -48,7 +84,7 @@ class spot_statement:
   def load(path: str, *, skip_zero_changes: bool = True) -> pd.DataFrame:
     df = pd.read_excel(path, dtype={'Quantity': str})
     util.validate_schema(df, spot_statement.schema)
-    key = util.find_key(dict(df.iloc[0]), creation_time_regex)
+    key = util.find_key(df, creation_time_regex)
     assert key is not None
     df['Creation Time'] = pd.to_datetime(df[key]).dt.tz_localize(parse_timezone(key)).dt.tz_convert(timezone.utc)
     if skip_zero_changes:
@@ -65,4 +101,5 @@ class spot_statement:
   @staticmethod
   def parse_df(df: pd.DataFrame):
     for _, row in df.iterrows():
-      yield parse_posting(row)
+      if (posting := spot_statement.parse_posting(row)) is not None:
+        yield posting
