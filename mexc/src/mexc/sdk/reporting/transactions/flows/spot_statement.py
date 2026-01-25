@@ -2,7 +2,7 @@ from decimal import Decimal
 from datetime import timedelta, timezone
 import re
 import pandas as pd
-from trading_sdk.reporting.transactions import Posting
+from trading_sdk.reporting.transactions import Flow
 
 from .. import util
 
@@ -29,7 +29,7 @@ class spot_statement:
   - `Quantity`
   """
 
-  TRANSACTION_TYPES: dict[str, Posting.Type] = {
+  TRANSACTION_TYPES: dict[str, Flow.Label] = {
     'Commission Sharing': 'bonus',
     'Referral Commission': 'bonus',
     'Flexible Savings Airdrop': 'bonus',
@@ -55,7 +55,7 @@ class spot_statement:
   }
 
   @staticmethod
-  def transaction_type(type: str) -> Posting.Type | None:
+  def transaction_type(type: str) -> Flow.Label | None:
     if type in spot_statement.IGNORE_TYPES:
       return None
     if type not in spot_statement.TRANSACTION_TYPES:
@@ -63,10 +63,10 @@ class spot_statement:
     return spot_statement.TRANSACTION_TYPES[type]
 
   @staticmethod
-  def parse_posting(row: pd.Series) -> Posting | None:
-    if (type := spot_statement.transaction_type(str(row['Transaction Type']))) is not None:
-      return Posting(
-        kind='currency', type=type,
+  def parse_posting(row: pd.Series) -> Flow | None:
+    if (label := spot_statement.transaction_type(str(row['Transaction Type']))) is not None:
+      return Flow(
+        kind='currency', label=label,
         time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
         asset=str(row['Crypto']),
         change=Decimal(str(row['Quantity'])),

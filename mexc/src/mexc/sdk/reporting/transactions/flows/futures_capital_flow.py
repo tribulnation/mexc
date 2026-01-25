@@ -2,7 +2,7 @@ from decimal import Decimal
 from datetime import timedelta, timezone
 import re
 import pandas as pd
-from trading_sdk.reporting import Posting
+from trading_sdk.reporting import Flow
 
 from .. import util
 
@@ -28,7 +28,7 @@ class futures_capital_flow:
   - `Amount`
   """  
 
-  TRANSACTION_TYPES: dict[str, Posting.Type] = {
+  TRANSACTION_TYPES: dict[str, Flow.Label] = {
     'BONUS': 'bonus',
     'CLOSE_POSITION': 'settlement',
     'LIQUIDATION': 'settlement',
@@ -41,7 +41,7 @@ class futures_capital_flow:
   }
 
   @staticmethod
-  def transaction_type(type: str) -> Posting.Type | None:
+  def transaction_type(type: str) -> Flow.Label | None:
     if type in futures_capital_flow.IGNORE_TYPES:
       return None
     if type not in futures_capital_flow.TRANSACTION_TYPES:
@@ -49,10 +49,10 @@ class futures_capital_flow:
     return futures_capital_flow.TRANSACTION_TYPES[type]
 
   @staticmethod
-  def parse_posting(row: pd.Series) -> Posting | None:
-    if (type := futures_capital_flow.transaction_type(str(row['Fund Type']))) is not None:
-      return Posting(
-        kind='currency', type=type,
+  def parse_posting(row: pd.Series) -> Flow | None:
+    if (label := futures_capital_flow.transaction_type(str(row['Fund Type']))) is not None:
+      return Flow(
+        kind='currency', label=label,
         time=util.ensure_datetime(str(row['Creation Time'])).replace(tzinfo=timezone.utc),
         asset=str(row['Crypto']),
         change=Decimal(str(row['Amount'])),

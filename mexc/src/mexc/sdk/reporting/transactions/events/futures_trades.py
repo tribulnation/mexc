@@ -40,7 +40,7 @@ pair_regex = re.compile(r'^(.+?)(USDT|USDC)$')
 #       return []
 
 #   @property
-#   def fixed_postings(self) -> list[Posting]:
+#   def fixed_postings(self) -> list[Flow]:
 #     s = 1 if self.side == 'BUY' else -1
 #     return [
 #       FuturePosting(
@@ -69,11 +69,11 @@ def parse_entry(row: pd.Series, time_idx: Callable[[datetime], int]):
   else:
     fee = Fee(fee_amount, str(row['Fee-payment Crypto']))
   return FutureTrade(
-    id=id, asset=asset, time=time,
+    id=id, instrument=asset, time=time,
     size=Decimal(str(row['Filled Qty (Crypto)'])),
     price=Decimal(str(row['Filled Price'])),
-    liquidity='TAKER' if row['Role'] == 'Taker' else 'MAKER',
-    side='BUY' if row['Direction'] in ('sell short', 'buy long') else 'SELL',
+    liquidity='taker' if row['Role'] == 'Taker' else 'maker',
+    side='buy' if row['Direction'] in ('sell short', 'buy long') else 'sell',
     fee=fee,
     details=dict(row),
   )

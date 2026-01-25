@@ -93,7 +93,7 @@ class Transactions(TransactionsTDK):
       end = end.astimezone(timezone.utc)
     
     def filter_time(tx: Transaction) -> bool:
-      return (start is None or start <= tx.operation.time) and (end is None or tx.operation.time < end)
+      return (start is None or start <= tx.time) and (end is None or tx.time < end)
 
     for path in self.paths.values():
       if not os.path.exists(path): # type: ignore (yes path is a string, fucking pyright)

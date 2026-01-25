@@ -2,12 +2,12 @@ from typing_extensions import TypedDict, Required, Iterable
 from datetime import timezone
 
 from trading_sdk.reporting.transactions import (
-  SinglePostingOperation, Operation,
+  SingleEvent, Event,
   Transaction, match_transactions
 )
 from .util import Module, UniqueIds
-from .postings import spot_statement
-from .operations import fixed_earn, flexible_earn, deposits, withdrawals, spot_trades, fiat_otc_orders
+from .flows import spot_statement
+from .events import fixed_earn, flexible_earn, deposits, withdrawals, spot_trades, fiat_otc_orders
 
 class SpotPaths(TypedDict, total=False):
   spot_statement: Required[str]
@@ -32,20 +32,17 @@ def spot_transactions(
   skip_zero_changes: bool = True
 ) -> Iterable[Transaction]:
 
-  postings = list(spot_statement.parse(paths['spot_statement'], skip_zero_changes=skip_zero_changes))
+  flows = list(spot_statement.parse(paths['spot_statement'], skip_zero_changes=skip_zero_changes))
 
-  operations: list[Operation] = []
+  events: list[Event] = []
   for key, module in spot_modules.items():
     if (path := paths.get(key)) is not None:
-      operations.extend(module.parse(path, tz, skip_zero_changes=skip_zero_changes))
+      events.extend(module.parse(path, tz, skip_zero_changes=skip_zero_changes))
   
-  matched_txs, other_postings = match_transactions(postings, operations)
+  matched_txs, other_flows = match_transactions(flows, events)
   yield from matched_txs
 
   ids = UniqueIds()
-  for p in other_postings:
-    id = ids.new(f'{p.type};{p.time:%Y-%m-%d %H:%M:%S}')
-    yield Transaction(
-      operation=SinglePostingOperation.of(id, p),
-      postings=[p]
-    )
+  for f in other_flows:
+    id = ids.new(f'{f.label};{f.time:%Y-%m-%d %H:%M:%S}')
+    yield Transaction.single(id, f)

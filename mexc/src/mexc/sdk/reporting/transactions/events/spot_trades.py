@@ -71,8 +71,8 @@ def parse_entry(row: pd.Series, time_idx: Callable[[datetime], int]):
     id=id, time=time, base=base, quote=quote,
     qty=Decimal(str(row['Executed Amount'])),
     price=Decimal(str(row['Filled Price'])),
-    liquidity='TAKER' if row['Role'] == 'Taker' else 'MAKER',
-    side='BUY' if row['Side'] == 'Buy' else 'SELL',
+    liquidity='taker' if row['Role'] == 'Taker' else 'maker',
+    side='buy' if row['Side'] == 'Buy' else 'sell',
     fee=fee,
     details=dict(row),
   )
