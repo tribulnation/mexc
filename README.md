@@ -1,114 +1,228 @@
-# MEXC Trading SDK
+# Typed MEXC
 
-> The unofficial, fully-typed async Python SDK for MEXC, by Tribulnation.
+> A fully typed, validated async client for the MEXC API
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
-> [Read the docs](https://mexc.tribulnation.com)
-
-## Quick Start
-
-```bash
-pip install mexc-trading-sdk
-```
+**Use autocomplete instead of documentation.**
 
 ```python
 from mexc import MEXC
 
-async with MEXC.new(API_KEY, API_SECRET) as client:
-  r = await client.spot.place_order('BTCUSDT', {
-    'price': '50000',
-    'quantity': '0.001',
-    'type': 'LIMIT',
-    'side': 'BUY',
-  })
+async with MEXC.new() as client:
+    account = await client.spot.account()
+    for balance in account['balances']:
+        if float(balance['free']) > 0:
+            print(f"{balance['asset']}: {balance['free']}")
 ```
 
-## Why MEXC SDK?
+## Why Typed MEXC?
 
-- **🚀 Fully Async** - Built with `httpx` for high-performance async operations
-- **🔒 Type Safe** - Complete type annotations with `TypedDict` and `pydantic` validation
-- **⚡ Easy to Use** - Simple context-managed API with `async with`
-- **📊 Comprehensive** - Spot trading, market data, wallet, and WebSocket streams
-- **🎯 No Setup Required** - Start exploring markets immediately
+- **🎯 Precise Types**: Literal types, not strings. Your IDE knows exactly what's valid.
+- **✅ Automatic Validation**: Pydantic-powered response validation catches API changes instantly.
+- **⚡ Async First**: Built on `httpx` for high-performance async operations.
+- **🔒 Type Safety**: Full type hints throughout. Catch errors before runtime.
+- **🎨 Beautiful DX**: No unnecessary imports, sensible defaults, optional complexity.
+- **📦 Batteries Included**: Pagination helpers, WebSocket streams for real-time data.
 
-## What's Included
+## Installation
 
-- **Market Data** - Real-time prices, order books, and historical data
-- **Spot Trading** - Place, cancel, and query orders
-- **User Data** - Account balances, trade history, and order status
-- **Wallet Operations** - Deposits, withdrawals, and address management
-- **WebSocket Streams** - Live market data and user notifications
+```bash
+pip install typed-mexc
+```
 
-## Authentication
+## Quick Start
 
-> Get your API keys from the [MEXC dashboard](https://www.mexc.com/user/openapi).
+### 1. Set up API credentials
 
-Or, you can use public methods:
+```bash
+export MEXC_ACCESS_KEY="your_access_key"
+export MEXC_SECRET_KEY="your_secret_key"
+```
+
+### 2. Start trading
 
 ```python
-from mexc.spot import MarketData
+from mexc import MEXC
 
-async with MarketData() as client:
-  candles = await client.candles('BTCUSDT', interval='15m')
+async with MEXC.new() as client:
+    # Get spot account info
+    account = await client.spot.account()
+    
+    # Get futures positions
+    positions = await client.futures.positions()
+    
+    # Get funding rate
+    rate = await client.futures.funding_rate(symbol='BTC_USDT')
 ```
 
-## Supported APIs
+## Features
 
-The SDK covers the following MEXC endpoints:
+### No Unnecessary Imports
 
-### Spot
+Notice something? **You never imported `Literal` types.** Just use strings:
 
-#### Trading
-- [`place_order`](mexc/src/mexc/spot/trading/place_order.py)
-- [`cancel_order`](mexc/src/mexc/spot/trading/cancel_order.py)
-- [`cancel_all_orders`](mexc/src/mexc/spot/trading/cancel_all_orders.py)
+```python
+# ❌ Other libraries
+from some_sdk import Interval
+candles = await client.get_candles(symbol='BTCUSDT', interval=Interval.M1)
 
-#### User Data
-- [`account`](mexc/src/mexc/spot/user_data/account.py) (balances)
-- [`my_trades`](mexc/src/mexc/spot/user_data/my_trades.py) (trade history)
-- [`query_order`](mexc/src/mexc/spot/user_data/query_order.py)
-- [`open_orders`](mexc/src/mexc/spot/user_data/open_orders.py)
-- [`my_orders`](mexc/src/mexc/spot/user_data/my_orders.py) (order history)
+# ✅ Typed MEXC
+candles = await client.spot.candles(
+    'BTCUSDT', interval='1m'  # Your IDE autocompletes this!
+)
+```
 
-#### Market Data
-- [`time`](mexc/src/mexc/spot/market_data/time.py) (server time)
-- [`depth`](mexc/src/mexc/spot/market_data/depth.py) (order book)
-- [`candles`](mexc/src/mexc/spot/market_data/candles.py) (klines)
-- [`trades`](mexc/src/mexc/spot/market_data/trades.py) (recent trades)
-- [`agg_trades`](mexc/src/mexc/spot/market_data/agg_trades.py)
-- [`exchange_info`](mexc/src/mexc/spot/market_data/exchange_info.py)
+### Precise Type Annotations
 
-#### Wallet
-- [`currency_info`](mexc/src/mexc/wallet/currency_info.py) (withdrawal methods)
-- [`deposit_addresses`](mexc/src/mexc/wallet/deposit_addresses.py) (deposit methods)
-- [`withdraw`](mexc/src/mexc/wallet/withdraw.py)
-- [`cancel_withdraw`](mexc/src/mexc/wallet/cancel_withdraw.py)
-- [`deposit_history`](mexc/src/mexc/wallet/deposit_history.py)
-- [`withdrawal_history`](mexc/src/mexc/wallet/withdrawal_history.py)
+Every field is precisely typed. Prices are strings (for precision), timestamps are `datetime` where applicable:
 
-#### Public Streams
-- [`candles`](mexc/src/mexc/spot/streams/market/candles.py)
-- [`trades`](mexc/src/mexc/spot/streams/market/trades.py)
+```python
+from datetime import datetime
 
-#### User Streams
-- [`my_trades`](mexc/src/mexc/spot/streams/user/my_trades.py) (trade history)
+account = await client.spot.account()
+for balance in account['balances']:
+    asset: str = balance['asset']
+    free: str = balance['free']  # String for decimal precision
+```
 
-### Futures
+### Automatic Validation
 
-#### Trading
+Response validation is **on by default** but can be disabled:
 
-Has been "under maintenance" (see the [docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#order-under-maintenance)) for years. I.e., they don't want you to trade futures via the API, sorry.
+```python
+# Validated (default) - throws ValidationError if API response changes
+account = await client.spot.account()
 
-#### Market Data
-- [`candles`](mexc/src/mexc/futures/market_data/candles.py)
-- [`funding_rate`](mexc/src/mexc/futures/market_data/funding_rate.py)
-- [`contract_info`](mexc/src/mexc/futures/market_data/contract_info.py)
+# Skip validation for maximum performance
+account = await client.spot.account(validate=False)
+```
 
-#### User Data
-- [`my_trades`](mexc/src/mexc/futures/user_data/my_trades.py)
-- [`funding_rate_history`](mexc/src/mexc/futures/user_data/funding_rate_history.py)
+### Built-in Pagination
 
-#### User Streams
-- [`my_trades`](mexc/src/mexc/futures/streams/user/my_trades.py)
+```python
+# Manual pagination
+candles = await client.spot.candles(
+    'BTCUSDT', interval='1m', limit=500
+)
+
+# Automatic pagination - yields chunks as they arrive
+async for chunk in client.spot.candles_paged(
+    'BTCUSDT', interval='1m', start=start, end=end
+):
+    for candle in chunk:
+        print(f"Candle: {candle['open']} -> {candle['close']}")
+```
+
+### WebSocket Streams
+
+Real-time market and user data via WebSockets:
+
+```python
+async with MEXC.new() as client:
+    # Spot: subscribe to candles (public stream)
+    async for candle in client.spot.streams.candles('BTCUSDT', interval='Min1'):
+        print(candle)
+    
+    # Futures: subscribe to tickers
+    async for tickers in client.futures.streams.tickers():
+        print(tickers)
+```
+
+## API Coverage
+
+This library covers **Spot** and **Futures** with market data, trading, user data, and WebSocket streams.
+
+- **Spot**: Account, candles, depth, trades, orders (place/cancel), wallet (deposits, withdrawals)
+- **Futures**: Positions, assets, funding rates, contracts, candles, depth, user streams
+
+📋 **See [API Overview](docs/api-overview.md) for complete coverage details.**
+
+## Documentation
+
+- [**Quickstart Guide**](docs/quickstart.md) - Get up and running in 5 minutes
+- [**Authentication**](docs/authentication.md) - API credentials setup
+- [**API Overview**](docs/api-overview.md) - Available endpoints and modules
+- [**Examples**](docs/examples.md) - Common use cases and patterns
+- [**Design Philosophy**](docs/design-philosophy.md) - Why we built it this way
+
+## Design Philosophy
+
+Typed MEXC follows the principles outlined in [**this blog post**](https://tribulnation.com/blog/clients):
+
+1. **Inputs shouldn't require custom imports** - Use string literals, not enums
+2. **Annotate types precisely** - `TypedDict`, strings for prices, `Literal` for enums
+3. **Avoid unnecessary complication** - Sensible defaults, optional complexity
+4. **Provide extra behavior optionally** - Pagination and validation are opt-in
+
+**Details matter. Developer experience matters.**
+
+## Examples
+
+### Portfolio Tracking
+
+```python
+async with MEXC.new() as client:
+    account = await client.spot.account()
+    
+    total_held = sum(
+        float(b['free']) + float(b['locked'])
+        for b in account['balances']
+        if float(b['free']) > 0 or float(b['locked']) > 0
+    )
+    print(f"Spot Balance: {total_held}")
+```
+
+### Trading Bot
+
+```python
+async with MEXC.new() as client:
+    # Get open orders
+    orders = await client.spot.open_orders(symbol='BTCUSDT')
+    
+    # Place limit order
+    result = await client.spot.place_order(
+        'BTCUSDT',
+        {'side': 'BUY', 'type': 'LIMIT', 'price': '50000', 'quantity': '0.001'}
+    )
+```
+
+### Funding Rate Monitor
+
+```python
+async with MEXC.new() as client:
+    rate = await client.futures.funding_rate(symbol='BTC_USDT')
+    print(f"Funding rate: {rate['fundingRate']}")
+```
+
+## Error Handling
+
+```python
+from mexc import MEXC
+from mexc.core import ApiError, ValidationError, NetworkError
+
+async with MEXC.new() as client:
+    try:
+        account = await client.spot.account()
+    except ValidationError:
+        # API response doesn't match expected schema
+        pass
+    except ApiError as e:
+        # MEXC API returned an error
+        print(f"API Error: {e}")
+    except NetworkError:
+        # Network/connection issue
+        pass
+```
+
+## Contributing
+
+This is a work in progress! Contributions are welcome. The codebase is designed to be:
+
+- **Consistent**: All endpoints follow the same patterns
+- **Type-safe**: Everything is fully typed
+- **Validated**: Pydantic models for all responses
+
+---
+
+Inspired by [this blog post](https://tribulnation.com/blog/clients) on building better API clients.
+
+Built with ❤️ by [Tribulnation](https://tribulnation.com)
