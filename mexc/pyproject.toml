@@ -3,21 +3,17 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mexc-trading-sdk"
-version = "0.1.13"
+name = "typed-mexc"
+version = "0.1.1"
 authors = [
   {name="Marcel Claramunt", email="marcel@tribulnation.com"}
 ]
-description = "The unofficial MEXC API SDK, by Tribulnation. Compatible with Trading SDK."
+description = "A fully typed, validated async client for the MEXC API."
 dependencies = [
-  "lazy-loader", "httpx", "pydantic", "protobuf==3.20", "websockets",
+  "lazy-loader", "httpx", "pydantic", "protobuf==3.20", "websockets", "orjson",
 ]
 requires-python = ">=3.10"
 readme = {file="README.md", content-type="text/markdown"}
 
 [project.urls]
 repo = "https://github.com/tribulnation/mexc.git"
-
-[project.optional-dependencies]
-sdk = ["trading-sdk"]
-orjson = ["orjson"]

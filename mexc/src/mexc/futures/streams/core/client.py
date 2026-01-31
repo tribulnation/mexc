@@ -1,8 +1,9 @@
 from typing_extensions import Any, TypedDict, Unpack
 import asyncio
 from dataclasses import dataclass, field
+import orjson
 
-from mexc.core import json, validator, ValidationMixin
+from mexc.core import validator, ValidationMixin
 from .streams_rpc import StreamsRPCSocketClient, Message
 
 MEXC_FUTURES_SOCKET_URL = 'wss://contract.mexc.com/edge'
@@ -19,7 +20,7 @@ class StreamsClient(StreamsRPCSocketClient):
   url: str = field(default=MEXC_FUTURES_SOCKET_URL, kw_only=True)
 
   async def send(self, msg):
-    await (await self.ws).send(json().dumps(msg), text=True)
+    await (await self.ws).send(orjson.dumps(msg), text=True)
 
   async def send_request(self, method: str, params=None):
     msg = {'method': method}

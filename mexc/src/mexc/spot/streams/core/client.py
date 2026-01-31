@@ -1,7 +1,8 @@
 from typing_extensions import Any, TypedDict
 from dataclasses import dataclass, field
-from mexc.core import json, validator, ValidationError
+import orjson
 
+from mexc.core import validator, ValidationError
 from .streams_rpc import StreamsRPCSocketClient, Message
 from .proto import parse_proto
 
@@ -19,7 +20,7 @@ class StreamsClient(StreamsRPCSocketClient):
   url: str = field(default=MEXC_SPOT_SOCKET_URL, kw_only=True)
 
   async def send(self, msg):
-    await (await self.ws).send(json().dumps(msg), text=True)
+    await (await self.ws).send(orjson.dumps(msg), text=True)
 
   async def send_request(self, method: str, params=None):
     msg = {'method': method}
