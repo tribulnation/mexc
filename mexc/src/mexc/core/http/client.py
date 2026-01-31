@@ -1,40 +1,36 @@
 from typing_extensions import Any, Mapping
 from dataclasses import dataclass, field
-from functools import wraps
+import asyncio
 import httpx
 
-from mexc.core import UserError, NetworkError
+from ..exc import NetworkError
 
+@dataclass
 class HttpClient:
-  async def __aenter__(self):
-    self._client = httpx.AsyncClient()
-    await self._client.__aenter__()
-    return self
-  
-  async def __aexit__(self, exc_type, exc_value, traceback):
-    if (client := getattr(self, '_client', None)) is not None:
-      await client.__aexit__(exc_type, exc_value, traceback)
-      self._client = None
+  lock: asyncio.Lock = field(default_factory=asyncio.Lock, init=False, repr=False)
+  client_future: asyncio.Future[httpx.AsyncClient|None] = field(default_factory=asyncio.Future, init=False, repr=False)
 
   @property
-  def client(self) -> httpx.AsyncClient:
-    if (client := getattr(self, '_client', None)) is None:
-      raise UserError('Client must be used as context manager: `async with ...: ...`')
-    return client
-  
-  @staticmethod
-  def with_client(fn):
-    @wraps(fn)
-    async def wrapper(self, *args, **kwargs):
-      if getattr(self, '_client', None) is None:
-        async with self:
-          return await fn(self, *args, **kwargs)
-      else:
-        return await fn(self, *args, **kwargs)
-      
-    return wrapper
+  async def client(self) -> httpx.AsyncClient:
+    if self.lock.locked() or self.client_future.done():
+      if (client := await self.client_future) is not None:
+        return client
 
-  @with_client
+    async with self.lock:
+      client = await httpx.AsyncClient().__aenter__()
+      self.client_future.set_result(client)
+      return client
+
+  async def __aenter__(self):
+    await self.client
+
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    client = await self.client
+    if not self.lock.locked():
+      async with self.lock:
+        await client.__aexit__(exc_type, exc_value, traceback)
+        self.client_future = asyncio.Future()
+
   async def request(
     self, method: str, url: str,
     *,
@@ -42,8 +38,8 @@ class HttpClient:
     data: httpx._types.RequestData | None = None,
     files: httpx._types.RequestFiles | None = None,
     json: Any | None = None,
-    params: httpx._types.QueryParamTypes | None = None,
-    headers: Mapping[str, str] | None = None,
+    params: Mapping[str, Any] | None = None,
+    headers: Mapping | None = None,
     cookies: httpx._types.CookieTypes | None = None,
     auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
     follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
@@ -51,17 +47,16 @@ class HttpClient:
     extensions: httpx._types.RequestExtensions | None = None,
   ):
     try:
-      return await self.client.request(
+      client = await self.client
+      return await client.request(
         method, url, params=params, cookies=cookies, json=json,
         content=content, data=data, files=files, auth=auth, follow_redirects=follow_redirects,
         timeout=timeout, extensions=extensions,
-        headers={
-          'User-Agent': 'trading-sdk',
-          **(headers or {})
-        }
+        headers=headers,
       )
     except httpx.HTTPError as e:
-      raise NetworkError from e
+      req = f'{method} {url}'
+      raise NetworkError(f'Error sending request to {req}', *e.args) from e
 
 @dataclass
 class HttpMixin:
@@ -82,8 +77,8 @@ class HttpMixin:
     data: httpx._types.RequestData | None = None,
     files: httpx._types.RequestFiles | None = None,
     json: Any | None = None,
-    params: httpx._types.QueryParamTypes | None = None,
-    headers: Mapping[str, str] | None = None,
+    params: Mapping[str, Any] | None = None,
+    headers: Mapping | None = None,
     cookies: httpx._types.CookieTypes | None = None,
     auth: httpx._types.AuthTypes | httpx._client.UseClientDefault | None = httpx.USE_CLIENT_DEFAULT,
     follow_redirects: bool | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,

@@ -89,10 +89,9 @@ class SocketClient(ABC):
       try:
         logger.debug('Pinging...')
         await asyncio.wait_for(self.ping(), self.timeout.total_seconds())
-      except asyncio.TimeoutError:
+      except asyncio.TimeoutError as e:
         logger.warning('Ping timeout, restarting...')
-        asyncio.create_task(self.restart())
-        break
+        raise NetworkError('Ping timeout') from e
 
   async def listener(self, ws: websockets.ClientConnection, /):
     while True:

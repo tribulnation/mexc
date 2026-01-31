@@ -29,23 +29,3 @@ def round2tick(x: Decimal, tick_size: Decimal) -> Decimal:
 def trunc2tick(x: Decimal, tick_size: Decimal) -> Decimal:
   r = (x / tick_size).to_integral_value(rounding=ROUND_FLOOR) * tick_size
   return r.normalize()
-
-def json():
-  try:
-    import orjson
-    return orjson
-  except ImportError:
-    import json
-    return json
-    
-def cacher(ttl: timedelta = timedelta(seconds=10)):
-  value = None
-  last = None
-  async def cached_fn(fn: Callable[[], Awaitable[T]]) -> T:
-    nonlocal value, last
-    if last is None or datetime.now() - last > ttl:
-      value = await fn()
-      last = datetime.now()
-    return value # type: ignore
-
-  return cached_fn
