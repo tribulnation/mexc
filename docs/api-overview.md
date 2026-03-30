@@ -1,194 +1,69 @@
 # API Overview
 
-Guide to available endpoints in Typed MEXC. Not all [MEXC API](https://mexcdevelop.github.io/apidocs/spot_v3_en/) endpoints are implemented yet.
+The MEXC client surface is split into `spot` and `futures`.
 
-## Module Structure
-
-The client is organized hierarchically, mirroring MEXC's API structure:
+The top-level entry point is:
 
 ```python
 from mexc import MEXC
 
 async with MEXC.new() as client:
-    client.spot          # Spot trading + market data + wallet + streams
-    client.futures       # Futures market data + user data + streams
+  ...
 ```
 
-Methods are mixed onto `client.spot` and `client.futures` directly (no nested sub-modules for REST).
+That gives you two main surfaces:
 
-## Spot Trading
+- `client.spot`
+- `client.futures`
 
-### Spot Market Data (Public)
+Each one also exposes `streams`.
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `time()` | Get server time | `ServerTime` |
-| `depth()` | Get order book depth | `OrderbookData` |
-| `trades()` | Get recent trades | `list` |
-| `agg_trades()` | Get aggregated trades | `list` |
-| `avg_price()` | Get average price | — |
-| `candles()` | Get candlestick data | `list[Candle]` |
-| `candles_paged()` | Get candles (paginated) | `AsyncIterable` |
-| `exchange_info()` | Get exchange info / symbols | — |
+## `spot`
 
-**Example:**
+`spot` mixes several REST groups directly onto one client:
 
-```python
-# Get candles
-candles = await client.spot.candles('BTCUSDT', interval='1m', limit=100)
+- market data: `time`, `depth`, `trades`, `agg_trades`, `avg_price`, `candles`, `exchange_info`
+- trading: `place_order`, `cancel_order`, `cancel_all_orders`
+- user data: `account`, `my_trades`, `query_order`, `open_orders`, `my_orders`
+- wallet: `currency_info`, `deposit_addresses`, `deposit_history`, `withdrawal_history`, `withdraw`, `cancel_withdraw`
 
-# Paginated candles
-async for chunk in client.spot.candles_paged(
-    'BTCUSDT', interval='1m', start=start, end=end
-):
-    for c in chunk:
-        print(c.open, c.close)
-```
+It also exposes `client.spot.streams` for:
 
-### Spot Account / User Data
+- public candles and order book streams
+- authenticated spot trade streams
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `account()` | Get account information | `AccountInfo` |
-| `my_trades()` | Get trade history | `list[Trade]` |
-| `my_trades_paged()` | Get trades (paginated) | `AsyncIterable` |
-| `query_order()` | Get order by ID | — |
-| `open_orders()` | Get open orders | `list` |
-| `my_orders()` | Get order history | `list` |
+## `futures`
 
-**Example:**
+`futures` currently covers:
 
-```python
-# Get account
-account = await client.spot.account()
+- market data: `candles`, `contract_info`, `depth`, `funding_rate`, `funding_rate_history`
+- user data: `assets`, `positions`, `my_trades`, `my_funding_history`
 
-# Get recent trades
-trades = await client.spot.my_trades('BTCUSDT', limit=50)
-```
+It also exposes `client.futures.streams` for:
 
-### Spot Trade
+- public futures ticker streams
+- authenticated futures trade streams
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `place_order()` | Place order | `NewOrder` |
-| `cancel_order()` | Cancel order | — |
-| `cancel_all_orders()` | Cancel all orders for symbol | — |
+## Current Limitation
 
-**Example:**
+The `futures.trading` surface exists structurally, but futures trading REST methods are not available in the MEXC API.
 
-```python
-# Place limit order
-result = await client.spot.place_order(
-    'BTCUSDT',
-    {'side': 'BUY', 'type': 'LIMIT', 'price': '50000', 'quantity': '0.001'}
-)
+## Public vs Authenticated Usage
 
-# Cancel
-await client.spot.cancel_order('BTCUSDT', orderId=result['orderId'])
-```
+For combined authenticated workflows, prefer `MEXC.new()`.
 
-### Spot Wallet
+For focused public-only workflows, instantiate `Spot.public()` or `Futures.public()` directly.
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `currency_info()` | Get currency info | — |
-| `deposit_addresses()` | Get deposit addresses | — |
-| `deposit_history()` | Get deposit history | — |
-| `withdrawal_history()` | Get withdrawal history | — |
-| `withdraw()` | Withdraw | — |
-| `cancel_withdraw()` | Cancel withdrawal | — |
+## Symbol Format
 
-### Spot WebSocket Streams
+Spot methods use symbols like `BTCUSDT`.
 
-**Module**: `client.spot.streams`
+Futures market-data methods generally use `BTC_USDT`.
 
-| Method | Description |
-|--------|-------------|
-| `candles(symbol, interval)` | Subscribe to klines |
-| `depth(symbol, level)` | Subscribe to order book |
-| `my_trades()` | Subscribe to user deals (via `auth_ws`) |
+Several futures private/user-data methods currently use `BTCUSDT`.
 
-## Futures
+That inconsistency comes from the upstream API surface as represented by the current client. Use each method docstring as the final source of truth.
 
-### Futures Market Data
+## Generated Reference
 
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `candles()` | Get candlestick data | `list` |
-| `candles_paged()` | Get candles (paginated) | `AsyncIterable` |
-| `contract_info()` | Get contract info | `Info` |
-| `depth()` | Get order book depth | — |
-| `funding_rate()` | Get funding rate | `Data` |
-| `funding_rate_history()` | Get funding rate history | — |
-| `funding_rate_history_paged()` | Funding history (paginated) | `AsyncIterable` |
-
-**Example:**
-
-```python
-# Contract info
-info = await client.futures.contract_info('BTC_USDT')
-
-# Funding rate
-rate = await client.futures.funding_rate(symbol='BTC_USDT')
-```
-
-### Futures User Data
-
-| Method | Description | Returns |
-|--------|-------------|---------|
-| `assets()` | Get futures account assets | `list[Asset]` |
-| `positions()` | Get positions | `list[Position]` |
-| `my_trades()` | Get trade history | — |
-| `my_funding_history()` | Get funding history | — |
-
-**Example:**
-
-```python
-# Get positions
-positions = await client.futures.positions()
-
-# Get positions for symbol
-btc_pos = await client.futures.positions(symbol='BTC_USDT')
-```
-
-### Futures Trade
-
-Not yet implemented. (Order placement, cancellation, etc.)
-
-### Futures WebSocket Streams
-
-**Module**: `client.futures.streams`
-
-| Method | Description |
-|--------|-------------|
-| `tickers()` | Subscribe to all tickers |
-| `my_trades()` | Subscribe to user deals |
-
-## Common Parameters
-
-- **symbol** (futures): Use underscore format, e.g. `'BTC_USDT'` (not `BTCUSDT`). Spot uses `'BTCUSDT'`.
-- **interval** (candles): `'1m'`, `'5m'`, `'15m'`, `'30m'`, `'60m'`, `'4h'`, `'1d'`, `'1W'`, `'1M'` (spot REST); `'Min1'`, `'Min5'`, etc. (streams)
-- **Time**: Pass `datetime` or ms; e.g. `start=datetime(2024,1,1)`, `end=datetime.now()`
-- **validate**: Default `True`; use `validate=False` per call or `MEXC.new(validate=False)` to skip Pydantic validation
-
-## Response Types
-
-Responses use `TypedDict` / `NamedTuple` with precise types (strings for amounts, `Decimal` where used, `datetime` for timestamps). Use IDE autocomplete.
-
-## Pagination
-
-Manual: use `limit` and `start`/`end`. Auto: `async for chunk in client.spot.candles_paged(...)` or `client.spot.my_trades_paged(...)`.
-
-## Errors
-
-`mexc.core`: `Error`, `NetworkError`, `ValidationError`, `UserError`, `AuthError`, `ApiError`. Catch as needed.
-
-## Advanced
-
-Custom base URL: `Spot.new(..., base_url='...')` or `Futures.new(..., base_url='...')` when constructing directly. The top-level `MEXC.new()` uses defaults.
-
-## Next Steps
-
-[Examples](examples.md) · [Design Philosophy](design-philosophy.md) · [Quickstart](quickstart.md)
-
-For parameter details, use `help(client.spot.account)` or your IDE docstrings.
+The complete endpoint reference belongs under [Reference > API](reference/api/index.md).

@@ -1,6 +1,8 @@
 # Typed MEXC
 
-> A fully typed, validated async client for the MEXC API
+[![MEXC](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTA4LjgiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCA0MTIgMTIwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSI0MTIiIGhlaWdodD0iMTIwIiBmaWxsPSIjZmZmIiAvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDQxLjIsIDM2KSBzY2FsZSgwLjgpIj4KICAgIDxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIgogICAgICBkPSJNMTQuMzQxNyA1OS4xMTM5SDY4LjI1NjJDNzEuNDYwOCA1OS4xMTM5IDczLjg5OTIgNTUuMzA0OSA3Mi4wNTQxIDUyLjUzODJMNDUuMTMwNyA1LjY5NTMxQzQzLjE2NCAyLjMwNTgxIDM5LjQzNDEgMC4wMDA5NzY1NjIgMzUuMTYxNyAwLjAwMDk3NjU2MkMzMC42ODU3IDAuMDAwOTc2NTYyIDI2Ljc1MjIgMi41NzY5NyAyNC44NTMzIDYuMzczMjFMNC4zNzI2NCA0MS44OTUyQzAuMjAxOTg0IDQ5LjMzOTggNS44ODgxOCA1OS4xMTM5IDE0LjM0MTcgNTkuMTEzOVoiCiAgICAgIGZpbGw9IiMwMDQzRkYiIC8+CiAgICA8cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIKICAgICAgZD0iTTU2Ljc5NTQgMTcuMjg4OEM1My42MDggMTEuNzk3OCA1NS41MDY4IDQuNzQ3NjIgNjEgMS41NjE0OUM2Ni40OTMyIC0xLjYyNDY0IDczLjU0NjEgMC4yNzM0OTIgNzYuNzMzNSA1Ljc2NDQ4TDk3LjU1MzUgNDEuODI4OEMxMDAuNzQxIDQ3LjMxOTggOTguODQxOSA1NC4zNjk5IDkzLjM0ODcgNTcuNTU2Qzg3Ljg1NTUgNjAuNzQyMiA4MC44MDI2IDU4Ljg0NDEgNzcuNjE1MiA1My4zNTMxTDU2Ljc5NTQgMTcuMjg4OFoiCiAgICAgIGZpbGw9IiMwMDQzRkYiIC8+CiAgICA8cGF0aAogICAgICBkPSJNMzc2LjUxOCAxNS4wMTIxQzM3OS42NjEgMTIuMDc5NyAzODUuMTc5IDEwLjY4MzMgMzkzLjIxMSAxMC42ODMzSDQxMlYwLjAwMDk3NjU2MkgzODkuNzg5QzM4NC40OCAwLjAwMDk3NjU2MiAzODAuMDEgMC41NTk1NDkgMzc2LjUxOCAxLjY3NjY2QzM3My4wOTUgMi43OTM3NyAzNzAuMDkyIDQuNTM5MjQgMzY3LjUwNyA2Ljk4MjkyQzM2NC43ODMgOS42MzYwNSAzNjIuNjE4IDEyLjkxNzUgMzYxLjA4MSAxNi44Mjc0QzM1OS41NDUgMjAuODA3MSAzNTguNzc2IDI1LjEzNiAzNTguNzc2IDI5LjY3NDJDMzU4Ljc3NiAzNC4wMDMgMzU5LjU0NSAzOC4xOTIyIDM2MS4wODEgNDIuMDMyM0MzNjIuNjE4IDQ1Ljg3MjMgMzY0Ljc4MyA0OS4yMjM2IDM2Ny41MDcgNTEuODc2OEMzNzAuMDIyIDU0LjMyMDUgMzczLjAyNSA1Ni4wNjYgMzc2LjM3OCA1Ny4xODMxQzM3OS44IDU4LjMwMDIgMzg0LjM0IDU4Ljg1ODcgMzg5Ljc4OSA1OC44NTg3SDQxMlY0OC4zMTZIMzkzLjIxMUMzODguOTUgNDguMzE2IDM4Ni4wMTcgNDguMTc2NCAzODQuMzQgNDcuODI3M0MzODIuNTk0IDQ3LjQ3ODIgMzgwLjk4OCA0Ni45MTk2IDM3OS42NjEgNDYuMDgxOEMzNzcuMDA2IDQ0LjQwNjEgMzc0Ljk4MSA0Mi4yNDE3IDM3My42NTQgMzkuNTE4N0MzNzIuMzk3IDM2Ljg2NTYgMzcxLjc2OCAzMy41MTQzIDM3MS43NjggMjkuNjA0NEMzNzEuNzY4IDIyLjkwMTggMzczLjM3NCAxNy45NDQ2IDM3Ni41MTggMTUuMDEyMVoiCiAgICAgIGZpbGw9ImJsYWNrIiAvPgogICAgPHBhdGgKICAgICAgZD0iTTIxMy4wMDUgNTguOTk5NEgyNjUuMzlWNDguNjY2MUgyMjUuNzg3VjMzLjkzNDJIMjYwLjM2MVYyNC4xNTk1SDIyNS43ODdWMTAuNDc0OUgyNjUuMzlWMC4wNzE3NzczSDIxMy4wMDVWNTguOTk5NFoiCiAgICAgIGZpbGw9ImJsYWNrIiAvPgogICAgPHBhdGgKICAgICAgZD0iTTI3OC40NTIgMC4wNzE3NzczTDMwMi45NjggMjkuNTM1NkwyNzguNDUyIDU4Ljk5OTRIMjk0LjMwN0wzMTMuNjU1IDM1LjY3OTdWMjMuNDYxM0wyOTQuMzA3IDAuMDcxNzc3M0gyNzguNDUyWiIKICAgICAgZmlsbD0iYmxhY2siIC8+CiAgICA8cGF0aAogICAgICBkPSJNMzM3Ljk2MiAwLjA3MTc3NzNMMzE4LjYxNCAyMy40NjEzVjM1LjY3OTdMMzM3Ljk2MiA1OC45OTk0SDM1My44MTdMMzI5LjIzMSAyOS41MzU2TDM1My44MTcgMC4wNzE3NzczSDMzNy45NjJaIgogICAgICBmaWxsPSJibGFjayIgLz4KICAgIDxwYXRoCiAgICAgIGQ9Ik0xNjEuNjY3IDI5LjExNjdMMTM4LjEyOSAwLjA3MTc3NzNIMTI1Ljk3NlY1OC45OTk0SDEzOC43NThWMTkuNjkxMUwxNTkuMTUzIDQ0LjEyNzhIMTY0LjExMkwxODQuNTA4IDE5LjQ4MTZWNTguOTk5NEgxOTcuMjlWMC4wNzE3NzczSDE4NS4yNzZMMTYxLjY2NyAyOS4xMTY3WiIKICAgICAgZmlsbD0iYmxhY2siIC8+CiAgPC9nPgo8L3N2Zz4=)](https://mexc.com)
+
+> A fully typed, validated async client for the MEXC spot and futures APIs
 
 **Use autocomplete instead of documentation.**
 
@@ -8,20 +10,29 @@
 from mexc import MEXC
 
 async with MEXC.new() as client:
-    account = await client.spot.account()
-    for balance in account['balances']:
-        if float(balance['free']) > 0:
-            print(f"{balance['asset']}: {balance['free']}")
+  account = await client.spot.account()
+  print(account['balances'][0]['asset'])
 ```
 
 ## Why Typed MEXC?
 
-- **🎯 Precise Types**: Literal types, not strings. Your IDE knows exactly what's valid.
-- **✅ Automatic Validation**: Pydantic-powered response validation catches API changes instantly.
-- **⚡ Async First**: Built on `httpx` for high-performance async operations.
-- **🔒 Type Safety**: Full type hints throughout. Catch errors before runtime.
-- **🎨 Beautiful DX**: No unnecessary imports, sensible defaults, optional complexity.
-- **📦 Batteries Included**: Pagination helpers, WebSocket streams for real-time data.
+- **🎯 Precise Types**: Strong typing throughout, so your editor can help before runtime does.
+- **✅ Automatic Validation**: Catch upstream API changes earlier, where they are easier to debug.
+- **⚡ Async First**: Built for concurrent, network-heavy workflows.
+- **🔒 Safer Usage**: Typed inputs and explicit errors reduce avoidable mistakes.
+- **🎨 Better DX**: Clear `spot` / `futures` routing and stream surfaces.
+- **📦 Practical Extras**: Pagination helpers and streams where they actually help.
+
+## Package Shape
+
+This package intentionally follows the way MEXC itself is split:
+
+- `MEXC.spot` for spot market data, trading, user data, wallet methods, and spot streams
+- `MEXC.futures` for futures market data, futures user data, and futures streams
+
+Current limitation:
+
+- futures trading REST methods are not available in the MEXC API
 
 ## Installation
 
@@ -29,200 +40,6 @@ async with MEXC.new() as client:
 pip install typed-mexc
 ```
 
-## Quick Start
-
-### 1. Set up API credentials
-
-```bash
-export MEXC_ACCESS_KEY="your_access_key"
-export MEXC_SECRET_KEY="your_secret_key"
-```
-
-### 2. Start trading
-
-```python
-from mexc import MEXC
-
-async with MEXC.new() as client:
-    # Get spot account info
-    account = await client.spot.account()
-    
-    # Get futures positions
-    positions = await client.futures.positions()
-    
-    # Get funding rate
-    rate = await client.futures.funding_rate(symbol='BTC_USDT')
-```
-
-## Features
-
-### No Unnecessary Imports
-
-Notice something? **You never imported `Literal` types.** Just use strings:
-
-```python
-# ❌ Other libraries
-from some_sdk import Interval
-candles = await client.get_candles(symbol='BTCUSDT', interval=Interval.M1)
-
-# ✅ Typed MEXC
-candles = await client.spot.candles(
-    'BTCUSDT', interval='1m'  # Your IDE autocompletes this!
-)
-```
-
-### Precise Type Annotations
-
-Every field is precisely typed. Prices are strings (for precision), timestamps are `datetime` where applicable:
-
-```python
-from datetime import datetime
-
-account = await client.spot.account()
-for balance in account['balances']:
-    asset: str = balance['asset']
-    free: str = balance['free']  # String for decimal precision
-```
-
-### Automatic Validation
-
-Response validation is **on by default** but can be disabled:
-
-```python
-# Validated (default) - throws ValidationError if API response changes
-account = await client.spot.account()
-
-# Skip validation for maximum performance
-account = await client.spot.account(validate=False)
-```
-
-### Built-in Pagination
-
-```python
-# Manual pagination
-candles = await client.spot.candles(
-    'BTCUSDT', interval='1m', limit=500
-)
-
-# Automatic pagination - yields chunks as they arrive
-async for chunk in client.spot.candles_paged(
-    'BTCUSDT', interval='1m', start=start, end=end
-):
-    for candle in chunk:
-        print(f"Candle: {candle['open']} -> {candle['close']}")
-```
-
-### WebSocket Streams
-
-Real-time market and user data via WebSockets:
-
-```python
-async with MEXC.new() as client:
-    # Spot: subscribe to candles (public stream)
-    async for candle in client.spot.streams.candles('BTCUSDT', interval='Min1'):
-        print(candle)
-    
-    # Futures: subscribe to tickers
-    async for tickers in client.futures.streams.tickers():
-        print(tickers)
-```
-
-## API Coverage
-
-This library covers **Spot** and **Futures** with market data, trading, user data, and WebSocket streams.
-
-- **Spot**: Account, candles, depth, trades, orders (place/cancel), wallet (deposits, withdrawals)
-- **Futures**: Positions, assets, funding rates, contracts, candles, depth, user streams
-
-📋 **See [API Overview](docs/api-overview.md) for complete coverage details.**
-
 ## Documentation
 
-- [**Quickstart Guide**](docs/quickstart.md) - Get up and running in 5 minutes
-- [**Authentication**](docs/authentication.md) - API credentials setup
-- [**API Overview**](docs/api-overview.md) - Available endpoints and modules
-- [**Examples**](docs/examples.md) - Common use cases and patterns
-- [**Design Philosophy**](docs/design-philosophy.md) - Why we built it this way
-
-## Design Philosophy
-
-Typed MEXC follows the principles outlined in [**this blog post**](https://tribulnation.com/blog/clients):
-
-1. **Inputs shouldn't require custom imports** - Use string literals, not enums
-2. **Annotate types precisely** - `TypedDict`, strings for prices, `Literal` for enums
-3. **Avoid unnecessary complication** - Sensible defaults, optional complexity
-4. **Provide extra behavior optionally** - Pagination and validation are opt-in
-
-**Details matter. Developer experience matters.**
-
-## Examples
-
-### Portfolio Tracking
-
-```python
-async with MEXC.new() as client:
-    account = await client.spot.account()
-    
-    total_held = sum(
-        float(b['free']) + float(b['locked'])
-        for b in account['balances']
-        if float(b['free']) > 0 or float(b['locked']) > 0
-    )
-    print(f"Spot Balance: {total_held}")
-```
-
-### Trading Bot
-
-```python
-async with MEXC.new() as client:
-    # Get open orders
-    orders = await client.spot.open_orders(symbol='BTCUSDT')
-    
-    # Place limit order
-    result = await client.spot.place_order(
-        'BTCUSDT',
-        {'side': 'BUY', 'type': 'LIMIT', 'price': '50000', 'quantity': '0.001'}
-    )
-```
-
-### Funding Rate Monitor
-
-```python
-async with MEXC.new() as client:
-    rate = await client.futures.funding_rate(symbol='BTC_USDT')
-    print(f"Funding rate: {rate['fundingRate']}")
-```
-
-## Error Handling
-
-```python
-from mexc import MEXC
-from mexc.core import ApiError, ValidationError, NetworkError
-
-async with MEXC.new() as client:
-    try:
-        account = await client.spot.account()
-    except ValidationError:
-        # API response doesn't match expected schema
-        pass
-    except ApiError as e:
-        # MEXC API returned an error
-        print(f"API Error: {e}")
-    except NetworkError:
-        # Network/connection issue
-        pass
-```
-
-## Contributing
-
-This is a work in progress! Contributions are welcome. The codebase is designed to be:
-
-- **Consistent**: All endpoints follow the same patterns
-- **Type-safe**: Everything is fully typed
-- **Validated**: Pydantic models for all responses
-
----
-
-Inspired by [this blog post](https://tribulnation.com/blog/clients) on building better API clients.
-
-Built with ❤️ by [Tribulnation](https://tribulnation.com)
+> [**Read the docs**](https://mexc.tribulnation.com)
