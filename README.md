@@ -1,5 +1,7 @@
 # Typed MEXC
 
+[![MEXC](https://raw.githubusercontent.com/tribulnation/mexc/refs/heads/main/media/mexc.svg)](https://www.mexc.com)
+
 > A fully typed, validated async client for the MEXC spot and futures APIs
 
 **Use autocomplete instead of documentation.**
