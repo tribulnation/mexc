@@ -8,7 +8,7 @@ Use `MEXC.new()` when you need authenticated spot and futures account data toget
 from mexc import MEXC
 
 async with MEXC.new() as client:
-  account = await client.spot.account()
+  account = await client.spot.account.info()
   print(account['balances'][0]['asset'], account['balances'][0]['free'])
 ```
 
@@ -16,12 +16,9 @@ async with MEXC.new() as client:
 
 ```python
 from mexc import MEXC
-from datetime import datetime, timedelta
 
 async with MEXC.new() as client:
-  end = datetime.now()
-  start = end - timedelta(days=7)
-  trades = await client.spot.my_trades('BTCUSDT', start=start, end=end, limit=100)
+  trades = await client.spot.account.trades(symbol='BTCUSDT', limit=100)
   print(trades[0]['id'], trades[0]['price'])
 ```
 
@@ -31,7 +28,7 @@ async with MEXC.new() as client:
 from mexc import MEXC
 
 async with MEXC.new() as client:
-  assets = await client.futures.assets()
+  assets = await client.futures.account.assets()
   print(assets[0]['currency'], assets[0]['availableBalance'])
 ```
 
@@ -41,7 +38,7 @@ async with MEXC.new() as client:
 from mexc import MEXC
 
 async with MEXC.new() as client:
-  positions = await client.futures.positions()
+  positions = await client.futures.position.open()
   print(positions[0]['symbol'], positions[0]['holdVol'])
 ```
 
@@ -49,13 +46,14 @@ async with MEXC.new() as client:
 
 ```python
 from mexc import MEXC
-from datetime import datetime, timedelta
 
 async with MEXC.new() as client:
-  end = datetime.now()
-  start = end - timedelta(days=7)
-  trades = await client.futures.my_trades(symbol='BTCUSDT', start=start, end=end, page_size=100)
-  print(trades[0]['symbol'], trades[0]['price'])
+  trades = await client.futures.trade.order_deals(
+    symbol='BTC_USDT',
+    page_num=1,
+    page_size=100,
+  )
+  print(trades['data'][0]['symbol'], trades['data'][0]['price'])
 ```
 
 ## Fetch Futures Funding History
@@ -64,6 +62,10 @@ async with MEXC.new() as client:
 from mexc import MEXC
 
 async with MEXC.new() as client:
-  history = await client.futures.my_funding_history(symbol='BTCUSDT', page_size=100)
-  print(history['resultList'][0]['funding'])
+  history = await client.futures.account.funding_records(
+    symbol='BTC_USDT',
+    page_num=1,
+    page_size=100,
+  )
+  print(history['data']['resultList'][0]['funding'])
 ```

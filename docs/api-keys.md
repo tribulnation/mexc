@@ -38,7 +38,7 @@ async with MEXC.new(
   api_key="your_access_key",
   api_secret="your_secret_key",
 ) as client:
-  account = await client.spot.account()
+  account = await client.spot.account.info()
   print(account['accountType'])
 ```
 

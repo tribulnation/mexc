@@ -1,21 +1,33 @@
 # Spot
 
-`Spot` combines market data, trading, user data, wallet methods, and `spot.streams`.
+`Spot` combines market, account, trade, wallet, sub-account, rebate, and stream methods.
 
 ## Main REST Areas
 
-- market data: `time`, `depth`, `trades`, `agg_trades`, `avg_price`, `candles`, `candles_paged`, `exchange_info`
-- trading: `place_order`, `cancel_order`, `cancel_all_orders`
-- user data: `account`, `my_trades`, `my_trades_paged`, `query_order`, `open_orders`, `my_orders`
-- wallet: `currency_info`, `deposit_addresses`, `deposit_history`, `withdrawal_history`, `withdraw`, `cancel_withdraw`
+- market: `time`, `depth`, `trades`, `agg_trades`, `avg_price`, `candles`, `exchange_info`, tickers, and ETF/default symbol endpoints
+- trade: order placement, test orders, batch orders, and cancel endpoints
+- account: account info, orders, trades, KYC, MX deduct, and symbol permissions
+- wallet: deposit, withdrawal, transfer, dust, and currency information endpoints
+- sub-accounts and rebate: master-account sub-account management and affiliate/rebate endpoints
 
 ## Streams
 
-`spot.streams` currently includes:
+`spot.streams.market` includes:
 
+- `book_ticker`
+- `book_ticker_batch`
 - `candles`
 - `depth`
-- `my_trades`
+- `depth_updates`
+- `trades`
+
+`spot.streams.user` includes:
+
+- `account`
+- `orders`
+- `trades`
+
+`spot.streams.listen_keys` includes listen-key `create`, `keepalive`, and `close` helpers for direct listen-key management.
 
 ## Constructor
 

@@ -8,9 +8,7 @@ Copyright &copy; 2026 Tribulnation
 """
 nav = [
   { "Intro" = "index.md" },
-  { "Getting Started" = "getting-started.md" },
   { "API Keys Setup" = "api-keys.md" },
-  { "API Overview" = "api-overview.md" },
   { "How To" = [
     { "Overview" = "how-to/index.md" },
     "how-to/fetch-market-data.md",
@@ -23,6 +21,7 @@ nav = [
     "reference/async-usage.md",
     "reference/error-handling.md",
     "reference/env-vars.md",
+    "reference/timestamps.md",
     { "API" = [
       { "Overview" = "reference/api/index.md" },
       "reference/api/mexc.md",

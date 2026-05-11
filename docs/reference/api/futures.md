@@ -4,19 +4,39 @@
 
 ## Main REST Areas
 
-- market data: `candles`, `candles_paged`, `contract_info`, `depth`, `funding_rate`, `funding_rate_history`, `funding_rate_history_paged`
-- user data: `assets`, `positions`, `my_trades`, `my_funding_history`
+- market data: `contract_info`, `depth`, `ticker`, `funding_rate`, `funding_rate_history`, `funding_rate_history_paged`, and related public history endpoints
+- account: `assets`, `asset`, `transfer_record`, `funding_records`, `tiered_fee_rate`
+- position: `open`, `history`, `leverage`, `risk_limit`, and position mutation endpoints
+- trade: order reads, order placement/cancel endpoints, trigger orders, stop orders, and deal history
 
 ## Streams
 
-`futures.streams` currently includes:
+`futures.streams.market` includes:
 
-- `tickers`
-- `my_trades`
+- `all_tickers` / `tickers`
+- `ticker`
+- `deal`
+- `depth`
+- `depth_full`
+- `candles`
+- `fair_price`
+- `funding_rate`
+- `index_price`
 
-## Current Limitation
+`futures.streams.user` includes:
 
-`futures.trading` is present structurally, but futures trading REST methods are not available in the MEXC API.
+- `login`
+- `adl_level`
+- `asset`
+- `order`
+- `position`
+- `position_mode`
+- `risk_limit`
+- `trades`
+
+## Safety
+
+Some futures write endpoints are effectful or documented upstream as under maintenance. They are available for typed usage and mock-tested from recorded examples, but use live trading credentials carefully.
 
 ## Constructor
 

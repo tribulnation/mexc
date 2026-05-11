@@ -1,6 +1,6 @@
 # Async Usage
 
-MEXC supports both a top-level combined client and focused subsystem clients.
+MEXC exposes a top-level client with spot and futures groups.
 
 ## Combined Client
 
@@ -10,28 +10,23 @@ Use `MEXC.new()` when you want spot and futures access in the same flow.
 from mexc import MEXC
 
 async with MEXC.new() as client:
-  account = await client.spot.account()
-  positions = await client.futures.positions()
+  account = await client.spot.account.info()
+  positions = await client.futures.position.open()
 ```
 
 This is the recommended default style for authenticated workflows.
 
-## Spot-Only Or Futures-Only Usage
+## Public Usage
 
-Use `Spot.public()`, `Futures.public()`, or their `new(...)` constructors when you only need one side of the API.
-
-```python
-from mexc.spot import Spot
-
-async with Spot.public() as spot:
-  depth = await spot.depth('BTCUSDT', limit=5)
-```
+Use `MEXC.public()` when you only need public market data and public streams.
 
 ```python
-from mexc.futures import Futures
+from mexc import MEXC
 
-async with Futures.public() as futures:
-  rate = await futures.funding_rate('BTC_USDT')
+async with MEXC.public() as client:
+  depth = await client.spot.market.depth(symbol='BTCUSDT', limit=5)
+  rate = await client.futures.market.funding_rate('BTC_USDT')
+  print(depth['bids'][0], rate['data']['fundingRate'])
 ```
 
 ## Streams
@@ -40,7 +35,7 @@ Both `spot` and `futures` expose `streams`, and the parent clients manage their 
 
 ```python
 async with MEXC.new() as client:
-  stream = await client.spot.streams.my_trades()
+  stream = await client.spot.streams.user.trades()
   async for trade in stream:
     print(trade)
 ```

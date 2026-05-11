@@ -19,7 +19,7 @@ from mexc.core import ApiError, AuthError, NetworkError, ValidationError
 
 async with MEXC.new() as client:
   try:
-    positions = await client.futures.positions()
+    positions = await client.futures.position.open()
   except ValidationError:
     ...
   except AuthError:
