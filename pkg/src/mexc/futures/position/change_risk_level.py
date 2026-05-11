@@ -1,0 +1,45 @@
+from typing_extensions import NotRequired, TypedDict
+from mexc.futures.core import AuthFuturesMixin
+from mexc.core import validator
+
+class Body(TypedDict):
+  """Change futures risk level request body."""
+  symbol: str
+  """Contract symbol whose risk level would be changed."""
+  level: int
+  """Target risk limit level."""
+
+class Response200(TypedDict):
+  """Disabled risk-level change response envelope."""
+  success: bool
+  """Whether the API request succeeded."""
+  code: NotRequired[int]
+  """MEXC response code; zero indicates success when present."""
+  message: NotRequired[str]
+  """Error or status message when present."""
+  data: NotRequired[None]
+  """No success data is returned by the disabled endpoint."""
+
+adapter = validator(Response200)
+
+class ChangeRiskLevel(AuthFuturesMixin):
+  async def change_risk_level(
+    self,
+    body: Body,
+    *,
+    validate: bool | None = None
+  ) -> Response200:
+    """Disabled risk-level switch endpoint documented by MEXC; calls return error code 8817 according to the official docs.
+
+    Args:
+      body: Request body.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-the-risk-level"""
+    params = {}
+    r = await self.signed_post('/api/v1/private/account/change_risk_level', json=body)
+    return self.envelope_output(r.text, adapter, validate)

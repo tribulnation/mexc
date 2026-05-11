@@ -1,27 +1,41 @@
-from mexc.core import timestamp as ts, validator, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
+from mexc.core import Timestamp, timestamp as ts, validator
 
-class WithdrawId(TypedDict):
-  id: str
+class Response200(TypedDict):
+  """Withdrawal cancellation response."""
+  id: NotRequired[str | None]
+  """Canceled withdrawal id."""
 
-Response: type[WithdrawId | ErrorResponse] = WithdrawId | ErrorResponse # type: ignore
-validate_response = validator(Response)
+Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+adapter = validator(Response)
 
 class CancelWithdraw(AuthSpotMixin):
   async def cancel_withdraw(
-    self, id: str, *,
-    timestamp: int | None = None, validate: bool | None = None,
-  ) -> WithdrawId:
-    """Cancel a withdrawal, given its ID.
-    
-    - `id`: The ID of the withdrawal to cancel. Will be returned by the `withdraw` endpoint.
-    - `timestamp`: The timestamp for the request, in milliseconds (default: now).
-    - `validate`: Whether to validate the response against the expected schema (default: True).
+    self,
+    *,
+    id: str,
+    timestamp: Timestamp | None = None,
+    validate: bool | None = None
+  ) -> Response200:
+    """Cancels a pending withdrawal by withdrawal id.
 
-    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw)
-    """
-    params = {
-      'id': id, 'timestamp': timestamp or ts.now(),
-    }
+    Args:
+      id: Withdrawal id to cancel.
+      timestamp: Signed request timestamp in milliseconds.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw"""
+    if timestamp is None:
+      timestamp = ts.now()
+    params = {}
+    if id is not None:
+      params['id'] = id
+    if timestamp is not None:
+      params['timestamp'] = ts.dump_ms(timestamp)
     r = await self.signed_request('DELETE', '/api/v3/capital/withdraw', params=params)
-    return self.output(r.text, validate_response, validate)
+    return self.output(r.text, adapter, validate)

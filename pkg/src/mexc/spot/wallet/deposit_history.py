@@ -1,75 +1,78 @@
-from typing_extensions import NotRequired
-from enum import Enum
 from datetime import datetime
-
-from mexc.core import timestamp as ts, validator, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
+from mexc.core import Timestamp, timestamp as ts, validator
 
-class TransferType(Enum):
-  outside = 0
-  inside = 1
+class Item(TypedDict):
+  """Deposit record."""
+  amount: NotRequired[str | None]
+  """Deposit amount."""
+  coin: NotRequired[str | None]
+  """Asset deposited."""
+  network: NotRequired[str | None]
+  """Deposit network."""
+  status: NotRequired[int | None]
+  """Deposit status code."""
+  address: NotRequired[str | None]
+  """Deposit address."""
+  addressTag: NotRequired[str | None]
+  """Deposit address tag."""
+  txId: NotRequired[str | None]
+  """Blockchain transaction id."""
+  insertTime: NotRequired[datetime | None]
+  """Deposit insert time."""
+  unlockConfirm: NotRequired[str | None]
+  """Required confirmations to unlock."""
+  confirmTimes: NotRequired[str | None]
+  """Observed confirmations."""
+  memo: NotRequired[str | None]
+  """Deposit memo."""
 
-class Status(Enum):
-  small = 1
-  time_delay = 2
-  large_delay = 3
-  pending = 4
-  success = 5
-  auditing = 6
-  rejected = 7
-  refund = 8
-  pre_success = 9
-  invalid = 10
-  restricted = 11
-  completed = 12
-
-class Deposit(TypedDict):
-  txId: str
-  amount: str
-  coin: str
-  network: str
-  netWork: str
-  status: Status
-  address: str
-  insertTime: int
-  confirmTimes: str
-  memo: NotRequired[str|None]
-
-Response: type[list[Deposit] | ErrorResponse] = list[Deposit] | ErrorResponse # type: ignore
-validate_response = validator(Response)
+Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+adapter = validator(Response)
 
 class DepositHistory(AuthSpotMixin):
   async def deposit_history(
-    self, *, coin: str | None = None,
-    status: Status | None = None,
-    start: datetime | None = None,
-    end: datetime | None = None,
+    self,
+    *,
+    coin: str | None = None,
+    status: str | None = None,
+    start_time: Timestamp | None = None,
+    end_time: Timestamp | None = None,
     limit: int | None = None,
-    timestamp: int | None = None,
-    validate: bool | None = None,
-  ) -> list[Deposit]:
-    """Query deposit history.
-    
-    - `coin`: The coin to query the deposit history for, e.g. `USDT`. (if not given, returns all coins)
-    - `status`: The status of the deposit to query. (if not given, returns all statuses)
-    - `start`: The start time to query. If given, only deposits after this time will be returned.
-    - `end`: The end time to query. If given, only deposits before this time will be returned.
-    - `limit`: The maximum number of deposits to return (default: 1000, max: 1000).
-    - `timestamp`: The timestamp for the request, in milliseconds (default: now).
-    - `validate`: Whether to validate the response against the expected schema (default: True).
+    timestamp: Timestamp | None = None,
+    validate: bool | None = None
+  ) -> list[Item]:
+    """Returns deposit records for the signed account, optionally filtered by coin, status, and time window.
 
-    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network)
-    """
-    params: dict = {'timestamp': timestamp or ts.now()}
+    Args:
+      coin: Asset filter.
+      status: Deposit status filter.
+      start_time: Start time in milliseconds; defaults to seven days ago.
+      end_time: End time in milliseconds; defaults to current time.
+      limit: Maximum records to return; max 1000.
+      timestamp: Signed request timestamp in milliseconds.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network"""
+    if timestamp is None:
+      timestamp = ts.now()
+    params = {}
     if coin is not None:
       params['coin'] = coin
     if status is not None:
-      params['status'] = status.value
-    if start is not None:
-      params['startTime'] = ts.dump(start)
-    if end is not None:
-      params['endTime'] = ts.dump(end)
+      params['status'] = status
+    if start_time is not None:
+      params['startTime'] = ts.dump_ms(start_time)
+    if end_time is not None:
+      params['endTime'] = ts.dump_ms(end_time)
     if limit is not None:
       params['limit'] = limit
+    if timestamp is not None:
+      params['timestamp'] = ts.dump_ms(timestamp)
     r = await self.signed_request('GET', '/api/v3/capital/deposit/hisrec', params=params)
-    return self.output(r.text, validate_response, validate)
+    return self.output(r.text, adapter, validate)

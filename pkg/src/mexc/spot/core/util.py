@@ -14,7 +14,7 @@ class ErrorResponse(TypedDict):
   code: int
 
 def is_error_response(r) -> TypeGuard[ErrorResponse]:
-  return isinstance(r, Mapping) and 'msg' in r and 'code' in r
+  return isinstance(r, Mapping) and 'msg' in r and 'code' in r and r['code'] != 0
 
 def raise_on_error(r: T | ErrorResponse) -> T:
   from mexc.core import ApiError

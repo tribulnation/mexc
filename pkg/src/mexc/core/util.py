@@ -1,10 +1,11 @@
-from typing_extensions import TypeVar, Mapping, Callable, Awaitable
+from typing_extensions import TypeAlias, TypeVar, Mapping, Callable, Awaitable
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_DOWN, ROUND_FLOOR
 
 T = TypeVar('T')
 D = TypeVar('D', bound=Mapping)
+Timestamp: TypeAlias = datetime | int
 
 def filter_kwargs(Params: type[D], params: D | dict) -> D:
   return { k: params[k] for k in getattr(Params, '__annotations__', {}) if k in params } # type: ignore
@@ -17,6 +18,18 @@ class timestamp:
   @staticmethod
   def dump(dt: datetime) -> int:
     return int(1e3*dt.timestamp())
+
+  @staticmethod
+  def dump_ms(value: Timestamp) -> int:
+    if isinstance(value, datetime):
+      return int(1e3*value.timestamp())
+    return value
+
+  @staticmethod
+  def dump_s(value: Timestamp) -> int:
+    if isinstance(value, datetime):
+      return int(value.timestamp())
+    return value
   
   @staticmethod
   def now() -> int:

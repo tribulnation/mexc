@@ -7,7 +7,30 @@ from .market import MarketStreams
 from .user import UserStreams
 
 @_dataclass
-class Streams(MarketStreams, UserStreams):
+class ListenKeys:
+  auth_ws: UserStreamsClient
+
+  def __init__(self, auth_ws: UserStreamsClient):
+    self.auth_ws = auth_ws
+
+  async def create(self) -> str:
+    """Create a spot user-stream listen key."""
+    return await self.auth_ws.listen_key()
+
+  async def keepalive(self, key: str):
+    """Keep a spot user-stream listen key alive."""
+    return await self.auth_ws.refresh_key(key)
+
+  async def close(self, key: str):
+    """Close a spot user-stream listen key."""
+    return await self.auth_ws.delete_key(key)
+
+
+@_dataclass
+class Streams:
+  market: MarketStreams
+  user: UserStreams
+  listen_keys: ListenKeys
 
   def __init__(
     self, *,
@@ -17,6 +40,9 @@ class Streams(MarketStreams, UserStreams):
   ):
     self.ws = StreamsClient(url=ws_url)
     self.auth_ws = UserStreamsClient(auth_http=auth_http, api_url=api_url, ws_url=ws_url)
+    self.market = MarketStreams(ws=self.ws)
+    self.user = UserStreams(self.auth_ws)
+    self.listen_keys = ListenKeys(self.auth_ws)
 
   @classmethod
   def new(
@@ -47,4 +73,3 @@ class Streams(MarketStreams, UserStreams):
       tasks.append(self.auth_ws.__aexit__(exc_type, exc_value, traceback))
     if tasks:
       await asyncio.gather(*tasks)
-  

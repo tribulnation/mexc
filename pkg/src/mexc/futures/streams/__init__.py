@@ -7,10 +7,10 @@ from .user import UserStreams
 from .market import MarketStreams
 
 @dataclass
-class Streams(
-  UserStreams,
-  MarketStreams,
-):
+class Streams:
+  market: MarketStreams
+  user: UserStreams
+
   @classmethod
   def new(
     cls, api_key: str | None = None, api_secret: str | None = None, *,
@@ -24,6 +24,17 @@ class Streams(
     ws = StreamsClient(url=url)
     auth_ws = AuthedStreamsClient(api_key=api_key, api_secret=api_secret, url=url)
     return cls(auth_ws=auth_ws, ws=ws, default_validate=default_validate)
+
+  def __init__(
+    self, *,
+    auth_ws: AuthedStreamsClient,
+    ws: StreamsClient,
+    default_validate: bool = True,
+  ):
+    self.auth_ws = auth_ws
+    self.ws = ws
+    self.market = MarketStreams(ws, default_validate=default_validate)
+    self.user = UserStreams(auth_ws, default_validate=default_validate)
 
   async def __aenter__(self):
     await self.auth_ws.__aenter__()

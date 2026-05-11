@@ -1,6 +1,6 @@
 from typing_extensions import Any, TypedDict
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import datetime, timedelta
 import asyncio
 import orjson
 
@@ -12,7 +12,7 @@ MEXC_FUTURES_SOCKET_URL = 'wss://contract.mexc.com/edge'
 class Reply(TypedDict):
   channel: str
   data: Any
-  ts: int
+  ts: datetime
 
 validate_reply = validator(Reply)
 
@@ -50,6 +50,8 @@ class StreamsClient(Streams[Any, Any, Reply, Reply]):
     r = validate_reply(msg)
     if r['channel'].startswith('push.'):
       channel = r['channel'].removeprefix('push.')
+      if channel == 'depth' and channel not in self.subscriptions and 'depth.full' in self.subscriptions:
+        channel = 'depth.full'
       return {'channel': channel, 'notification': r['data']}
     else:
       self.replies.put_nowait(r)

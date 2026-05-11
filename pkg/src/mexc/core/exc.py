@@ -1,24 +1,24 @@
-class Error(Exception):
-  def __str__(self):
-    args = self.args[0] if len(self.args) == 1 else ', '.join(self.args)
-    return f'{self.__class__.__name__}({args})'
+from typed_core.exceptions import (
+  ApiError,
+  AuthError,
+  BadRequest,
+  Error,
+  LogicError,
+  NetworkError,
+  RateLimited,
+  ValidationError,
+)
 
-class NetworkError(Error):
-  def __str__(self):
-    return super().__str__()
+UserError = LogicError
 
-class ValidationError(Error):
-  def __str__(self):
-    return super().__str__()
-
-class UserError(Error):
-  def __str__(self):
-    return super().__str__()
-
-class AuthError(Error):
-  def __str__(self):
-    return super().__str__()
-
-class ApiError(Error):
-  def __str__(self):
-    return super().__str__()
+__all__ = [
+  'ApiError',
+  'AuthError',
+  'BadRequest',
+  'Error',
+  'LogicError',
+  'NetworkError',
+  'RateLimited',
+  'UserError',
+  'ValidationError',
+]

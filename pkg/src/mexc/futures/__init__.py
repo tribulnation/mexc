@@ -1,2 +1,92 @@
-import lazy_loader as lazy
-__getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)
+from dataclasses import dataclass
+import asyncio
+import os
+
+from mexc.futures.core import MEXC_FUTURES_API_BASE, AuthHttpClient
+from .streams import Streams
+from .streams.core import MEXC_FUTURES_SOCKET_URL
+from .account import Account
+from .market import Market
+from .position import Position
+from .trade import Trade
+
+@dataclass
+class Futures:
+  account: Account
+  market: Market
+  position: Position
+  trade: Trade
+  streams: Streams
+
+  def __init__(
+    self, *,
+    api_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
+    auth_http: AuthHttpClient,
+    default_validate: bool = True,
+  ):
+    self.base_url = api_url
+    self.default_validate = default_validate
+    self.http = self.auth_http = auth_http
+    self.account = Account(
+      base_url=api_url,
+      auth_http=auth_http,
+      default_validate=default_validate,
+    )
+    self.market = Market(
+      base_url=api_url,
+      http=auth_http,
+      default_validate=default_validate,
+    )
+    self.position = Position(
+      base_url=api_url,
+      auth_http=auth_http,
+      default_validate=default_validate,
+    )
+    self.trade = Trade(
+      base_url=api_url,
+      auth_http=auth_http,
+      default_validate=default_validate,
+    )
+    self.streams = Streams.new(
+      auth_http.api_key, auth_http.api_secret,
+      url=ws_url,
+      default_validate=default_validate,
+    )
+
+  @classmethod
+  def new(
+    cls, api_key: str | None = None, api_secret: str | None = None, *,
+    base_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
+    default_validate: bool = True,
+  ):
+    if api_key is None:
+      api_key = os.environ['MEXC_ACCESS_KEY']
+    if api_secret is None:
+      api_secret = os.environ['MEXC_SECRET_KEY']
+    auth_http = AuthHttpClient(api_key=api_key, api_secret=api_secret)
+    return cls(api_url=base_url, ws_url=ws_url, auth_http=auth_http, default_validate=default_validate)
+
+  @classmethod
+  def public(
+    cls, *,
+    base_url: str = MEXC_FUTURES_API_BASE,
+    ws_url: str = MEXC_FUTURES_SOCKET_URL,
+    default_validate: bool = True,
+  ):
+    auth_http = AuthHttpClient(api_key='', api_secret='', public=True)
+    return cls(api_url=base_url, ws_url=ws_url, auth_http=auth_http, default_validate=default_validate)
+
+  async def __aenter__(self):
+    await asyncio.gather(
+      self.auth_http.__aenter__(),
+      self.streams.__aenter__(),
+    )
+    return self
+
+  async def __aexit__(self, exc_type, exc_value, traceback):
+    await asyncio.gather(
+      self.auth_http.__aexit__(exc_type, exc_value, traceback),
+      self.streams.__aexit__(exc_type, exc_value, traceback),
+    )

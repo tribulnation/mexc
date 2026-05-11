@@ -1,0 +1,57 @@
+from typing_extensions import NotRequired, TypedDict
+from mexc.spot.core import AuthSpotMixin, ErrorResponse
+from mexc.core import Timestamp, timestamp as ts, validator
+
+class Body(TypedDict):
+  subAccount: NotRequired[str]
+  """Sub-account name whose API key should be deleted."""
+  apiKey: NotRequired[str]
+  """API public key to delete."""
+
+class Response200(TypedDict):
+  """Deleted sub-account API key result."""
+  subAccount: NotRequired[str | None]
+  """Sub-account name."""
+
+Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+adapter = validator(Response)
+
+class DeleteApiKey(AuthSpotMixin):
+  async def delete_api_key(
+    self,
+    body: Body,
+    *,
+    sub_account: str,
+    api_key: str,
+    recv_window: int | None = None,
+    timestamp: Timestamp | None = None,
+    validate: bool | None = None
+  ) -> Response200:
+    """Deletes an API key from a sub-account under the signed master account.
+
+    Args:
+      body: Request body.
+      sub_account: Sub-account name whose API key should be deleted.
+      api_key: API public key to delete.
+      recv_window: Optional signed-request validity window in milliseconds.
+      timestamp: Signed request timestamp in milliseconds.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account"""
+    if timestamp is None:
+      timestamp = ts.now()
+    params = {}
+    if sub_account is not None:
+      params['subAccount'] = sub_account
+    if api_key is not None:
+      params['apiKey'] = api_key
+    if recv_window is not None:
+      params['recvWindow'] = recv_window
+    if timestamp is not None:
+      params['timestamp'] = ts.dump_ms(timestamp)
+    r = await self.signed_request('DELETE', '/api/v3/sub-account/apiKey', params=params)
+    return self.output(r.text, adapter, validate)

@@ -4,6 +4,7 @@ from urllib.parse import urlencode, quote
 import hashlib
 import hmac
 import httpx
+from mexc.core import AuthError
 from mexc.core.http import HttpClient, HttpMixin
 
 def sign(payload: str, *, secret: str) -> str:
@@ -24,13 +25,19 @@ def signed_query(params: Mapping, *, secret: str) -> str:
 class AuthHttpClient(HttpClient):
   api_key: str
   api_secret: str = field(repr=False)
+  public: bool = field(default=False, repr=False)
 
   @property
   def headers(self) -> dict:
     return { 'X-MEXC-APIKEY': self.api_key }
 
   def signed_query(self, params: Mapping) -> str:
+    self.require_auth()
     return signed_query(params, secret=self.api_secret)
+
+  def require_auth(self):
+    if self.public or not self.api_key or not self.api_secret:
+      raise AuthError('MEXC API credentials are required for authenticated endpoints.')
   
   async def authed_request(
     self, method: str, path: str,
@@ -47,6 +54,7 @@ class AuthHttpClient(HttpClient):
     timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
     extensions: httpx._types.RequestExtensions | None = None,
   ):
+    self.require_auth()
     headers = {**self.headers, **(headers or {})}
     return await self.request(
       method, path, headers=headers, params=params, json=json,
@@ -70,6 +78,7 @@ class AuthHttpClient(HttpClient):
     timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
     extensions: httpx._types.RequestExtensions | None = None,
   ):
+    self.require_auth()
     path = path + '?' + self.signed_query(params or {})
     return await self.authed_request(
       method, path, headers=headers, json=json,

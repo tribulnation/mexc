@@ -1,47 +1,69 @@
-from mexc.core import timestamp as ts, validator, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
+from mexc.core import Timestamp, timestamp as ts, validator
 
-class WithdrawId(TypedDict):
-  id: str
+class Response200(TypedDict):
+  """Withdrawal creation response."""
+  id: NotRequired[str | None]
+  """Withdrawal id."""
 
-Response: type[WithdrawId | ErrorResponse] = WithdrawId | ErrorResponse # type: ignore
-validate_response = validator(Response)
+Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+adapter = validator(Response)
 
 class Withdraw(AuthSpotMixin):
   async def withdraw(
-    self, coin: str, *,
-    amount: str, address: str,
-    network: str | None = None,
+    self,
+    *,
+    coin: str,
+    withdraw_order_id: str | None = None,
+    net_work: str | None = None,
     contract_address: str | None = None,
+    address: str,
     memo: str | None = None,
+    amount: str,
     remark: str | None = None,
-    timestamp: int | None = None, validate: bool | None = None,
-  ) -> WithdrawId:
-    """Withdraw assets from your account.
-    
-    - `coin`: The coin to withdraw, e.g. `USDT`.
-    - `amount`: The amount to withdraw.
-    - `address`: The address to withdraw to.
-    - `network`: The network to withdraw to, e.g. `TRX`. You can retrieve the network from the `deposit_addresses` endpoint, using the `netWork` field.
-    - `contract_address`: The contract address to withdraw to. You can use it to make sure it's the token you expect.
-    - `memo`: The memo to withdraw to. Only needed for some networks.
-    - `remark`: Text to add to the withdrawal record.
-    - `timestamp`: The timestamp for the request, in milliseconds (default: now).
-    - `validate`: Whether to validate the response against the expected schema (default: True).
+    timestamp: Timestamp | None = None,
+    validate: bool | None = None
+  ) -> Response200:
+    """Submits a live asset withdrawal request from the signed spot account.
 
-    > [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-new)
-    """
-    params = {
-      'coin': coin, 'timestamp': timestamp or ts.now(),
-      'amount': amount, 'address': address,
-    }
-    if network is not None:
-      params['netWork'] = network
+    Args:
+      coin: Asset to withdraw.
+      withdraw_order_id: Optional client withdrawal order id.
+      net_work: Withdrawal network identifier from currency configuration.
+      contract_address: Token contract address, when required.
+      address: Destination withdrawal address.
+      memo: Destination memo or tag when required by the network.
+      amount: Withdrawal amount.
+      remark: Optional withdrawal remark.
+      timestamp: Signed request timestamp in milliseconds.
+      validate: Validation override for this request.
+
+    Returns:
+      The validated endpoint response.
+
+    References:
+      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-new"""
+    if timestamp is None:
+      timestamp = ts.now()
+    params = {}
+    if coin is not None:
+      params['coin'] = coin
+    if withdraw_order_id is not None:
+      params['withdrawOrderId'] = withdraw_order_id
+    if net_work is not None:
+      params['netWork'] = net_work
     if contract_address is not None:
       params['contractAddress'] = contract_address
+    if address is not None:
+      params['address'] = address
     if memo is not None:
       params['memo'] = memo
+    if amount is not None:
+      params['amount'] = amount
     if remark is not None:
       params['remark'] = remark
+    if timestamp is not None:
+      params['timestamp'] = ts.dump_ms(timestamp)
     r = await self.signed_request('POST', '/api/v3/capital/withdraw', params=params)
-    return self.output(r.text, validate_response, validate)
+    return self.output(r.text, adapter, validate)

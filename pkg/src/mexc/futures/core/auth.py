@@ -7,7 +7,7 @@ import hmac
 import os
 import httpx
 
-from mexc.core import HttpClient, HttpMixin, timestamp
+from mexc.core import AuthError, HttpClient, HttpMixin, timestamp
 
 def sign(payload: str, *, secret: str) -> str:
   return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
@@ -29,6 +29,11 @@ def query_string(params: Mapping) -> str:
 class AuthHttpClient(HttpClient):
   api_key: str
   api_secret: str = field(repr=False)
+  public: bool = field(default=False, repr=False)
+
+  def require_auth(self):
+    if self.public or not self.api_key or not self.api_secret:
+      raise AuthError('MEXC API credentials are required for authenticated endpoints.')
 
   def headers(self, *, timestamp: int, signature: str) -> dict:
     return {
@@ -48,6 +53,7 @@ class AuthHttpClient(HttpClient):
     extensions: httpx._types.RequestExtensions | None = None,
   ):
     """Non-POST request"""
+    self.require_auth()
     ts = timestamp.now()
     query = query_string(params) if params else ''
     path = path + '?' + query
@@ -70,6 +76,7 @@ class AuthHttpClient(HttpClient):
     timeout: httpx._types.TimeoutTypes | httpx._client.UseClientDefault = httpx.USE_CLIENT_DEFAULT,
     extensions: httpx._types.RequestExtensions | None = None,
   ):
+    self.require_auth()
     ts = timestamp.now()
     body = jsonlib.dumps(json) if json else ''
     headers = dict(headers or {})

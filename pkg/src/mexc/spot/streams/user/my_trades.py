@@ -6,7 +6,7 @@ from mexc.spot.streams.core.proto import PrivateDealsV3Api
 
 @dataclass
 class MyTrades(UserStreamsMixin):
-  async def my_trades(self) -> Stream[PrivateDealsV3Api, Reply, Reply]:
+  async def trades(self) -> Stream[PrivateDealsV3Api, Reply, Reply]:
     """Subscribe to your trades.
     
     > [MEXC API docs](https://www.mexc.com/api-docs/spot-v3/websocket-user-data-streams#spot-account-deals)
