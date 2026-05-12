@@ -1,17 +1,17 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class SelfSymbolsResponse(TypedDict):
   """Default symbol wrapper."""
-  code: NotRequired[int]
+  code: int
   """Response code."""
-  data: NotRequired[list[str]]
+  data: list[str]
   """Enabled symbols."""
-  msg: NotRequired[str | None]
+  msg: str | None
   """Message."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[SelfSymbolsResponse | ErrorResponse] = SelfSymbolsResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class SelfSymbols(AuthSpotMixin):
@@ -21,7 +21,7 @@ class SelfSymbols(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> SelfSymbolsResponse:
     """Returns the symbols enabled for the signed API key.
 
     Args:
@@ -33,7 +33,8 @@ class SelfSymbols(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-api-default-symbol"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-api-default-symbol)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

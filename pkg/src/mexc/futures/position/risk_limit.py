@@ -2,12 +2,12 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class RiskLimitItem(TypedDict):
   """Risk limit record."""
   symbol: NotRequired[str]
   """Contract symbol."""
   positionType: NotRequired[int]
-  """Position side: Item1 long, 2 short."""
+  """Position side: 1 long, 2 short."""
   level: NotRequired[int]
   """Current risk level."""
   maxVol: NotRequired[float]
@@ -19,7 +19,7 @@ class Item(TypedDict):
   imr: NotRequired[float]
   """Initial margin rate."""
 
-class Response200(TypedDict):
+class RiskLimitResponse(TypedDict):
   """Get futures account risk limits response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -27,10 +27,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: dict[str, list[Item]]
+  data: NotRequired[dict[str, list[RiskLimitItem]]]
   """Risk limits keyed by contract symbol."""
 
-adapter = validator(Response200)
+adapter = validator(RiskLimitResponse)
 
 class RiskLimit(AuthFuturesMixin):
   async def risk_limit(
@@ -38,7 +38,7 @@ class RiskLimit(AuthFuturesMixin):
     *,
     symbol: str | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> RiskLimitResponse:
     """Returns current risk-limit levels for the signed futures account, optionally filtered by symbol.
 
     Args:
@@ -49,7 +49,8 @@ class RiskLimit(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-risk-limits"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-risk-limits)
+    """
     headers = {}
     params = {}
     if symbol is not None:

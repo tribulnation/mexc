@@ -1,27 +1,27 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class ApiKeyItem(TypedDict):
   """Sub-account API key record."""
-  note: NotRequired[str | None]
+  note: str | None
   """API key note."""
-  apiKey: NotRequired[str | None]
+  apiKey: str | None
   """API public key."""
-  permissions: NotRequired[str | None]
+  permissions: str | None
   """API key permissions."""
-  ip: NotRequired[str | None]
+  ip: str | None
   """API key IP allowlist."""
-  creatTime: NotRequired[datetime | None]
+  creatTime: datetime | None
   """API key creation time as spelled by the upstream docs."""
 
-class Response200(TypedDict):
+class ApiKeyResponse(TypedDict):
   """Sub-account API key wrapper."""
-  subAccount: NotRequired[list[Item]]
+  subAccount: list[ApiKeyItem]
   """API keys for the requested sub-account."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[ApiKeyResponse | ErrorResponse] = ApiKeyResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class ApiKey(AuthSpotMixin):
@@ -32,7 +32,7 @@ class ApiKey(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> ApiKeyResponse:
     """Returns API keys configured for a sub-account under the signed master account.
 
     Args:
@@ -45,7 +45,8 @@ class ApiKey(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-apikey-of-a-sub-account-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-apikey-of-a-sub-account-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

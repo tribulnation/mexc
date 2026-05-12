@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class WithdrawApplyItem(TypedDict):
   """Withdrawal application result."""
-  id: NotRequired[str | None]
+  id: str | None
   """Withdrawal id."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[WithdrawApplyItem] | ErrorResponse] = list[WithdrawApplyItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class WithdrawApply(AuthSpotMixin):
@@ -23,7 +23,7 @@ class WithdrawApply(AuthSpotMixin):
     remark: str | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[WithdrawApplyItem]:
     """Deprecated previous withdrawal endpoint that submits a live asset withdrawal request.
 
     Args:
@@ -41,7 +41,8 @@ class WithdrawApply(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-previous-offline-soon"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-previous-offline-soon)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

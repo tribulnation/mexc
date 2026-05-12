@@ -3,7 +3,7 @@ from typing_extensions import Literal, NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Data(TypedDict):
+class FairPriceCandlesData(TypedDict):
   """K-line series, with each array index representing the same candle across fields."""
   time: list[datetime]
   """Candle open times in seconds."""
@@ -17,18 +17,18 @@ class Data(TypedDict):
   """Lowest prices."""
   vol: list[float]
   """Contract volumes."""
-  amount: NotRequired[list[float]]
+  amount: list[float]
   """Quote amounts."""
-  realOpen: NotRequired[list[float]]
+  realOpen: list[float]
   """Live API real opening prices."""
-  realClose: NotRequired[list[float]]
+  realClose: list[float]
   """Live API real closing prices."""
-  realHigh: NotRequired[list[float]]
+  realHigh: list[float]
   """Live API real highest prices."""
-  realLow: NotRequired[list[float]]
+  realLow: list[float]
   """Live API real lowest prices."""
 
-class Response200(TypedDict):
+class FairPriceCandlesResponse(TypedDict):
   """Fair-price K-line envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -36,9 +36,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[FairPriceCandlesData]
 
-adapter = validator(Response200)
+adapter = validator(FairPriceCandlesResponse)
 
 class FairPriceCandles(FuturesMixin):
   async def fair_price_candles(
@@ -49,7 +49,7 @@ class FairPriceCandles(FuturesMixin):
     start: Timestamp | None = None,
     end: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> FairPriceCandlesResponse:
     """Return fair-price K-line/candlestick series for a symbol and optional time window.
 
     Args:
@@ -63,7 +63,8 @@ class FairPriceCandles(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-fair-price"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-k-line-data-of-the-fair-price)
+    """
     params = {}
     if interval is not None:
       params['interval'] = interval

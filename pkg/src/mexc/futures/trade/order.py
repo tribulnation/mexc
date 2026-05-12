@@ -3,60 +3,60 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Data(TypedDict):
+class OrderData(TypedDict):
   """Futures order record."""
-  orderId: NotRequired[int | str]
+  orderId: int | str
   """Order identifier."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  positionId: NotRequired[int | str]
+  positionId: int | str
   """Related position identifier."""
-  price: NotRequired[float]
+  price: float
   """Order or trigger price."""
-  vol: NotRequired[float]
+  vol: float
   """Order volume."""
-  leverage: NotRequired[int]
+  leverage: int
   """Leverage used by the order."""
-  side: NotRequired[int]
-  """Order side: Item1 open long, 2 close short, 3 open short, 4 close long."""
-  category: NotRequired[int]
+  side: int
+  """Order side: 1 open long, 2 close short, 3 open short, 4 close long."""
+  category: int
   """Order category."""
-  orderType: NotRequired[int]
+  orderType: int
   """Order type."""
-  dealAvgPrice: NotRequired[float]
+  dealAvgPrice: float
   """Average filled price."""
-  dealVol: NotRequired[float]
+  dealVol: float
   """Filled volume."""
-  orderMargin: NotRequired[float]
+  orderMargin: float
   """Margin reserved for the order."""
-  takerFee: NotRequired[float]
+  takerFee: float
   """Taker fee."""
-  makerFee: NotRequired[float]
+  makerFee: float
   """Maker fee."""
-  profit: NotRequired[float]
+  profit: float
   """Realized close profit."""
-  feeCurrency: NotRequired[str]
+  feeCurrency: str
   """Fee currency."""
-  openType: NotRequired[int]
-  """Margin mode: Item1 isolated, 2 cross."""
-  state: NotRequired[int]
+  openType: int
+  """Margin mode: 1 isolated, 2 cross."""
+  state: int
   """Order state."""
-  externalOid: NotRequired[str]
+  externalOid: str
   """Client-provided external order id."""
-  errorCode: NotRequired[int]
+  errorCode: int
   """Order error code."""
-  usedMargin: NotRequired[float]
+  usedMargin: float
   """Used margin."""
-  createTime: NotRequired[datetime | str]
+  createTime: datetime | str
   """Creation time."""
-  updateTime: NotRequired[datetime | str]
+  updateTime: datetime | str
   """Last update time."""
   stopLossPrice: NotRequired[float]
   """Attached stop-loss price when present."""
   takeProfitPrice: NotRequired[float]
   """Attached take-profit price when present."""
 
-class Response200(TypedDict):
+class OrderResponse(TypedDict):
   """Get futures order by id response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -64,12 +64,12 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[OrderData]
 
-adapter = validator(Response200)
+adapter = validator(OrderResponse)
 
 class Order(AuthFuturesMixin):
-  async def order(self, order_id: str, *, validate: bool | None = None) -> Response200:
+  async def order(self, order_id: str, *, validate: bool | None = None) -> OrderResponse:
     """Returns a futures order by exchange order id.
 
     Args:
@@ -80,7 +80,8 @@ class Order(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-order-number"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#query-the-order-based-on-the-order-number)
+    """
     headers = {}
     params = {}
     r = await self.signed_request('GET', '/api/v1/private/order/get/{order_id}'.replace('{order_id}', str(order_id)), params=params or None, headers=headers)

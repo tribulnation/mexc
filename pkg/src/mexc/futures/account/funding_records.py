@@ -3,39 +3,39 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class FundingRecordsItem(TypedDict):
   """funding record"""
-  id: NotRequired[int | str]
+  id: int | str
   """Funding record id."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
   positionId: NotRequired[int | str]
   """Position id when present."""
-  positionType: NotRequired[int]
-  """Position side: Item1 long, 2 short."""
-  positionValue: NotRequired[float]
+  positionType: int
+  """Position side: 1 long, 2 short."""
+  positionValue: float
   """Position value used for funding."""
-  funding: NotRequired[float]
+  funding: float
   """Funding amount."""
-  rate: NotRequired[float]
+  rate: float
   """Funding rate."""
-  settleTime: NotRequired[datetime | str]
+  settleTime: datetime | str
   """Funding settlement time."""
 
-class Data(TypedDict):
+class FundingRecordsData(TypedDict):
   """Funding record page."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of available pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current page number."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[FundingRecordsItem]
   """Page of funding record records."""
 
-class Response200(TypedDict):
+class FundingRecordsResponse(TypedDict):
   """Get user funding records response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -43,9 +43,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[FundingRecordsData]
 
-adapter = validator(Response200)
+adapter = validator(FundingRecordsResponse)
 
 class FundingRecords(AuthFuturesMixin):
   async def funding_records(
@@ -56,7 +56,7 @@ class FundingRecords(AuthFuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> FundingRecordsResponse:
     """Returns paginated funding-fee records for the signed futures account.
 
     Args:
@@ -70,7 +70,8 @@ class FundingRecords(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-details-of-user-s-funding-rate"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-details-of-user-s-funding-rate)
+    """
     headers = {}
     params = {}
     if symbol is not None:
@@ -84,7 +85,7 @@ class FundingRecords(AuthFuturesMixin):
     r = await self.signed_request('GET', '/api/v1/private/position/funding_records', params=params or None, headers=headers)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def funding_records_paged(self, *, symbol: str | None = None, position_id: int | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def funding_records_paged(self, *, symbol: str | None = None, position_id: int | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[FundingRecordsResponse]:
     """Yield pages from `funding_records` until the response reports the final page."""
     page = 1
     while True:

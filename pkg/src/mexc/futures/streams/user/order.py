@@ -35,7 +35,7 @@ class OrderStream(AuthedStreamsMixin):
     References:
       - [MEXC futures WebSocket API](https://mexcdevelop.github.io/apidocs/contract_v1_en/#order-data)
     """
-    stream = await self.auth_ws.subscribe('personal.order')
+    stream = await self.authenticated_ws.subscribe('personal.order')
     async def parsed_stream():
       async for msg in stream:
         yield validate_response(msg) if self.validate(validate) else msg

@@ -1,8 +1,11 @@
-from typing_extensions import Any, Literal
+from datetime import datetime
+from typing_extensions import Literal
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-Response: type[list[list[Any]] | ErrorResponse] = list[list[Any]] | ErrorResponse # type: ignore
+SpotCandle = tuple[datetime, str, str, str, str, str, datetime, str]
+
+Response: type[list[SpotCandle] | ErrorResponse] = list[SpotCandle] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Candles(SpotMixin):
@@ -15,7 +18,7 @@ class Candles(SpotMixin):
     end_time: Timestamp | None = None,
     limit: int | None = None,
     validate: bool | None = None
-  ) -> list[list[Any]]:
+  ) -> list[SpotCandle]:
     """Return spot kline/candlestick rows for a symbol.
 
     Args:
@@ -30,7 +33,8 @@ class Candles(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-candlestick-data"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#kline-candlestick-data)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

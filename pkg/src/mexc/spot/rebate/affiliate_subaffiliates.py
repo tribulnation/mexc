@@ -1,53 +1,53 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class AffiliateSubaffiliatesItem(TypedDict):
   """Affiliate record."""
-  subaffiliateName: NotRequired[str]
+  subaffiliateName: str
   """Sub-affiliate display name."""
-  subaffiliateMail: NotRequired[str]
+  subaffiliateMail: str
   """Masked sub-affiliate email."""
-  campaign: NotRequired[str | None]
+  campaign: str | None
   """Campaign name."""
-  inviteCode: NotRequired[str]
+  inviteCode: str
   """Invite code."""
-  activationTime: NotRequired[datetime]
+  activationTime: datetime
   """Sub-affiliate activation time."""
-  registered: NotRequired[int]
+  registered: int
   """Registered-user count."""
-  deposited: NotRequired[int]
+  deposited: int
   """Deposited-user count."""
-  depositAmount: NotRequired[str]
+  depositAmount: str
   """Deposit amount."""
-  commission: NotRequired[str]
+  commission: str
   """Commission amount."""
 
-class Data(TypedDict):
+class AffiliateSubaffiliatesData(TypedDict):
   """Paginated affiliate data."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of result pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current result page."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[AffiliateSubaffiliatesItem]
   """Affiliate records for the page."""
 
-class Response200(TypedDict):
+class AffiliateSubaffiliatesResponse(TypedDict):
   """Affiliate wrapper response."""
-  success: NotRequired[bool]
+  success: bool
   """Whether the request succeeded."""
-  code: NotRequired[int]
+  code: int
   """Business response code."""
-  message: NotRequired[str | None]
+  message: str | None
   """Business response message."""
-  data: NotRequired[Data]
+  data: AffiliateSubaffiliatesData
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AffiliateSubaffiliatesResponse | ErrorResponse] = AffiliateSubaffiliatesResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AffiliateSubaffiliates(AuthSpotMixin):
@@ -61,7 +61,7 @@ class AffiliateSubaffiliates(AuthSpotMixin):
     page_size: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> AffiliateSubaffiliatesResponse:
     """Affiliate-only endpoint returning sub-affiliate activation, registration, deposit, campaign, and commission data.
 
     Args:
@@ -77,7 +77,8 @@ class AffiliateSubaffiliates(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-subaffiliates-data-affiliate-only"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-subaffiliates-data-affiliate-only)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -96,7 +97,7 @@ class AffiliateSubaffiliates(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/rebate/affiliate/subaffiliates', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def affiliate_subaffiliates_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def affiliate_subaffiliates_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[AffiliateSubaffiliatesResponse]:
     """Yield pages from `affiliate_subaffiliates` until the response reports the final page."""
     page = 1
     while True:

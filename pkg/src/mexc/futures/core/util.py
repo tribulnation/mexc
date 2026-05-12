@@ -26,8 +26,11 @@ def raise_on_error(r: FuturesResponse[T]) -> T:
 
 def raise_envelope_on_error(r: T) -> T:
   from mexc.core import ApiError
-  if isinstance(r, dict) and r.get('success') is False and r.get('code') not in (None, 0):
-    raise ApiError(r)
+  if isinstance(r, dict):
+    if r.get('success') is False:
+      raise ApiError(r)
+    if r.get('code') not in (None, 0):
+      raise ApiError(r)
   return r
 
 MEXC_FUTURES_API_BASE = 'https://contract.mexc.com'

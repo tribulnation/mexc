@@ -1,5 +1,4 @@
 from dataclasses import dataclass as _dataclass
-import asyncio
 
 from mexc.spot.core import MEXC_SPOT_API_BASE, AuthHttpClient
 from .core import StreamsClient, UserStreamsClient, MEXC_SPOT_SOCKET_URL
@@ -16,6 +15,10 @@ class ListenKeys:
   async def create(self) -> str:
     """Create a spot user-stream listen key."""
     return await self.auth_ws.listen_key()
+
+  async def list(self) -> list[str]:
+    """List active spot user-stream listen keys."""
+    return await self.auth_ws.list_keys()
 
   async def keepalive(self, key: str):
     """Keep a spot user-stream listen key alive."""
@@ -59,17 +62,13 @@ class Streams:
     return cls(api_url=api_url, ws_url=ws_url, auth_http=auth_http)
 
   async def __aenter__(self):
-    await asyncio.gather(
-      self.ws.__aenter__(),
-      self.auth_ws.__aenter__(),
-    )
+    await self.ws.__aenter__()
+    if not self.auth_ws.auth_http.public:
+      await self.auth_ws.__aenter__()
     return self
 
   async def __aexit__(self, exc_type, exc_value, traceback):
-    tasks = []
     if self.ws.ctx_future.done():
-      tasks.append(self.ws.__aexit__(exc_type, exc_value, traceback))
+      await self.ws.__aexit__(exc_type, exc_value, traceback)
     if self.auth_ws.ctx_future.done():
-      tasks.append(self.auth_ws.__aexit__(exc_type, exc_value, traceback))
-    if tasks:
-      await asyncio.gather(*tasks)
+      await self.auth_ws.__aexit__(exc_type, exc_value, traceback)

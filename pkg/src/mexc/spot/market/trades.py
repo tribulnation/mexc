@@ -1,27 +1,27 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-class Item(TypedDict):
-  id: NotRequired[Any]
+class TradesItem(TypedDict):
+  id: int | str | None
   """Trade id; currently null on some live responses."""
-  price: NotRequired[str]
+  price: str
   """Trade price."""
-  qty: NotRequired[str]
+  qty: str
   """Trade quantity."""
-  quoteQty: NotRequired[str]
+  quoteQty: str
   """Quote quantity."""
-  time: NotRequired[datetime]
+  time: datetime
   """Trade timestamp in milliseconds."""
-  isBuyerMaker: NotRequired[bool]
+  isBuyerMaker: bool
   """Whether the buyer was maker."""
-  isBestMatch: NotRequired[bool]
+  isBestMatch: bool
   """Whether this was the best match."""
-  tradeType: NotRequired[str]
+  tradeType: str
   """Trade side label."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[TradesItem] | ErrorResponse] = list[TradesItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Trades(SpotMixin):
@@ -31,7 +31,7 @@ class Trades(SpotMixin):
     symbol: str,
     limit: int | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[TradesItem]:
     """Return recent public trades for a spot symbol.
 
     Args:
@@ -43,7 +43,8 @@ class Trades(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#recent-trades-list"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#recent-trades-list)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

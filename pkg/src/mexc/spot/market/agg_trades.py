@@ -1,27 +1,27 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
-  a: NotRequired[Any]
+class AggTradesItem(TypedDict):
+  a: int | str | None
   """Aggregate trade id; can be null."""
-  f: NotRequired[Any]
+  f: int | str | None
   """First trade id; can be null."""
-  l: NotRequired[Any]
+  l: int | str | None
   """Last trade id; can be null."""
-  p: NotRequired[str]
+  p: str
   """Price."""
-  q: NotRequired[str]
+  q: str
   """Quantity."""
-  T: NotRequired[datetime]
+  T: datetime
   """Trade timestamp in milliseconds."""
-  m: NotRequired[bool]
+  m: bool
   """Whether buyer was maker."""
-  M: NotRequired[bool]
+  M: bool
   """Whether this was the best match."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[AggTradesItem] | ErrorResponse] = list[AggTradesItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AggTrades(SpotMixin):
@@ -33,7 +33,7 @@ class AggTrades(SpotMixin):
     start_time: Timestamp | None = None,
     end_time: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[AggTradesItem]:
     """Return aggregate public trades for a spot symbol.
 
     Args:
@@ -47,7 +47,8 @@ class AggTrades(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#compressed-aggregate-trades-list"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#compressed-aggregate-trades-list)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

@@ -3,7 +3,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Data(TypedDict):
+class DepthData(TypedDict):
   """Depth snapshot or incremental depth commit."""
   asks: list[list[float]]
   """Ask-side depth levels."""
@@ -11,10 +11,10 @@ class Data(TypedDict):
   """Bid-side depth levels."""
   version: int
   """Depth version number."""
-  timestamp: NotRequired[datetime]
+  timestamp: datetime
   """System timestamp in milliseconds."""
 
-class Response200(TypedDict):
+class DepthResponse(TypedDict):
   """Depth snapshot envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -22,9 +22,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[DepthData]
 
-adapter = validator(Response200)
+adapter = validator(DepthResponse)
 
 class Depth(FuturesMixin):
   async def depth(
@@ -33,7 +33,7 @@ class Depth(FuturesMixin):
     *,
     limit: int | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> DepthResponse:
     """Return a contract order book depth snapshot.
 
     Args:
@@ -45,7 +45,8 @@ class Depth(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-s-depth-information"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-contract-s-depth-information)
+    """
     params = {}
     if limit is not None:
       params['limit'] = limit

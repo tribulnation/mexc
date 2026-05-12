@@ -2,10 +2,36 @@ from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
-  """Item."""
+class CancelOpenOrdersItem(TypedDict):
+  """CancelOpenOrdersItem."""
+  clientOrderId: str
+  """clientOrderId identifier."""
+  cummulativeQuoteQty: str
+  """Returned cummulativeQuoteQty field."""
+  executedQty: str
+  """Returned executedQty field."""
+  orderId: int
+  """orderId identifier."""
+  orderListId: int
+  """orderListId identifier."""
+  origClientOrderId: str
+  """origClientOrderId identifier."""
+  origQty: str
+  """Returned origQty field."""
+  price: str
+  """Returned price field."""
+  side: str
+  """Returned side field."""
+  status: str
+  """Returned status field."""
+  symbol: str
+  """Returned symbol field."""
+  timeInForce: str
+  """timeInForce timestamp in milliseconds."""
+  type: str
+  """Returned type field."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[CancelOpenOrdersItem] | ErrorResponse] = list[CancelOpenOrdersItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class CancelOpenOrders(AuthSpotMixin):
@@ -16,7 +42,7 @@ class CancelOpenOrders(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[CancelOpenOrdersItem]:
     """Cancels pending orders for one or more symbols on the signed account.
 
     Args:
@@ -29,7 +55,8 @@ class CancelOpenOrders(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-all-open-orders-on-a-symbol"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-all-open-orders-on-a-symbol)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

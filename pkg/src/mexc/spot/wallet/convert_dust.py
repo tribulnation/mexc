@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class ConvertDustItem(TypedDict):
   """Failed conversion."""
   asset: NotRequired[str | None]
   """Asset."""
@@ -11,18 +11,18 @@ class Item(TypedDict):
   code: NotRequired[str | None]
   """Failure code."""
 
-class Response200(TypedDict):
+class ConvertDustResponse(TypedDict):
   """Dust conversion response."""
-  successList: NotRequired[list[str]]
+  successList: list[str]
   """Successfully converted assets."""
-  failedList: NotRequired[list[Item]]
+  failedList: list[ConvertDustItem]
   """Failed conversion entries."""
-  totalConvert: NotRequired[str | None]
+  totalConvert: str | None
   """Total converted MX amount after fee."""
-  convertFee: NotRequired[str | None]
+  convertFee: str | None
   """Conversion fee."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[ConvertDustResponse | ErrorResponse] = ConvertDustResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class ConvertDust(AuthSpotMixin):
@@ -32,7 +32,7 @@ class ConvertDust(AuthSpotMixin):
     asset: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> ConvertDustResponse:
     """Converts small asset balances into MX.
 
     Args:
@@ -44,7 +44,8 @@ class ConvertDust(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#dust-transfer)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

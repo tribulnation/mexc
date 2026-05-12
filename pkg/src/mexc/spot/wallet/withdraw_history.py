@@ -1,44 +1,46 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class WithdrawHistoryItem(TypedDict):
   """Withdrawal record."""
-  id: NotRequired[str | None]
+  id: str | None
   """Withdrawal id."""
-  txId: NotRequired[str | None]
+  txId: str | None
   """Blockchain transaction id."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Asset withdrawn."""
-  network: NotRequired[str | None]
+  network: str | None
   """Withdrawal network."""
-  address: NotRequired[str | None]
+  address: str | None
   """Withdrawal address."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Withdrawal amount."""
-  transferType: NotRequired[int | None]
+  transferType: int | None
   """Transfer type; outside or inside transfer."""
-  status: NotRequired[int | None]
+  status: int | None
   """Withdrawal status code."""
-  transactionFee: NotRequired[str | None]
+  transactionFee: str | None
   """Withdrawal fee."""
-  applyTime: NotRequired[datetime | None]
+  applyTime: datetime | None
   """Apply time."""
-  remark: NotRequired[str | None]
+  remark: str | None
   """Remark."""
-  memo: NotRequired[str | None]
+  memo: str | None
   """Memo."""
-  transHash: NotRequired[str | None]
+  transHash: str | None
   """Transaction hash."""
-  updateTime: NotRequired[datetime | None]
+  updateTime: datetime | None
   """Update time."""
-  coinId: NotRequired[str | None]
+  coinId: str | None
   """Asset id."""
-  vcoinId: NotRequired[str | None]
+  vcoinId: str | None
   """Currency id."""
+  confirmNo: None
+  """Returned confirmNo field."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[WithdrawHistoryItem] | ErrorResponse] = list[WithdrawHistoryItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class WithdrawHistory(AuthSpotMixin):
@@ -52,7 +54,7 @@ class WithdrawHistory(AuthSpotMixin):
     end_time: Timestamp | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[WithdrawHistoryItem]:
     """Returns withdrawal records for the signed account, optionally filtered by coin, status, and time window.
 
     Args:
@@ -68,7 +70,8 @@ class WithdrawHistory(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-history-supporting-network"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-history-supporting-network)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

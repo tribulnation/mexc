@@ -1,11 +1,11 @@
-from typing_extensions import TypedDict
+from typing_extensions import Literal, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class TestOrderResponse(TypedDict):
   """Empty response when validation succeeds."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[TestOrderResponse | ErrorResponse] = TestOrderResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class TestOrder(AuthSpotMixin):
@@ -13,8 +13,8 @@ class TestOrder(AuthSpotMixin):
     self,
     *,
     symbol: str,
-    side: str,
-    type_: str,
+    side: Literal['BUY', 'SELL'],
+    type_: Literal['LIMIT', 'MARKET', 'LIMIT_MAKER', 'IMMEDIATE_OR_CANCEL', 'FILL_OR_KILL'],
     quantity: str | None = None,
     quote_order_qty: str | None = None,
     price: str | None = None,
@@ -22,7 +22,7 @@ class TestOrder(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TestOrderResponse:
     """Validates a new order without sending it to the matching engine.
 
     Args:
@@ -41,7 +41,8 @@ class TestOrder(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-new-order"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#test-new-order)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

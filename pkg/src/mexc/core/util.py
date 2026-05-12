@@ -1,6 +1,6 @@
 from typing_extensions import TypeAlias, TypeVar, Mapping, Callable, Awaitable
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, ROUND_HALF_DOWN, ROUND_FLOOR
 
 T = TypeVar('T')
@@ -13,7 +13,7 @@ def filter_kwargs(Params: type[D], params: D | dict) -> D:
 class timestamp:
   @staticmethod
   def parse(time: int) -> datetime:
-    return datetime.fromtimestamp(time/1e3)
+    return datetime.fromtimestamp(time / 1e3, timezone.utc)
   
   @staticmethod
   def dump(dt: datetime) -> int:

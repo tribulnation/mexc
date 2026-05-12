@@ -3,36 +3,36 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class DealDetailsItem(TypedDict):
   """Futures deal record."""
-  id: NotRequired[int | str]
+  id: int | str
   """Trade/deal identifier."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  side: NotRequired[int]
+  side: int
   """Order side."""
-  vol: NotRequired[float]
+  vol: float
   """Executed volume."""
-  price: NotRequired[float]
+  price: float
   """Execution price."""
-  feeCurrency: NotRequired[str]
+  feeCurrency: str
   """Fee currency."""
-  fee: NotRequired[float]
+  fee: float
   """Charged fee."""
-  timestamp: NotRequired[datetime | str]
+  timestamp: datetime | str
   """Execution timestamp."""
-  profit: NotRequired[float]
+  profit: float
   """Realized profit."""
   isTaker: NotRequired[bool]
   """Whether the fill was taker-side."""
-  taker: NotRequired[bool]
+  taker: bool
   """Whether the fill was taker-side; name used by some examples."""
-  category: NotRequired[int]
+  category: int
   """Order category."""
-  orderId: NotRequired[int | str]
+  orderId: int | str
   """Related order identifier."""
 
-class Response200(TypedDict):
+class DealDetailsResponse(TypedDict):
   """Get futures order deal details response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -40,13 +40,18 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[DealDetailsItem]]
   """Order deal details."""
 
-adapter = validator(Response200)
+adapter = validator(DealDetailsResponse)
 
 class DealDetails(AuthFuturesMixin):
-  async def deal_details(self, order_id: str, *, validate: bool | None = None) -> Response200:
+  async def deal_details(
+    self,
+    order_id: str,
+    *,
+    validate: bool | None = None
+  ) -> DealDetailsResponse:
     """Returns fills/deals for a futures order id.
 
     Args:
@@ -57,7 +62,8 @@ class DealDetails(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-order-transaction-details-based-on-the-order-id"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-order-transaction-details-based-on-the-order-id)
+    """
     headers = {}
     params = {}
     r = await self.signed_request('GET', '/api/v1/private/order/deal_details/{order_id}'.replace('{order_id}', str(order_id)), params=params or None, headers=headers)

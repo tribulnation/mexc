@@ -1,33 +1,33 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class CancelOrderResponse(TypedDict):
   """Canceled order response."""
-  symbol: NotRequired[str]
+  symbol: str
   """Spot symbol."""
-  orderId: NotRequired[Any]
+  orderId: int | str
   """MEXC order id."""
-  orderListId: NotRequired[Any]
+  orderListId: NotRequired[int | str]
   """Order-list id."""
   clientOrderId: NotRequired[str | None]
   """Client order id."""
-  price: NotRequired[str]
+  price: str
   """Price."""
-  origQty: NotRequired[str]
+  origQty: str
   """Original quantity."""
-  executedQty: NotRequired[str]
+  executedQty: str
   """Executed quantity."""
-  cummulativeQuoteQty: NotRequired[str]
+  cummulativeQuoteQty: str
   """Executed quote quantity."""
-  status: NotRequired[str]
+  status: str
   """Order status."""
   timeInForce: NotRequired[str]
   """Time in force."""
-  type: NotRequired[str]
+  type: str
   """Order type."""
-  side: NotRequired[str]
+  side: str
   """Order side."""
   time: NotRequired[datetime]
   """Creation time."""
@@ -35,8 +35,10 @@ class Response200(TypedDict):
   """Update time."""
   isWorking: NotRequired[bool]
   """Whether active on the order book."""
+  origClientOrderId: NotRequired[str]
+  """origClientOrderId identifier."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[CancelOrderResponse | ErrorResponse] = CancelOrderResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class CancelOrder(AuthSpotMixin):
@@ -50,7 +52,7 @@ class CancelOrder(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CancelOrderResponse:
     """Cancels one active spot order by order id or original client order id.
 
     Args:
@@ -66,7 +68,8 @@ class CancelOrder(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-order"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-order)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

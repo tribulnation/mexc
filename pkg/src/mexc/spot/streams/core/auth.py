@@ -12,16 +12,28 @@ from .client import StreamsClient, MEXC_SPOT_SOCKET_URL
 class ListenResponse(TypedDict):
   listenKey: str
 
+class ListenListResponse(TypedDict):
+  listenKey: list[str]
+
 class ErrorResponse(TypedDict):
   code: int
   msg: str
 
 Response = ListenResponse | ErrorResponse
+ListResponse = ListenListResponse | ErrorResponse
 
 response_adapter = pydantic.TypeAdapter(Response)
+list_response_adapter = pydantic.TypeAdapter(ListResponse)
 
 def validate_listen_response(content: str) -> str:
   obj = response_adapter.validate_json(content)
+  if 'listenKey' in obj:
+    return obj['listenKey']
+  else:
+    raise ApiError(obj)
+
+def validate_listen_list_response(content: str) -> list[str]:
+  obj = list_response_adapter.validate_json(content)
   if 'listenKey' in obj:
     return obj['listenKey']
   else:
@@ -69,6 +81,12 @@ class UserStreamsClient:
       'timestamp': ts.now(),
     })
     return validate_listen_response(r.text)
+
+  async def list_keys(self) -> list[str]:
+    r = await self.auth_http.signed_request('GET', self.api_url + '/api/v3/userDataStream', params={
+      'timestamp': ts.now(),
+    })
+    return validate_listen_list_response(r.text)
   
   async def refresh_key(self, key: str):
     r = await self.auth_http.signed_request('PUT', self.api_url + '/api/v3/userDataStream', params={

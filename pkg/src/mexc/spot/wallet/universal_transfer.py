@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class UniversalTransferItem(TypedDict):
   """Universal transfer result."""
-  tranId: NotRequired[str | None]
+  tranId: str | None
   """Transfer id."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[UniversalTransferItem] | ErrorResponse] = list[UniversalTransferItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class UniversalTransfer(AuthSpotMixin):
@@ -20,7 +20,7 @@ class UniversalTransfer(AuthSpotMixin):
     amount: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[UniversalTransferItem]:
     """Transfers assets between the signed user account types such as spot and futures.
 
     Args:
@@ -35,7 +35,8 @@ class UniversalTransfer(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-universal-transfer"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#user-universal-transfer)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

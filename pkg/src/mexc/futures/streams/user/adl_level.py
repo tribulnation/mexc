@@ -22,7 +22,7 @@ class AdlLevelStream(AuthedStreamsMixin):
     References:
       - [MEXC futures WebSocket API](https://mexcdevelop.github.io/apidocs/contract_v1_en/#position-adl-level)
     """
-    stream = await self.auth_ws.subscribe('personal.adl.level')
+    stream = await self.authenticated_ws.subscribe('personal.adl.level')
     async def parsed_stream():
       async for msg in stream:
         yield validate_response(msg) if self.validate(validate) else msg

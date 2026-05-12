@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class CancelWithdrawResponse(TypedDict):
   """Withdrawal cancellation response."""
-  id: NotRequired[str | None]
+  id: str | None
   """Canceled withdrawal id."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[CancelWithdrawResponse | ErrorResponse] = CancelWithdrawResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class CancelWithdraw(AuthSpotMixin):
@@ -17,7 +17,7 @@ class CancelWithdraw(AuthSpotMixin):
     id: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CancelWithdrawResponse:
     """Cancels a pending withdrawal by withdrawal id.
 
     Args:
@@ -29,7 +29,8 @@ class CancelWithdraw(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#cancel-withdraw)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

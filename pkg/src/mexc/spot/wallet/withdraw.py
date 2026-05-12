@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class WithdrawResponse(TypedDict):
   """Withdrawal creation response."""
-  id: NotRequired[str | None]
+  id: str | None
   """Withdrawal id."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[WithdrawResponse | ErrorResponse] = WithdrawResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Withdraw(AuthSpotMixin):
@@ -24,7 +24,7 @@ class Withdraw(AuthSpotMixin):
     remark: str | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> WithdrawResponse:
     """Submits a live asset withdrawal request from the signed spot account.
 
     Args:
@@ -43,7 +43,8 @@ class Withdraw(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-new"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-new)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

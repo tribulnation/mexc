@@ -3,7 +3,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class DepthCommitsItem(TypedDict):
   """Depth snapshot or incremental depth commit."""
   asks: list[list[float]]
   """Ask-side depth levels."""
@@ -14,7 +14,7 @@ class Item(TypedDict):
   timestamp: NotRequired[datetime]
   """System timestamp in milliseconds."""
 
-class Response200(TypedDict):
+class DepthCommitsResponse(TypedDict):
   """Depth commits envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -22,10 +22,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[DepthCommitsItem]]
   """Latest depth commit records."""
 
-adapter = validator(Response200)
+adapter = validator(DepthCommitsResponse)
 
 class DepthCommits(FuturesMixin):
   async def depth_commits(
@@ -34,7 +34,7 @@ class DepthCommits(FuturesMixin):
     limit: int,
     *,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> DepthCommitsResponse:
     """Return the latest N depth snapshots/commits for a contract.
 
     Args:
@@ -46,7 +46,8 @@ class DepthCommits(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-a-snapshot-of-the-latest-n-depth-information-of-the-contract"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-a-snapshot-of-the-latest-n-depth-information-of-the-contract)
+    """
     params = {}
     r = await self.request('GET', '/api/v1/contract/depth_commits/{symbol}/{limit}'.replace('{symbol}', str(symbol)).replace('{limit}', str(limit)))
     return self.envelope_output(r.text, adapter, validate)

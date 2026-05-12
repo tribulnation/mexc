@@ -1,22 +1,51 @@
-from typing_extensions import Any, TypedDict
+from typing_extensions import Literal, NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
-  """Item."""
+class BatchOrderRequest(TypedDict):
+  """Order to create."""
+  symbol: NotRequired[str]
+  """Spot symbol."""
+  side: NotRequired[Literal['BUY', 'SELL']]
+  """Order side."""
+  type: NotRequired[str]
+  """Order type."""
+  quantity: NotRequired[str]
+  """Base-asset quantity."""
+  quoteOrderQty: NotRequired[str]
+  """Quote-asset quantity."""
+  price: NotRequired[str]
+  """Limit price."""
+  newClientOrderId: NotRequired[str]
+  """Client order id."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+class BatchOrdersItem(TypedDict):
+  """Batch order result."""
+  symbol: NotRequired[str]
+  """Spot symbol for a successfully created order."""
+  orderId: NotRequired[int | str]
+  """Created MEXC order id."""
+  orderListId: NotRequired[int | str]
+  """Order-list id."""
+  newClientOrderId: NotRequired[str]
+  """Client order id for a rejected order."""
+  code: NotRequired[int]
+  """Error code for a rejected order."""
+  msg: NotRequired[str]
+  """Error message for a rejected order."""
+
+Response: type[list[BatchOrdersItem] | ErrorResponse] = list[BatchOrdersItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class BatchOrders(AuthSpotMixin):
   async def batch_orders(
     self,
     *,
-    batch_orders: list[dict[str, Any]],
+    batch_orders: list[BatchOrderRequest],
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[BatchOrdersItem]:
     """Creates up to 20 orders for the same symbol in one signed request.
 
     Args:
@@ -29,7 +58,8 @@ class BatchOrders(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#batch-orders"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#batch-orders)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

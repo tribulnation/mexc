@@ -1,8 +1,39 @@
-from typing_extensions import Any
+from datetime import datetime
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-Response: type[dict[str, Any] | list[dict[str, Any]] | ErrorResponse] = dict[str, Any] | list[dict[str, Any]] | ErrorResponse # type: ignore
+class EtfInfoResponse(TypedDict):
+  """ETF information."""
+  symbol: NotRequired[str]
+  """ETF symbol."""
+  netValue: NotRequired[str | float]
+  """Current net value."""
+  leverage: NotRequired[str | float]
+  """ETF leverage multiplier."""
+  fundFee: NotRequired[str | float]
+  """Fund fee rate."""
+  fundFeeTime: NotRequired[datetime]
+  """Fund fee timestamp in milliseconds."""
+  basket: NotRequired[str]
+  """Underlying basket description."""
+
+class EtfInfoListItem(TypedDict):
+  """ETF information."""
+  symbol: NotRequired[str]
+  """ETF symbol."""
+  netValue: NotRequired[str | float]
+  """Current net value."""
+  leverage: NotRequired[str | float]
+  """ETF leverage multiplier."""
+  fundFee: NotRequired[str | float]
+  """Fund fee rate."""
+  fundFeeTime: NotRequired[datetime]
+  """Fund fee timestamp in milliseconds."""
+  basket: NotRequired[str]
+  """Underlying basket description."""
+
+Response: type[EtfInfoResponse | list[EtfInfoListItem] | ErrorResponse] = EtfInfoResponse | list[EtfInfoListItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class EtfInfo(SpotMixin):
@@ -11,7 +42,7 @@ class EtfInfo(SpotMixin):
     *,
     symbol: str | None = None,
     validate: bool | None = None
-  ) -> dict[str, Any] | list[dict[str, Any]]:
+  ) -> EtfInfoResponse | list[EtfInfoListItem]:
     """Return spot ETF information such as net value, leverage, and fund fee.
 
     Args:
@@ -22,7 +53,8 @@ class EtfInfo(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#etf-endpoints"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#etf-endpoints)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

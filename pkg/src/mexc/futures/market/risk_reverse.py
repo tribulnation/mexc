@@ -3,7 +3,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class RiskReverseItem(TypedDict):
   """Risk fund balance record."""
   symbol: str
   """Contract symbol."""
@@ -11,10 +11,10 @@ class Item(TypedDict):
   """Risk fund currency."""
   available: float
   """Available risk fund balance."""
-  timestamp: NotRequired[datetime]
+  timestamp: datetime
   """System timestamp in milliseconds."""
 
-class Response200(TypedDict):
+class RiskReverseResponse(TypedDict):
   """Risk fund balance envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -22,13 +22,13 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[RiskReverseItem]]
   """Risk fund balance records."""
 
-adapter = validator(Response200)
+adapter = validator(RiskReverseResponse)
 
 class RiskReverse(FuturesMixin):
-  async def risk_reverse(self, *, validate: bool | None = None) -> Response200:
+  async def risk_reverse(self, *, validate: bool | None = None) -> RiskReverseResponse:
     """Return all contract risk fund balances.
 
     Args:
@@ -38,7 +38,8 @@ class RiskReverse(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-contract-risk-fund-balance"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-contract-risk-fund-balance)
+    """
     params = {}
     r = await self.request('GET', '/api/v1/contract/risk_reverse')
     return self.envelope_output(r.text, adapter, validate)

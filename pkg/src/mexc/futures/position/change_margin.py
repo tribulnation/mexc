@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Body(TypedDict):
+class ChangeMarginRequest(TypedDict):
   """Change futures position margin request body."""
   positionId: int
   """Position identifier whose margin will be changed."""
@@ -11,7 +11,7 @@ class Body(TypedDict):
   type: str
   """Margin change direction: ADD increases margin, SUB decreases margin."""
 
-class Response200(TypedDict):
+class ChangeMarginResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -20,10 +20,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(ChangeMarginResponse)
 
 class ChangeMargin(AuthFuturesMixin):
-  async def change_margin(self, body: Body, *, validate: bool | None = None) -> Response200:
+  async def change_margin(
+    self,
+    body: ChangeMarginRequest,
+    *,
+    validate: bool | None = None
+  ) -> ChangeMarginResponse:
     """Increases or decreases margin on an existing futures position.
 
     Args:
@@ -34,7 +39,8 @@ class ChangeMargin(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#increase-or-decrease-margin"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#increase-or-decrease-margin)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/position/change_margin', json=body)
     return self.envelope_output(r.text, adapter, validate)

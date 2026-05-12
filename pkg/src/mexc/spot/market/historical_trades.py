@@ -1,27 +1,27 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-class Item(TypedDict):
-  id: NotRequired[Any]
+class HistoricalTradesItem(TypedDict):
+  id: int | str | None
   """Trade id; can be null on current live responses."""
-  price: NotRequired[str]
+  price: str
   """Trade price."""
-  qty: NotRequired[str]
+  qty: str
   """Trade quantity."""
-  quoteQty: NotRequired[str]
+  quoteQty: str
   """Quote quantity."""
-  time: NotRequired[datetime]
+  time: datetime
   """Trade timestamp in milliseconds."""
-  isBuyerMaker: NotRequired[bool]
+  isBuyerMaker: bool
   """Whether the buyer was maker."""
-  isBestMatch: NotRequired[bool]
+  isBestMatch: bool
   """Whether this was the best match."""
-  tradeType: NotRequired[str]
+  tradeType: str
   """Trade side label."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[HistoricalTradesItem] | ErrorResponse] = list[HistoricalTradesItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class HistoricalTrades(SpotMixin):
@@ -32,7 +32,7 @@ class HistoricalTrades(SpotMixin):
     limit: int | None = None,
     from_id: str | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[HistoricalTradesItem]:
     """Return older public spot trades for a symbol.
 
     Args:
@@ -45,7 +45,8 @@ class HistoricalTrades(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#old-trade-lookup"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#old-trade-lookup)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol
@@ -55,3 +56,30 @@ class HistoricalTrades(SpotMixin):
       params['fromId'] = from_id
     r = await self.request('GET', '/api/v3/historicalTrades', params=params)
     return self.output(r.text, adapter, validate)
+
+  async def historical_trades_paged(
+    self, *,
+    symbol: str,
+    limit: int | None = None,
+    from_id: str | None = None,
+    max_pages: int | None = None,
+    validate: bool | None = None,
+  ) -> AsyncIterator[list[HistoricalTradesItem]]:
+    """Yield historical trade pages by advancing the `fromId` cursor."""
+    page = 0
+    cursor = from_id
+    while True:
+      response = await self.historical_trades(symbol=symbol, limit=limit, from_id=cursor, validate=validate)
+      yield response
+      page += 1
+      if max_pages is not None and page >= max_pages:
+        break
+      if not response or (limit is not None and len(response) < limit):
+        break
+      ids = [trade.get('id') for trade in response if trade.get('id') is not None]
+      if not ids:
+        break
+      next_cursor = str(ids[-1])
+      if next_cursor == cursor:
+        break
+      cursor = next_cursor

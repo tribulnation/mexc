@@ -3,32 +3,32 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class DepositHistoryItem(TypedDict):
   """Deposit record."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Deposit amount."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Asset deposited."""
-  network: NotRequired[str | None]
+  network: str | None
   """Deposit network."""
-  status: NotRequired[int | None]
+  status: int | None
   """Deposit status code."""
-  address: NotRequired[str | None]
+  address: str | None
   """Deposit address."""
   addressTag: NotRequired[str | None]
   """Deposit address tag."""
-  txId: NotRequired[str | None]
+  txId: str | None
   """Blockchain transaction id."""
-  insertTime: NotRequired[datetime | None]
+  insertTime: datetime | None
   """Deposit insert time."""
-  unlockConfirm: NotRequired[str | None]
+  unlockConfirm: str | None
   """Required confirmations to unlock."""
-  confirmTimes: NotRequired[str | None]
+  confirmTimes: str | None
   """Observed confirmations."""
-  memo: NotRequired[str | None]
+  memo: str | None
   """Deposit memo."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[DepositHistoryItem] | ErrorResponse] = list[DepositHistoryItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class DepositHistory(AuthSpotMixin):
@@ -42,7 +42,7 @@ class DepositHistory(AuthSpotMixin):
     limit: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[DepositHistoryItem]:
     """Returns deposit records for the signed account, optionally filtered by coin, status, and time window.
 
     Args:
@@ -58,7 +58,8 @@ class DepositHistory(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-history-supporting-network)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

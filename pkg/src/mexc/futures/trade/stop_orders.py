@@ -3,44 +3,44 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class StopOrdersItem(TypedDict):
   """Stop-limit order record."""
-  id: NotRequired[int | str]
+  id: int | str
   """Stop-limit order id."""
-  orderId: NotRequired[int | str]
+  orderId: int | str
   """Limit order id, or zero if based on a position."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  positionId: NotRequired[int | str]
+  positionId: int | str
   """Position id."""
-  stopLossPrice: NotRequired[float]
+  stopLossPrice: float
   """Stop-loss price."""
-  takeProfitPrice: NotRequired[float]
+  takeProfitPrice: float
   """Take-profit price."""
-  state: NotRequired[int]
+  state: int
   """Stop-limit order state."""
-  triggerSide: NotRequired[int]
+  triggerSide: int
   """Trigger side."""
-  positionType: NotRequired[int]
+  positionType: int
   """Position side."""
-  vol: NotRequired[float]
+  vol: float
   """Configured volume."""
-  realityVol: NotRequired[float]
+  realityVol: float
   """Actual executed volume."""
-  placeOrderId: NotRequired[int | str]
+  placeOrderId: int | str
   """Placed order id."""
-  errorCode: NotRequired[int]
+  errorCode: int
   """Error code."""
-  version: NotRequired[int]
+  version: int
   """Record version."""
-  isFinished: NotRequired[int]
+  isFinished: int
   """Final-state indicator."""
-  createTime: NotRequired[datetime | str]
+  createTime: datetime | str
   """Creation time."""
-  updateTime: NotRequired[datetime | str]
+  updateTime: datetime | str
   """Update time."""
 
-class Response200(TypedDict):
+class StopOrdersResponse(TypedDict):
   """List futures stop-limit orders response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -48,10 +48,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[StopOrdersItem]]
   """Stop-limit order records."""
 
-adapter = validator(Response200)
+adapter = validator(StopOrdersResponse)
 
 class StopOrders(AuthFuturesMixin):
   async def stop_orders(
@@ -64,7 +64,7 @@ class StopOrders(AuthFuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> StopOrdersResponse:
     """Returns paginated stop-limit trigger orders for the signed futures account.
 
     Args:
@@ -80,7 +80,8 @@ class StopOrders(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-stop-limit-order-list"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-stop-limit-order-list)
+    """
     headers = {}
     params = {}
     if symbol is not None:
@@ -98,7 +99,7 @@ class StopOrders(AuthFuturesMixin):
     r = await self.signed_request('GET', '/api/v1/private/stoporder/list/orders', params=params or None, headers=headers)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def stop_orders_paged(self, *, symbol: str | None = None, is_finished: int | None = None, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def stop_orders_paged(self, *, symbol: str | None = None, is_finished: int | None = None, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[StopOrdersResponse]:
     """Yield pages from `stop_orders` until the response reports the final page."""
     page = 1
     while True:

@@ -1,42 +1,48 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class OrderStatus(TypedDict):
   """Order status response."""
-  symbol: NotRequired[str]
+  symbol: str
   """Spot symbol."""
-  orderId: NotRequired[Any]
+  orderId: int | str
   """MEXC order id."""
-  orderListId: NotRequired[Any]
+  orderListId: int | str
   """Order-list id."""
-  clientOrderId: NotRequired[str | None]
+  clientOrderId: str | None
   """Client order id."""
-  price: NotRequired[str]
+  price: str
   """Price."""
-  origQty: NotRequired[str]
+  origQty: str
   """Original quantity."""
-  executedQty: NotRequired[str]
+  executedQty: str
   """Executed quantity."""
-  cummulativeQuoteQty: NotRequired[str]
+  cummulativeQuoteQty: str
   """Executed quote quantity."""
-  status: NotRequired[str]
+  status: str
   """Order status."""
-  timeInForce: NotRequired[str]
+  timeInForce: str | None
   """Time in force."""
-  type: NotRequired[str]
+  type: str
   """Order type."""
-  side: NotRequired[str]
+  side: str
   """Order side."""
-  time: NotRequired[datetime]
+  time: datetime
   """Creation time."""
-  updateTime: NotRequired[datetime]
+  updateTime: datetime
   """Update time."""
-  isWorking: NotRequired[bool]
+  isWorking: bool
   """Whether active on the order book."""
+  origQuoteOrderQty: str
+  """Returned origQuoteOrderQty field."""
+  stopPrice: str | None
+  """Returned stopPrice field."""
+  icebergQty: NotRequired[str | None]
+  """Returned icebergQty field."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[OrderStatus | ErrorResponse] = OrderStatus | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Order(AuthSpotMixin):
@@ -49,7 +55,7 @@ class Order(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> OrderStatus:
     """Returns status and fill information for one order.
 
     Args:
@@ -64,7 +70,8 @@ class Order(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-order"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-order)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

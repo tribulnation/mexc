@@ -42,7 +42,7 @@ class MyTrades(AuthedStreamsMixin):
 
     > [MEXC API docs](https://www.mexc.com/api-docs/futures/websocket-api#fill-details)
     """
-    stream = await self.auth_ws.subscribe('personal.order.deal')
+    stream = await self.authenticated_ws.subscribe('personal.order.deal')
     async def parsed_stream():
       async for msg in stream:
         yield validate_response(msg) if self.validate(validate) else msg

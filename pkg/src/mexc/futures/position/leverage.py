@@ -2,20 +2,20 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class LeverageItem(TypedDict):
   """Leverage record."""
-  positionType: NotRequired[int]
-  """Position side: Item1 long, 2 short."""
-  level: NotRequired[int]
+  positionType: int
+  """Position side: 1 long, 2 short."""
+  level: int
   """Risk level."""
-  imr: NotRequired[float]
+  imr: float
   """Initial margin rate for the leverage risk level."""
-  mmr: NotRequired[float]
+  mmr: float
   """Maintenance margin rate for the leverage risk level."""
-  leverage: NotRequired[int]
+  leverage: int
   """Configured leverage."""
 
-class Response200(TypedDict):
+class LeverageResponse(TypedDict):
   """Get futures position leverage response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -23,13 +23,13 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[LeverageItem]]
   """Leverage records for long and short sides."""
 
-adapter = validator(Response200)
+adapter = validator(LeverageResponse)
 
 class Leverage(AuthFuturesMixin):
-  async def leverage(self, *, symbol: str, validate: bool | None = None) -> Response200:
+  async def leverage(self, *, symbol: str, validate: bool | None = None) -> LeverageResponse:
     """Returns leverage and risk-rate details for the signed account on a contract.
 
     Args:
@@ -40,7 +40,8 @@ class Leverage(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-leverage"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-leverage)
+    """
     headers = {}
     params = {}
     if symbol is not None:

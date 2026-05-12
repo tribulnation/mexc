@@ -11,4 +11,4 @@ class Login(AuthedStreamsMixin):
     References:
       - [MEXC futures WebSocket API](https://mexcdevelop.github.io/apidocs/contract_v1_en/#login)
     """
-    await self.auth_ws.authenticate()
+    await self.authenticated_ws.authenticate()

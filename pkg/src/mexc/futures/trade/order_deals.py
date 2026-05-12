@@ -3,36 +3,38 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class OrderDeal(TypedDict):
   """Futures deal record."""
-  id: NotRequired[int | str]
+  id: int | str
   """Trade/deal identifier."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  side: NotRequired[int]
+  side: int
   """Order side."""
-  vol: NotRequired[float]
+  vol: float
   """Executed volume."""
-  price: NotRequired[float]
+  price: float
   """Execution price."""
-  feeCurrency: NotRequired[str]
+  feeCurrency: str
   """Fee currency."""
-  fee: NotRequired[float]
+  fee: float
   """Charged fee."""
-  timestamp: NotRequired[datetime | str]
+  timestamp: datetime | str
   """Execution timestamp."""
-  profit: NotRequired[float]
+  profit: float
   """Realized profit."""
-  isTaker: NotRequired[bool]
+  isTaker: bool
   """Whether the fill was taker-side."""
   taker: NotRequired[bool]
   """Whether the fill was taker-side; name used by some examples."""
-  category: NotRequired[int]
+  category: int
   """Order category."""
-  orderId: NotRequired[int | str]
+  orderId: int | str
   """Related order identifier."""
+  opponentOrderId: int
+  """opponentOrderId identifier."""
 
-class Response200(TypedDict):
+class OrderDealsResponse(TypedDict):
   """List futures order deals response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -40,10 +42,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[OrderDeal]]
   """Order deal history records."""
 
-adapter = validator(Response200)
+adapter = validator(OrderDealsResponse)
 
 class OrderDeals(AuthFuturesMixin):
   async def order_deals(
@@ -55,7 +57,7 @@ class OrderDeals(AuthFuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> OrderDealsResponse:
     """Returns paginated futures order deal history for the signed account.
 
     Args:
@@ -70,7 +72,8 @@ class OrderDeals(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-transaction-details-of-the-user-s-order"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-all-transaction-details-of-the-user-s-order)
+    """
     headers = {}
     params = {}
     if symbol is not None:
@@ -86,7 +89,7 @@ class OrderDeals(AuthFuturesMixin):
     r = await self.signed_request('GET', '/api/v1/private/order/list/order_deals', params=params or None, headers=headers)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def order_deals_paged(self, *, symbol: str, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def order_deals_paged(self, *, symbol: str, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[OrderDealsResponse]:
     """Yield pages from `order_deals` until the response reports the final page."""
     page = 1
     while True:

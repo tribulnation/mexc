@@ -3,7 +3,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Item0(TypedDict):
+class ContractTickerListItem(TypedDict):
   """Contract ticker/trend data."""
   symbol: str
   """Contract symbol."""
@@ -36,40 +36,68 @@ class Item0(TypedDict):
   timestamp: datetime
   """Ticker timestamp in milliseconds."""
 
-class Item(TypedDict):
+class RiseFallRates(TypedDict):
+  """Returned riseFallRates field."""
+  r: float
+  """Returned r field."""
+  r180: float
+  """Returned r180 field."""
+  r30: float
+  """Returned r30 field."""
+  r365: float
+  """Returned r365 field."""
+  r7: float
+  """Returned r7 field."""
+  r90: float
+  """Returned r90 field."""
+  v: float
+  """Returned v field."""
+  zone: str
+  """Returned zone field."""
+
+class ContractTicker(TypedDict):
   """Contract ticker/trend data."""
   symbol: str
   """Contract symbol."""
   lastPrice: float
   """Latest traded price."""
-  bid1: NotRequired[float]
+  bid1: float
   """Best bid price."""
-  ask1: NotRequired[float]
+  ask1: float
   """Best ask price."""
-  volume24: NotRequired[float]
+  volume24: float
   """24-hour contract volume."""
-  amount24: NotRequired[float]
+  amount24: float
   """24-hour quote amount."""
-  holdVol: NotRequired[float]
+  holdVol: float
   """Open interest volume."""
-  lower24Price: NotRequired[float]
+  lower24Price: float
   """24-hour low price."""
-  high24Price: NotRequired[float]
+  high24Price: float
   """24-hour high price."""
-  riseFallRate: NotRequired[float]
+  riseFallRate: float
   """Rise/fall rate."""
-  riseFallValue: NotRequired[float]
+  riseFallValue: float
   """Rise/fall value."""
-  indexPrice: NotRequired[float]
+  indexPrice: float
   """Index price."""
-  fairPrice: NotRequired[float]
+  fairPrice: float
   """Fair price."""
-  fundingRate: NotRequired[float]
+  fundingRate: float
   """Funding rate."""
   timestamp: datetime
   """Ticker timestamp in milliseconds."""
+  contractId: int
+  """contractId identifier."""
+  maxBidPrice: float
+  """Returned maxBidPrice field."""
+  minAskPrice: float
+  """Returned minAskPrice field."""
+  riseFallRates: RiseFallRates
+  riseFallRatesOfTimezone: list[float]
+  """Rise/fall rates for configured timezone windows."""
 
-class Response200(TypedDict):
+class TickerResponse(TypedDict):
   """Ticker envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -77,10 +105,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Item0 | list[Item]
+  data: NotRequired[ContractTicker | list[ContractTickerListItem]]
   """Ticker object when symbol is supplied, otherwise a list."""
 
-adapter = validator(Response200)
+adapter = validator(TickerResponse)
 
 class Ticker(FuturesMixin):
   async def ticker(
@@ -88,7 +116,7 @@ class Ticker(FuturesMixin):
     *,
     symbol: str | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TickerResponse:
     """Return ticker/trend data, optionally filtered to one futures contract.
 
     Args:
@@ -99,7 +127,8 @@ class Ticker(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-trend-data"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-trend-data)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

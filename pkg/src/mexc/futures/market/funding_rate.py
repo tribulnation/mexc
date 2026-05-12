@@ -3,24 +3,28 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Data(TypedDict):
+class FundingRateData(TypedDict):
   """Current funding-rate state for a contract."""
   symbol: str
   """Contract symbol."""
   fundingRate: float
   """Current funding rate."""
-  maxFundingRate: NotRequired[float]
+  maxFundingRate: float
   """Maximum funding rate."""
-  minFundingRate: NotRequired[float]
+  minFundingRate: float
   """Minimum funding rate."""
-  collectCycle: NotRequired[int]
+  collectCycle: int
   """Funding collection cycle in hours."""
-  nextSettleTime: NotRequired[datetime]
+  nextSettleTime: datetime
   """Next funding settlement time in milliseconds."""
-  timestamp: NotRequired[datetime]
+  timestamp: datetime
   """System timestamp in milliseconds."""
+  fairPrice: float
+  """Returned fairPrice field."""
+  idxPrice: float
+  """Returned idxPrice field."""
 
-class Response200(TypedDict):
+class FundingRateResponse(TypedDict):
   """Funding rate envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -28,12 +32,17 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[FundingRateData]
 
-adapter = validator(Response200)
+adapter = validator(FundingRateResponse)
 
 class FundingRate(FuturesMixin):
-  async def funding_rate(self, symbol: str, *, validate: bool | None = None) -> Response200:
+  async def funding_rate(
+    self,
+    symbol: str,
+    *,
+    validate: bool | None = None
+  ) -> FundingRateResponse:
     """Return the current funding-rate state for a contract.
 
     Args:
@@ -44,7 +53,8 @@ class FundingRate(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-funding-rate)
+    """
     params = {}
     r = await self.request('GET', '/api/v1/contract/funding_rate/{symbol}'.replace('{symbol}', str(symbol)))
     return self.envelope_output(r.text, adapter, validate)

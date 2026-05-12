@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class TransferRequest(TypedDict):
   fromAccount: NotRequired[str]
   """Source account name."""
   toAccount: NotRequired[str]
@@ -16,12 +16,12 @@ class Body(TypedDict):
   amount: NotRequired[str]
   """Amount of the asset to transfer."""
 
-class Response200(TypedDict):
+class TransferResponse(TypedDict):
   """Sub-account transfer result."""
-  tranId: NotRequired[str | int | None]
+  tranId: str | int | None
   """Transfer id."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[TransferResponse | ErrorResponse] = TransferResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Transfer(AuthSpotMixin):
@@ -36,7 +36,7 @@ class Transfer(AuthSpotMixin):
     amount: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TransferResponse:
     """Transfers an asset between the master account and a sub-account.
 
     Args:
@@ -53,7 +53,8 @@ class Transfer(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#universal-transfer-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#universal-transfer-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

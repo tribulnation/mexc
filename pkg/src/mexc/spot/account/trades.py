@@ -1,11 +1,42 @@
+from datetime import datetime
 from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
-  """Item."""
+class AccountTrade(TypedDict):
+  """Account trade execution."""
+  symbol: str
+  """Spot symbol."""
+  id: int | str
+  """Trade id."""
+  orderId: int | str
+  """Order id."""
+  orderListId: int
+  """Order-list id."""
+  price: str
+  """Execution price."""
+  qty: str
+  """Executed base quantity."""
+  quoteQty: str
+  """Executed quote quantity."""
+  commission: str
+  """Commission amount."""
+  commissionAsset: str
+  """Commission asset."""
+  time: datetime
+  """Execution time."""
+  isBuyer: bool
+  """Whether the account was buyer."""
+  isMaker: bool
+  """Whether the account was maker."""
+  isBestMatch: bool
+  """Whether the trade was best-match."""
+  isSelfTrade: bool
+  """Whether the trade was self-trade."""
+  clientOrderId: str | None
+  """Client order id."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[AccountTrade] | ErrorResponse] = list[AccountTrade] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Trades(AuthSpotMixin):
@@ -20,7 +51,7 @@ class Trades(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[AccountTrade]:
     """Returns account trade executions for a symbol, limited to recent history.
 
     Args:
@@ -37,7 +68,8 @@ class Trades(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-trade-list)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

@@ -1,22 +1,22 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class AssetItem(TypedDict):
   """Single asset balance."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Asset symbol."""
-  free: NotRequired[str | None]
+  free: str | None
   """Available balance."""
-  locked: NotRequired[str | None]
+  locked: str | None
   """Locked balance."""
 
-class Response200(TypedDict):
+class AssetResponse(TypedDict):
   """Sub-account balances wrapper."""
-  balances: NotRequired[list[Item]]
+  balances: list[AssetItem]
   """Asset balances for the sub-account."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AssetResponse | ErrorResponse] = AssetResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Asset(AuthSpotMixin):
@@ -27,7 +27,7 @@ class Asset(AuthSpotMixin):
     account_type: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> AssetResponse:
     """Returns balances for a single sub-account.
 
     Args:
@@ -40,7 +40,8 @@ class Asset(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-asset"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-asset)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

@@ -1,25 +1,25 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class SubAccountsItem(TypedDict):
   """Sub-account record."""
-  subAccount: NotRequired[str | None]
+  subAccount: str | None
   """Sub-account name."""
-  isFreeze: NotRequired[bool | str | None]
+  isFreeze: bool | str | None
   """Whether the sub-account is frozen."""
-  createTime: NotRequired[datetime | None]
+  createTime: datetime | None
   """Sub-account creation time in milliseconds."""
-  uid: NotRequired[str | int | None]
+  uid: str | int | None
   """Sub-account user id."""
 
-class Response200(TypedDict):
+class SubAccountsResponse(TypedDict):
   """Sub-account list wrapper."""
-  subAccounts: NotRequired[list[Item]]
+  subAccounts: list[SubAccountsItem]
   """Sub-account records."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[SubAccountsResponse | ErrorResponse] = SubAccountsResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class List(AuthSpotMixin):
@@ -33,7 +33,7 @@ class List(AuthSpotMixin):
     timestamp: Timestamp | None = None,
     recv_window: int | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> SubAccountsResponse:
     """Returns sub-account records visible to the signed master account.
 
     Args:
@@ -49,7 +49,8 @@ class List(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-list-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-sub-account-list-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -68,7 +69,7 @@ class List(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/sub-account/list', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def list_paged(self, *, sub_account: str | None = None, is_freeze: str | None = None, limit: int | None = None, timestamp: Timestamp | None = None, recv_window: int | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def list_paged(self, *, sub_account: str | None = None, is_freeze: str | None = None, limit: int | None = None, timestamp: Timestamp | None = None, recv_window: int | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[SubAccountsResponse]:
     """Yield pages from `list` until the response reports the final page."""
     page = 1
     while True:

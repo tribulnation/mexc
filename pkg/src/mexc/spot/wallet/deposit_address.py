@@ -1,19 +1,19 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class DepositAddressItem(TypedDict):
   """Deposit address."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Asset."""
-  network: NotRequired[str | None]
+  network: str | None
   """Network."""
-  address: NotRequired[str | None]
+  address: str | None
   """Deposit address."""
-  memo: NotRequired[str | None]
+  memo: str | None
   """Deposit memo."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[DepositAddressItem] | ErrorResponse] = list[DepositAddressItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class DepositAddress(AuthSpotMixin):
@@ -24,7 +24,7 @@ class DepositAddress(AuthSpotMixin):
     network: str | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[DepositAddressItem]:
     """Returns deposit addresses for an asset, optionally filtered by network.
 
     Args:
@@ -37,7 +37,8 @@ class DepositAddress(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-address-supporting-network"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#deposit-address-supporting-network)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

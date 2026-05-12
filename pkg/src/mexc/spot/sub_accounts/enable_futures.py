@@ -3,11 +3,11 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class EnableFuturesRequest(TypedDict):
   subAccount: NotRequired[str]
   """Sub-account name whose futures capability should be enabled."""
 
-class Item(TypedDict):
+class EnableFuturesItem(TypedDict):
   """Sub-account futures enablement record."""
   subAccount: NotRequired[str | None]
   """Sub-account name."""
@@ -16,16 +16,16 @@ class Item(TypedDict):
   timestamp: NotRequired[str | datetime | None]
   """Response time."""
 
-class Response200(TypedDict):
+class EnableFuturesResponse(TypedDict):
   """Sub-account futures enablement result."""
   code: NotRequired[str | int | None]
   """Upstream result code when present."""
   message: NotRequired[str | None]
   """Upstream result message when present."""
-  data: NotRequired[list[Item]]
+  data: NotRequired[list[EnableFuturesItem]]
   """Enablement result records when present."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[EnableFuturesResponse | ErrorResponse] = EnableFuturesResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class EnableFutures(AuthSpotMixin):
@@ -35,7 +35,7 @@ class EnableFutures(AuthSpotMixin):
     sub_account: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> EnableFuturesResponse:
     """Enables futures capability for a sub-account. The exact non-broker Spot endpoint is docs-ambiguous in the current official Spot V3 page.
 
     Args:
@@ -47,7 +47,8 @@ class EnableFutures(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#sub-account-endpoints"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#sub-account-endpoints)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

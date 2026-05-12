@@ -3,52 +3,52 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class OpenPosition(TypedDict):
   """Futures position record."""
-  positionId: NotRequired[int | str]
+  positionId: int | str
   """Position identifier."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  positionType: NotRequired[int]
-  """Position side: Item1 long, 2 short."""
-  openType: NotRequired[int]
-  """Margin mode: Item1 isolated, 2 cross."""
-  state: NotRequired[int]
-  """Position state: Item1 holding, 2 system holding, 3 closed."""
-  holdVol: NotRequired[float]
+  positionType: int
+  """Position side: 1 long, 2 short."""
+  openType: int
+  """Margin mode: 1 isolated, 2 cross."""
+  state: int
+  """Position state: 1 holding, 2 system holding, 3 closed."""
+  holdVol: float
   """Held contract volume."""
-  frozenVol: NotRequired[float]
+  frozenVol: float
   """Frozen position volume."""
-  closeVol: NotRequired[float]
+  closeVol: float
   """Closed position volume."""
-  holdAvgPrice: NotRequired[float]
+  holdAvgPrice: float
   """Average holding price."""
-  openAvgPrice: NotRequired[float]
+  openAvgPrice: float
   """Average opening price."""
-  closeAvgPrice: NotRequired[float]
+  closeAvgPrice: float
   """Average closing price."""
-  liquidatePrice: NotRequired[float]
+  liquidatePrice: float
   """Liquidation price."""
-  oim: NotRequired[float]
+  oim: float
   """Original initial margin."""
-  im: NotRequired[float]
+  im: float
   """Initial margin."""
-  holdFee: NotRequired[float]
+  holdFee: float
   """Holding fee."""
-  realised: NotRequired[float]
+  realised: float
   """Realized profit and loss."""
   adlLevel: NotRequired[int]
   """Current ADL level when present."""
-  leverage: NotRequired[int]
+  leverage: int
   """Position leverage."""
-  createTime: NotRequired[datetime | str]
+  createTime: datetime | str
   """Creation time."""
-  updateTime: NotRequired[datetime | str]
+  updateTime: datetime | str
   """Last update time."""
-  autoAddIm: NotRequired[bool]
+  autoAddIm: bool
   """Whether automatic margin addition is enabled."""
 
-class Response200(TypedDict):
+class OpenPositionsResponse(TypedDict):
   """Get open futures positions response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -56,10 +56,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[OpenPosition]]
   """Current open futures positions."""
 
-adapter = validator(Response200)
+adapter = validator(OpenPositionsResponse)
 
 class Open(AuthFuturesMixin):
   async def open(
@@ -67,7 +67,7 @@ class Open(AuthFuturesMixin):
     *,
     symbol: str | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> OpenPositionsResponse:
     """Returns current open holding positions for the signed futures account.
 
     Args:
@@ -78,7 +78,8 @@ class Open(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-holding-position"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-current-holding-position)
+    """
     headers = {}
     params = {}
     if symbol is not None:

@@ -1,21 +1,21 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import Literal, NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class PlaceOrderResponse(TypedDict):
   """Created order response."""
-  symbol: NotRequired[str]
+  symbol: str
   """Spot symbol."""
-  orderId: NotRequired[Any]
+  orderId: int | str
   """MEXC order id."""
-  orderListId: NotRequired[Any]
+  orderListId: int | str
   """Order-list id."""
   clientOrderId: NotRequired[str | None]
   """Client order id."""
-  price: NotRequired[str]
+  price: str
   """Price."""
-  origQty: NotRequired[str]
+  origQty: str
   """Original quantity."""
   executedQty: NotRequired[str]
   """Executed quantity."""
@@ -23,11 +23,11 @@ class Response200(TypedDict):
   """Executed quote quantity."""
   status: NotRequired[str]
   """Order status."""
-  timeInForce: NotRequired[str]
+  timeInForce: NotRequired[Literal['GTC', 'IOC', 'FOK']]
   """Time in force."""
-  type: NotRequired[str]
+  type: Literal['LIMIT', 'MARKET', 'LIMIT_MAKER', 'IMMEDIATE_OR_CANCEL', 'FILL_OR_KILL']
   """Order type."""
-  side: NotRequired[str]
+  side: Literal['BUY', 'SELL']
   """Order side."""
   time: NotRequired[datetime]
   """Creation time."""
@@ -35,8 +35,10 @@ class Response200(TypedDict):
   """Update time."""
   isWorking: NotRequired[bool]
   """Whether active on the order book."""
+  transactTime: datetime
+  """transactTime timestamp in milliseconds."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[PlaceOrderResponse | ErrorResponse] = PlaceOrderResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class PlaceOrder(AuthSpotMixin):
@@ -44,8 +46,8 @@ class PlaceOrder(AuthSpotMixin):
     self,
     *,
     symbol: str,
-    side: str,
-    type_: str,
+    side: Literal['BUY', 'SELL'],
+    type_: Literal['LIMIT', 'MARKET', 'LIMIT_MAKER', 'IMMEDIATE_OR_CANCEL', 'FILL_OR_KILL'],
     quantity: str | None = None,
     quote_order_qty: str | None = None,
     price: str | None = None,
@@ -53,7 +55,7 @@ class PlaceOrder(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> PlaceOrderResponse:
     """Creates a live spot order on the signed account.
 
     Args:
@@ -72,7 +74,8 @@ class PlaceOrder(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#new-order)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

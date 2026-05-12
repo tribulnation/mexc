@@ -2,31 +2,31 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class DeleteApiKeyRequest(TypedDict):
   subAccount: NotRequired[str]
   """Sub-account name whose API key should be deleted."""
   apiKey: NotRequired[str]
   """API public key to delete."""
 
-class Response200(TypedDict):
+class DeleteApiKeyResponse(TypedDict):
   """Deleted sub-account API key result."""
-  subAccount: NotRequired[str | None]
+  subAccount: str | None
   """Sub-account name."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[DeleteApiKeyResponse | ErrorResponse] = DeleteApiKeyResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class DeleteApiKey(AuthSpotMixin):
   async def delete_api_key(
     self,
-    body: Body,
+    body: DeleteApiKeyRequest,
     *,
     sub_account: str,
     api_key: str,
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> DeleteApiKeyResponse:
     """Deletes an API key from a sub-account under the signed master account.
 
     Args:
@@ -41,7 +41,8 @@ class DeleteApiKey(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#delete-the-apikey-of-a-sub-account-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

@@ -2,14 +2,14 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Body(TypedDict):
+class CancelAllStopRequest(TypedDict):
   """Cancel all futures stop-limit trigger orders request body."""
   positionId: NotRequired[int]
   """Position identifier to scope cancellation."""
   symbol: NotRequired[str]
   """Contract symbol to scope cancellation; omit with positionId to cancel all stop-limit trigger orders."""
 
-class Response200(TypedDict):
+class CancelAllStopResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -18,10 +18,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(CancelAllStopResponse)
 
 class CancelAllStop(AuthFuturesMixin):
-  async def cancel_all_stop(self, body: Body, *, validate: bool | None = None) -> Response200:
+  async def cancel_all_stop(
+    self,
+    body: CancelAllStopRequest,
+    *,
+    validate: bool | None = None
+  ) -> CancelAllStopResponse:
     """Cancels stop-limit trigger orders by position, by symbol, or across all symbols when no scope is provided.
 
     Args:
@@ -32,7 +37,8 @@ class CancelAllStop(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-stop-limit-price-trigger-orders-under-maintenance"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-all-stop-limit-price-trigger-orders-under-maintenance)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/stoporder/cancel_all', json=body)
     return self.envelope_output(r.text, adapter, validate)

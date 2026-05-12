@@ -1,55 +1,55 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class AffiliateCampaignItem(TypedDict):
   """Affiliate record."""
-  campaign: NotRequired[str]
+  campaign: str
   """Campaign name."""
-  inviteCode: NotRequired[str]
+  inviteCode: str
   """Campaign invite code."""
-  clickTime: NotRequired[int]
+  clickTime: int
   """Invite-code click count."""
-  createTime: NotRequired[datetime]
+  createTime: datetime
   """Campaign creation time."""
-  signup: NotRequired[int]
+  signup: int
   """Signup count."""
-  traded: NotRequired[int]
+  traded: int
   """Number of users who traded."""
-  deposited: NotRequired[int]
+  deposited: int
   """Number of users who deposited."""
-  depositAmount: NotRequired[str]
+  depositAmount: str
   """Deposit amount in USDT."""
-  tradingAmount: NotRequired[str]
+  tradingAmount: str
   """Trading amount in USDT."""
-  commission: NotRequired[str]
+  commission: str
   """Commission amount."""
 
-class Data(TypedDict):
+class AffiliateCampaignData(TypedDict):
   """Paginated affiliate data."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of result pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current result page."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[AffiliateCampaignItem]
   """Affiliate records for the page."""
 
-class Response200(TypedDict):
+class AffiliateCampaignResponse(TypedDict):
   """Affiliate wrapper response."""
-  success: NotRequired[bool]
+  success: bool
   """Whether the request succeeded."""
-  code: NotRequired[int]
+  code: int
   """Business response code."""
-  message: NotRequired[str | None]
+  message: str | None
   """Business response message."""
-  data: NotRequired[Data]
+  data: AffiliateCampaignData
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AffiliateCampaignResponse | ErrorResponse] = AffiliateCampaignResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AffiliateCampaign(AuthSpotMixin):
@@ -62,7 +62,7 @@ class AffiliateCampaign(AuthSpotMixin):
     page_size: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> AffiliateCampaignResponse:
     """Affiliate-only endpoint returning campaign-level referral, deposit, trading, and commission metrics.
 
     Args:
@@ -77,7 +77,8 @@ class AffiliateCampaign(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-campaign-data-affiliate-only"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-campaign-data-affiliate-only)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -94,7 +95,7 @@ class AffiliateCampaign(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/rebate/affiliate/campaign', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def affiliate_campaign_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def affiliate_campaign_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[AffiliateCampaignResponse]:
     """Yield pages from `affiliate_campaign` until the response reports the final page."""
     page = 1
     while True:

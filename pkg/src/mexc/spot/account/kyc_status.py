@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class KycStatusResponse(TypedDict):
   """KYC status response."""
-  status: NotRequired[str]
-  """Verification tier: Item1 unverified, 2 primary, 3 advanced, 4 institutional."""
+  status: str
+  """Verification tier: 1 unverified, 2 primary, 3 advanced, 4 institutional."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[KycStatusResponse | ErrorResponse] = KycStatusResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class KycStatus(AuthSpotMixin):
@@ -17,7 +17,7 @@ class KycStatus(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> KycStatusResponse:
     """Returns the account KYC verification tier for the signed spot account.
 
     Args:
@@ -29,7 +29,8 @@ class KycStatus(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-kyc-status"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-kyc-status)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

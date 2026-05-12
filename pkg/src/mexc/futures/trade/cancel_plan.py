@@ -2,14 +2,14 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class CancelPlanItem(TypedDict):
   """Single trigger order cancellation request."""
   symbol: str
   """Contract symbol."""
   orderId: str
   """Trigger order identifier."""
 
-class Response200(TypedDict):
+class CancelPlanResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -18,15 +18,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(CancelPlanResponse)
 
 class CancelPlan(AuthFuturesMixin):
   async def cancel_plan(
     self,
-    list_item: list[Item],
+    list_item: list[CancelPlanItem],
     *,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CancelPlanResponse:
     """Cancels up to 50 futures trigger orders.
 
     Args:
@@ -37,7 +37,8 @@ class CancelPlan(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-trigger-order-under-maintenance"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-trigger-order-under-maintenance)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/planorder/cancel', json=list_item)
     return self.envelope_output(r.text, adapter, validate)

@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class PositionModeResponse(TypedDict):
   """Get futures position mode response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -10,13 +10,13 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: int
-  """Position mode: Item1 hedge, 2 one-way."""
+  data: NotRequired[int]
+  """Position mode: 1 hedge, 2 one-way."""
 
-adapter = validator(Response200)
+adapter = validator(PositionModeResponse)
 
 class PositionMode(AuthFuturesMixin):
-  async def position_mode(self, *, validate: bool | None = None) -> Response200:
+  async def position_mode(self, *, validate: bool | None = None) -> PositionModeResponse:
     """Returns the signed account position mode: 1 hedge mode, 2 one-way mode.
 
     Args:
@@ -26,7 +26,8 @@ class PositionMode(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-position-mode"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-position-mode)
+    """
     headers = {}
     params = {}
     r = await self.signed_request('GET', '/api/v1/private/position/position_mode', params=params or None, headers=headers)

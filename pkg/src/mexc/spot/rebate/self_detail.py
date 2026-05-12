@@ -1,39 +1,39 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class SelfDetailItem(TypedDict):
   """Rebate record."""
-  asset: NotRequired[str]
+  asset: str
   """Rebate asset."""
-  type: NotRequired[str]
+  type: str
   """Rebate source type, such as spot or futures."""
-  rate: NotRequired[str]
+  rate: str
   """Rebate rate."""
-  amount: NotRequired[str]
+  amount: str
   """Rebate amount."""
-  uid: NotRequired[str]
+  uid: str
   """Invitee user id."""
-  account: NotRequired[str]
+  account: str
   """Masked invitee account."""
-  tradeTime: NotRequired[datetime]
+  tradeTime: datetime
   """Trade time in milliseconds."""
-  updateTime: NotRequired[datetime]
+  updateTime: datetime
   """Record update time in milliseconds."""
 
-class Response200(TypedDict):
+class SelfDetailResponse(TypedDict):
   """Paginated rebate response."""
-  page: NotRequired[int]
+  page: int
   """Current result page."""
-  totalRecords: NotRequired[int]
+  totalRecords: int
   """Total number of matching records."""
-  totalPageNum: NotRequired[int]
+  totalPageNum: int
   """Total number of result pages."""
-  data: NotRequired[list[Item]]
+  data: list[SelfDetailItem]
   """Result records for the page."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[SelfDetailResponse | ErrorResponse] = SelfDetailResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class SelfDetail(AuthSpotMixin):
@@ -46,7 +46,7 @@ class SelfDetail(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> SelfDetailResponse:
     """Returns self-commission rebate records generated from invited friends trading spot or futures.
 
     Args:
@@ -61,7 +61,8 @@ class SelfDetail(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-self-rebate-records-detail)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -78,7 +79,7 @@ class SelfDetail(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/rebate/detail/kickback', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def self_detail_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, recv_window: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def self_detail_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, recv_window: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[SelfDetailResponse]:
     """Yield pages from `self_detail` until the response reports the final page."""
     page = 1
     while True:

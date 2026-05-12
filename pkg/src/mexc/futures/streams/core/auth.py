@@ -88,7 +88,13 @@ class AuthedStreamsClient(Streams[Any, Any, None, None]):
 
 @dataclass
 class AuthedStreamsMixin(ValidationMixin):
-  auth_ws: AuthedStreamsClient
+  auth_ws: AuthedStreamsClient | None
+
+  @property
+  def authenticated_ws(self) -> AuthedStreamsClient:
+    if self.auth_ws is None:
+      raise AuthError('MEXC API credentials are required for authenticated futures streams.')
+    return self.auth_ws
 
   @classmethod
   def new(cls, api_key: str | None = None, api_secret: str | None = None, *,
@@ -98,8 +104,8 @@ class AuthedStreamsMixin(ValidationMixin):
     return cls(auth_ws=auth_ws)
 
   async def __aenter__(self):
-    await self.auth_ws.__aenter__()
+    await self.authenticated_ws.__aenter__()
     return self
   
   async def __aexit__(self, exc_type, exc_value, traceback):
-    await self.auth_ws.__aexit__(exc_type, exc_value, traceback)
+    await self.authenticated_ws.__aexit__(exc_type, exc_value, traceback)

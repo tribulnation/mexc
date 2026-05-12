@@ -3,39 +3,39 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class TransferRecordItem(TypedDict):
   """transfer record"""
-  id: NotRequired[int | str]
+  id: int | str
   """Transfer record id."""
-  txid: NotRequired[str]
+  txid: str
   """Transfer flow number."""
-  currency: NotRequired[str]
+  currency: str
   """Currency code."""
-  amount: NotRequired[float]
+  amount: float
   """Transfer amount."""
-  type: NotRequired[str]
+  type: str
   """Transfer direction: IN or OUT."""
-  state: NotRequired[str]
+  state: str
   """Transfer state."""
-  createTime: NotRequired[datetime | str]
+  createTime: datetime | str
   """Creation time."""
-  updateTime: NotRequired[datetime | str]
+  updateTime: datetime | str
   """Update time."""
 
-class Data(TypedDict):
+class TransferRecordData(TypedDict):
   """Transfer record page."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of available pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current page number."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[TransferRecordItem]
   """Page of transfer record records."""
 
-class Response200(TypedDict):
+class TransferRecordResponse(TypedDict):
   """Get futures asset transfer records response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -43,9 +43,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[TransferRecordData]
 
-adapter = validator(Response200)
+adapter = validator(TransferRecordResponse)
 
 class TransferRecord(AuthFuturesMixin):
   async def transfer_record(
@@ -57,7 +57,7 @@ class TransferRecord(AuthFuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TransferRecordResponse:
     """Returns paginated asset transfer records for the signed futures account.
 
     Args:
@@ -72,7 +72,8 @@ class TransferRecord(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-the-user-39-s-asset-transfer-records)
+    """
     headers = {}
     params = {}
     if currency is not None:
@@ -88,7 +89,7 @@ class TransferRecord(AuthFuturesMixin):
     r = await self.signed_request('GET', '/api/v1/private/account/transfer_record', params=params or None, headers=headers)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def transfer_record_paged(self, *, currency: str | None = None, state: str | None = None, type_: str | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def transfer_record_paged(self, *, currency: str | None = None, state: str | None = None, type_: str | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[TransferRecordResponse]:
     """Yield pages from `transfer_record` until the response reports the final page."""
     page = 1
     while True:

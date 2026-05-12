@@ -2,12 +2,12 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class CancelStopItem(TypedDict):
   """Single stop-limit trigger cancellation request."""
   stopPlanOrderId: int
   """Stop-limit trigger order identifier."""
 
-class Response200(TypedDict):
+class CancelStopResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -16,15 +16,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(CancelStopResponse)
 
 class CancelStop(AuthFuturesMixin):
   async def cancel_stop(
     self,
-    list_item: list[Item],
+    list_item: list[CancelStopItem],
     *,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CancelStopResponse:
     """Cancels up to 50 futures stop-limit trigger orders by stop-plan order id.
 
     Args:
@@ -35,7 +35,8 @@ class CancelStop(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-stop-limit-trigger-order-under-maintenance"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#cancel-the-stop-limit-trigger-order-under-maintenance)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/stoporder/cancel', json=list_item)
     return self.envelope_output(r.text, adapter, validate)

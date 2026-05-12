@@ -10,9 +10,9 @@ Create API credentials from the MEXC API management page:
 
 Before using them in production:
 
-- enable only the permissions you actually need
-- restrict IPs when the provider supports it
-- keep trading and withdrawal permissions separate when possible
+1. Enable only the permissions you actually need.
+2. Restrict IPs when the provider supports it.
+3. Keep trading and withdrawal permissions separate when possible.
 
 ## Environment Variables
 
@@ -44,17 +44,20 @@ async with MEXC.new(
 
 ## Security Notes
 
-- never commit credentials to git
-- prefer read-only keys for development
-- use separate keys for production automation
-- rotate credentials after any suspected leak
-- keys without an IP whitelist expire after 90 days on MEXC
+1. Never commit credentials to git, issue trackers, logs, notebooks, or shared terminals.
+2. Prefer read-only keys for development and documentation examples.
+3. Use separate keys for production automation, manual trading, and local experiments.
+4. Keep withdrawal permission disabled unless the exact workflow requires it.
+5. Keep futures trading permission separate from spot read access where your account setup allows it.
+6. Restrict production keys by IP before enabling trading permission.
+7. Rotate credentials after any suspected leak or after using them on an untrusted machine.
+8. Keys without an IP whitelist expire after 90 days on MEXC.
 
 ## Troubleshooting
 
 If authenticated requests fail:
 
-- confirm the key has the required permissions
-- confirm your environment variables are loaded
-- confirm your IP whitelist configuration on the MEXC side
-- check [Error Handling](reference/error-handling.md) for the client error model
+1. Confirm the key has the required permissions.
+2. Confirm your environment variables are loaded.
+3. Confirm your IP whitelist configuration on the MEXC side.
+4. Check [Error Handling](reference/error-handling.md) for the client error model.

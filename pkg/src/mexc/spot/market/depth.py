@@ -1,19 +1,19 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-class Response200(TypedDict):
+class OrderBook(TypedDict):
   lastUpdateId: int
   """Last update id."""
   bids: list[list[str]]
   """Bid price and quantity levels."""
   asks: list[list[str]]
   """Ask price and quantity levels."""
-  timestamp: NotRequired[datetime]
+  timestamp: datetime
   """Snapshot timestamp in milliseconds."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[OrderBook | ErrorResponse] = OrderBook | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Depth(SpotMixin):
@@ -23,7 +23,7 @@ class Depth(SpotMixin):
     symbol: str,
     limit: int | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> OrderBook:
     """Return a spot order book snapshot for a symbol.
 
     Args:
@@ -35,7 +35,8 @@ class Depth(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#order-book"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#order-book)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

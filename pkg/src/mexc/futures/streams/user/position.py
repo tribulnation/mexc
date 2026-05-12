@@ -36,7 +36,7 @@ class PositionStream(AuthedStreamsMixin):
     References:
       - [MEXC futures WebSocket API](https://mexcdevelop.github.io/apidocs/contract_v1_en/#position-information)
     """
-    stream = await self.auth_ws.subscribe('personal.position')
+    stream = await self.authenticated_ws.subscribe('personal.position')
     async def parsed_stream():
       async for msg in stream:
         yield validate_response(msg) if self.validate(validate) else msg

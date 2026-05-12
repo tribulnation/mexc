@@ -1,39 +1,39 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class InternalTransferHistoryItem(TypedDict):
   """Internal transfer row."""
-  tranId: NotRequired[str | None]
+  tranId: str | None
   """Transfer id."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Asset."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Amount."""
-  toAccountType: NotRequired[str | None]
+  toAccountType: str | None
   """Recipient account type."""
-  toAccount: NotRequired[str | None]
+  toAccount: str | None
   """Recipient account."""
-  fromAccount: NotRequired[str | None]
+  fromAccount: str | None
   """Source account."""
-  status: NotRequired[str | None]
+  status: str | None
   """Transfer status."""
-  timestamp: NotRequired[datetime | None]
+  timestamp: datetime | None
   """Transfer timestamp."""
 
-class Response200(TypedDict):
+class InternalTransferHistoryResponse(TypedDict):
   """Internal transfer history response."""
-  page: NotRequired[int | None]
+  page: int | None
   """Current page."""
-  totalRecords: NotRequired[int | None]
+  totalRecords: int | None
   """Total records."""
-  totalPageNum: NotRequired[int | None]
+  totalPageNum: int | None
   """Total pages."""
-  data: NotRequired[list[Item]]
+  data: list[InternalTransferHistoryItem]
   """Internal transfer rows."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[InternalTransferHistoryResponse | ErrorResponse] = InternalTransferHistoryResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class InternalTransferHistory(AuthSpotMixin):
@@ -47,7 +47,7 @@ class InternalTransferHistory(AuthSpotMixin):
     tran_id: str | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> InternalTransferHistoryResponse:
     """Returns internal transfer records for the signed account.
 
     Args:
@@ -63,7 +63,8 @@ class InternalTransferHistory(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-internal-transfer-history"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-internal-transfer-history)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -82,7 +83,7 @@ class InternalTransferHistory(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/capital/transfer/internal', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def internal_transfer_history_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, limit: int | None = None, tran_id: str | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def internal_transfer_history_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, limit: int | None = None, tran_id: str | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[InternalTransferHistoryResponse]:
     """Yield pages from `internal_transfer_history` until the response reports the final page."""
     page = 1
     while True:

@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class ReferCodeResponse(TypedDict):
   """Referral code response."""
-  referCode: NotRequired[str]
+  referCode: str
   """Referral code for the signed account."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[ReferCodeResponse | ErrorResponse] = ReferCodeResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class ReferCode(AuthSpotMixin):
@@ -17,7 +17,7 @@ class ReferCode(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> ReferCodeResponse:
     """Returns the referral code associated with the signed account.
 
     Args:
@@ -29,7 +29,8 @@ class ReferCode(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-refercode"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-refercode)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

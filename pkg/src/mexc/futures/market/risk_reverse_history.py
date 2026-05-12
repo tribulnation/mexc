@@ -3,7 +3,7 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class RiskReverseHistoryItem(TypedDict):
   """Risk fund balance snapshot."""
   symbol: str
   """Contract symbol."""
@@ -14,7 +14,7 @@ class Item(TypedDict):
   snapshotTime: datetime
   """Snapshot time in milliseconds."""
 
-class Data(TypedDict):
+class RiskReverseHistoryData(TypedDict):
   """Risk fund balance history page."""
   pageSize: int
   """Page size."""
@@ -24,10 +24,10 @@ class Data(TypedDict):
   """Total page count."""
   currentPage: int
   """Current page number."""
-  resultList: list[Item]
+  resultList: list[RiskReverseHistoryItem]
   """Page result records."""
 
-class Response200(TypedDict):
+class RiskReverseHistoryResponse(TypedDict):
   """Risk fund history envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -35,9 +35,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[RiskReverseHistoryData]
 
-adapter = validator(Response200)
+adapter = validator(RiskReverseHistoryResponse)
 
 class RiskReverseHistory(FuturesMixin):
   async def risk_reverse_history(
@@ -47,7 +47,7 @@ class RiskReverseHistory(FuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> RiskReverseHistoryResponse:
     """Return paginated risk fund balance history for a contract.
 
     Args:
@@ -60,7 +60,8 @@ class RiskReverseHistory(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-risk-fund-balance-history"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-risk-fund-balance-history)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol
@@ -71,7 +72,7 @@ class RiskReverseHistory(FuturesMixin):
     r = await self.request('GET', '/api/v1/contract/risk_reverse/history', params=params)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def risk_reverse_history_paged(self, *, symbol: str, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def risk_reverse_history_paged(self, *, symbol: str, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[RiskReverseHistoryResponse]:
     """Yield pages from `risk_reverse_history` until the response reports the final page."""
     page = 1
     while True:

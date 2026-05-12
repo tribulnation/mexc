@@ -1,32 +1,32 @@
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class WithdrawAddressItem(TypedDict):
   """Withdrawal address."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Asset."""
-  network: NotRequired[str | None]
+  network: str | None
   """Network."""
-  address: NotRequired[str | None]
+  address: str | None
   """Withdrawal address."""
-  addressTag: NotRequired[str | None]
+  addressTag: str | None
   """Address label/tag."""
-  memo: NotRequired[str | None]
+  memo: str | None
   """Address memo."""
 
-class Response200(TypedDict):
+class WithdrawAddressResponse(TypedDict):
   """Withdrawal address lookup response."""
-  data: NotRequired[list[Item]]
+  data: list[WithdrawAddressItem]
   """Withdrawal addresses."""
-  totalRecords: NotRequired[int | None]
+  totalRecords: int | None
   """Total records."""
-  page: NotRequired[int | None]
+  page: int | None
   """Current page."""
-  totalPageNum: NotRequired[int | None]
+  totalPageNum: int | None
   """Total pages."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[WithdrawAddressResponse | ErrorResponse] = WithdrawAddressResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class WithdrawAddress(AuthSpotMixin):
@@ -38,7 +38,7 @@ class WithdrawAddress(AuthSpotMixin):
     limit: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> WithdrawAddressResponse:
     """Returns saved withdrawal addresses for the signed account.
 
     Args:
@@ -52,7 +52,8 @@ class WithdrawAddress(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-address-supporting-network"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#withdraw-address-supporting-network)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -67,7 +68,7 @@ class WithdrawAddress(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/capital/withdraw/address', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def withdraw_address_paged(self, *, coin: str | None = None, limit: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def withdraw_address_paged(self, *, coin: str | None = None, limit: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[WithdrawAddressResponse]:
     """Yield pages from `withdraw_address` until the response reports the final page."""
     page = 1
     while True:

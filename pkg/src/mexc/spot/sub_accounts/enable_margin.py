@@ -1,12 +1,23 @@
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class EnableMarginRequest(TypedDict):
   subAccount: NotRequired[str]
   """Sub-account name whose margin capability should be enabled."""
 
-Response: type[dict[str, Any] | ErrorResponse] = dict[str, Any] | ErrorResponse # type: ignore
+class EnableMarginResponse(TypedDict):
+  """Sub-account margin enablement result."""
+  subAccount: NotRequired[str]
+  """Sub-account name."""
+  isMarginEnabled: NotRequired[bool]
+  """Whether margin has been enabled."""
+  code: NotRequired[int]
+  """MEXC response code when returned."""
+  msg: NotRequired[str | None]
+  """Status message when returned."""
+
+Response: type[EnableMarginResponse | ErrorResponse] = EnableMarginResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class EnableMargin(AuthSpotMixin):
@@ -16,7 +27,7 @@ class EnableMargin(AuthSpotMixin):
     sub_account: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> dict[str, Any]:
+  ) -> EnableMarginResponse:
     """Enables margin capability for a sub-account. The exact endpoint is docs-ambiguous because the current official Spot V3 page omits this operation.
 
     Args:
@@ -28,7 +39,8 @@ class EnableMargin(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#sub-account-endpoints"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#sub-account-endpoints)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

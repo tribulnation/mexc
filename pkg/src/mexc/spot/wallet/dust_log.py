@@ -1,46 +1,46 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
 class ConvertDetailsItem(TypedDict):
   """Conversion detail."""
-  id: NotRequired[str | None]
+  id: str | None
   """Conversion id."""
-  convert: NotRequired[str | None]
+  convert: str | None
   """Converted MX amount."""
-  fee: NotRequired[str | None]
+  fee: str | None
   """Fee amount."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Source asset amount."""
-  time: NotRequired[datetime | None]
+  time: datetime | None
   """Conversion time."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Source asset."""
 
-class DataItem(TypedDict):
+class DustLogDataItem(TypedDict):
   """Dust conversion group."""
-  totalConvert: NotRequired[str | None]
+  totalConvert: str | None
   """Total converted MX amount."""
-  totalFee: NotRequired[str | None]
+  totalFee: str | None
   """Total fee amount."""
-  convertTime: NotRequired[datetime | None]
+  convertTime: datetime | None
   """Conversion time."""
-  convertDetails: NotRequired[list[ConvertDetailsItem]]
+  convertDetails: list[ConvertDetailsItem]
   """Conversion detail rows."""
 
-class Response200(TypedDict):
+class DustLogResponse(TypedDict):
   """Dust log response."""
-  data: NotRequired[list[DataItem]]
+  data: list[DustLogDataItem]
   """Dust conversion groups."""
-  totalRecords: NotRequired[int | None]
+  totalRecords: int | None
   """Total records."""
-  page: NotRequired[int | None]
+  page: int | None
   """Current page."""
-  totalPageNum: NotRequired[int | None]
+  totalPageNum: int | None
   """Total pages."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[DustLogResponse | ErrorResponse] = DustLogResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class DustLog(AuthSpotMixin):
@@ -53,7 +53,7 @@ class DustLog(AuthSpotMixin):
     limit: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> DustLogResponse:
     """Returns historical dust conversion records for the signed account.
 
     Args:
@@ -68,7 +68,8 @@ class DustLog(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#dustlog"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#dustlog)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -85,7 +86,7 @@ class DustLog(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/capital/convert', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def dust_log_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, limit: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def dust_log_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, limit: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[DustLogResponse]:
     """Yield pages from `dust_log` until the response reports the final page."""
     page = 1
     while True:

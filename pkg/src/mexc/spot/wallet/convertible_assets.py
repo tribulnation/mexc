@@ -1,23 +1,23 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class ConvertibleAssetsItem(TypedDict):
   """Convertible asset."""
-  convertMx: NotRequired[str | None]
+  convertMx: str | None
   """Estimated MX amount after fee."""
-  convertUsdt: NotRequired[str | None]
+  convertUsdt: str | None
   """Estimated USDT amount."""
-  balance: NotRequired[str | None]
+  balance: str | None
   """Convertible balance."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Asset."""
-  code: NotRequired[str | None]
+  code: str | None
   """Per-asset code."""
-  message: NotRequired[str | None]
+  message: str | None
   """Per-asset message."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[ConvertibleAssetsItem] | ErrorResponse] = list[ConvertibleAssetsItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class ConvertibleAssets(AuthSpotMixin):
@@ -26,7 +26,7 @@ class ConvertibleAssets(AuthSpotMixin):
     *,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[ConvertibleAssetsItem]:
     """Returns dust balances and estimated MX/USDT conversion values for assets that can be converted.
 
     Args:
@@ -37,7 +37,8 @@ class ConvertibleAssets(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-assets-that-can-be-converted-into-mx"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-assets-that-can-be-converted-into-mx)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

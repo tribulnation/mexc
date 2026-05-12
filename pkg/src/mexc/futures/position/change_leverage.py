@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Body(TypedDict):
+class ChangeLeverageRequest(TypedDict):
   """Change futures leverage request body."""
   positionId: NotRequired[int]
   """Existing position identifier when changing leverage for a held position."""
@@ -15,7 +15,7 @@ class Body(TypedDict):
   positionType: NotRequired[int]
   """Required when there is no position; 1 long, 2 short."""
 
-class Response200(TypedDict):
+class ChangeLeverageResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -24,10 +24,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(ChangeLeverageResponse)
 
 class ChangeLeverage(AuthFuturesMixin):
-  async def change_leverage(self, body: Body, *, validate: bool | None = None) -> Response200:
+  async def change_leverage(
+    self,
+    body: ChangeLeverageRequest,
+    *,
+    validate: bool | None = None
+  ) -> ChangeLeverageResponse:
     """Changes leverage either for an existing position or for a symbol/open-type/side when no position exists.
 
     Args:
@@ -38,7 +43,8 @@ class ChangeLeverage(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-leverage"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-leverage)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/position/change_leverage', json=body)
     return self.envelope_output(r.text, adapter, validate)

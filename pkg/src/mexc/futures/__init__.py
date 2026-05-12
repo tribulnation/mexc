@@ -25,6 +25,7 @@ class Futures:
     auth_http: AuthHttpClient,
     default_validate: bool = True,
   ):
+    """Create a futures API group from an authenticated HTTP client."""
     self.base_url = api_url
     self.default_validate = default_validate
     self.http = self.auth_http = auth_http
@@ -48,10 +49,14 @@ class Futures:
       auth_http=auth_http,
       default_validate=default_validate,
     )
-    self.streams = Streams.new(
-      auth_http.api_key, auth_http.api_secret,
-      url=ws_url,
-      default_validate=default_validate,
+    self.streams = (
+      Streams.public(url=ws_url, default_validate=default_validate)
+      if auth_http.public
+      else Streams.new(
+        auth_http.api_key, auth_http.api_secret,
+        url=ws_url,
+        default_validate=default_validate,
+      )
     )
 
   @classmethod
@@ -61,6 +66,7 @@ class Futures:
     ws_url: str = MEXC_FUTURES_SOCKET_URL,
     default_validate: bool = True,
   ):
+    """Create a futures API group with signed endpoint support."""
     if api_key is None:
       api_key = os.environ['MEXC_ACCESS_KEY']
     if api_secret is None:
@@ -75,10 +81,12 @@ class Futures:
     ws_url: str = MEXC_FUTURES_SOCKET_URL,
     default_validate: bool = True,
   ):
+    """Create a public-only futures API group."""
     auth_http = AuthHttpClient(api_key='', api_secret='', public=True)
     return cls(api_url=base_url, ws_url=ws_url, auth_http=auth_http, default_validate=default_validate)
 
   async def __aenter__(self):
+    """Open the underlying futures transports."""
     await asyncio.gather(
       self.auth_http.__aenter__(),
       self.streams.__aenter__(),
@@ -86,6 +94,7 @@ class Futures:
     return self
 
   async def __aexit__(self, exc_type, exc_value, traceback):
+    """Close the underlying futures transports."""
     await asyncio.gather(
       self.auth_http.__aexit__(exc_type, exc_value, traceback),
       self.streams.__aexit__(exc_type, exc_value, traceback),

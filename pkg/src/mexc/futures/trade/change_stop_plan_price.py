@@ -2,7 +2,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Body(TypedDict):
+class ChangeStopPlanPriceRequest(TypedDict):
   """Change stop-limit prices for a futures trigger order request body."""
   stopPlanOrderId: int
   """Stop-limit trigger order identifier."""
@@ -11,7 +11,7 @@ class Body(TypedDict):
   takeProfitPrice: NotRequired[float]
   """Take-profit price; at least one stop-loss or take-profit price must be present and greater than 0."""
 
-class Response200(TypedDict):
+class ChangeStopPlanPriceResponse(TypedDict):
   """Futures write endpoint response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -20,15 +20,15 @@ class Response200(TypedDict):
   message: NotRequired[str]
   """Error or status message when present."""
 
-adapter = validator(Response200)
+adapter = validator(ChangeStopPlanPriceResponse)
 
 class ChangeStopPlanPrice(AuthFuturesMixin):
   async def change_stop_plan_price(
     self,
-    body: Body,
+    body: ChangeStopPlanPriceRequest,
     *,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> ChangeStopPlanPriceResponse:
     """Updates stop-loss and/or take-profit prices for a futures stop-limit trigger order.
 
     Args:
@@ -39,7 +39,8 @@ class ChangeStopPlanPrice(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-the-stop-limit-price-of-trigger-orders"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#switch-the-stop-limit-price-of-trigger-orders)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/stoporder/change_plan_price', json=body)
     return self.envelope_output(r.text, adapter, validate)

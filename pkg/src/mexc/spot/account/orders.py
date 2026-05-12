@@ -1,11 +1,48 @@
+from datetime import datetime
 from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
-  """Item."""
+class OrderStatus(TypedDict):
+  """Order status."""
+  symbol: str
+  """Spot symbol."""
+  orderId: int | str
+  """MEXC order id."""
+  orderListId: int
+  """Order-list id."""
+  clientOrderId: str | None
+  """Client order id."""
+  price: str
+  """Price."""
+  origQty: str
+  """Original quantity."""
+  executedQty: str
+  """Executed quantity."""
+  cummulativeQuoteQty: str
+  """Executed quote quantity."""
+  status: str
+  """Order status."""
+  timeInForce: str
+  """Time in force."""
+  type: str
+  """Order type."""
+  side: str
+  """Order side."""
+  stopPrice: str
+  """Stop price."""
+  icebergQty: str
+  """Iceberg quantity."""
+  time: datetime
+  """Creation time."""
+  updateTime: datetime
+  """Update time."""
+  isWorking: bool
+  """Whether active on the order book."""
+  origQuoteOrderQty: str
+  """Original quote order quantity."""
 
-Response: type[list[Item] | ErrorResponse] = list[Item] | ErrorResponse # type: ignore
+Response: type[list[OrderStatus] | ErrorResponse] = list[OrderStatus] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Orders(AuthSpotMixin):
@@ -19,7 +56,7 @@ class Orders(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Item]:
+  ) -> list[OrderStatus]:
     """Returns active, canceled, and completed orders for a symbol in a bounded time window.
 
     Args:
@@ -35,7 +72,8 @@ class Orders(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#all-orders"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#all-orders)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

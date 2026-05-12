@@ -3,24 +3,24 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import validator
 
-class Item(TypedDict):
+class DealsItem(TypedDict):
   """Recent contract deal."""
   p: float
   """Transaction price."""
   v: float
   """Transaction quantity."""
   T: int
-  """Deal type: Item1 purchase, 2 sell."""
+  """Deal type: 1 purchase, 2 sell."""
   O: int
   """Open-position flag/type from upstream."""
   M: int
-  """Self-trade flag: Item1 yes, 2 no."""
+  """Self-trade flag: 1 yes, 2 no."""
   t: datetime
   """Transaction timestamp in milliseconds."""
-  i: NotRequired[str]
+  i: str
   """Live API deal id."""
 
-class Response200(TypedDict):
+class DealsResponse(TypedDict):
   """Contract deals envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -28,10 +28,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[DealsItem]]
   """Recent contract deals."""
 
-adapter = validator(Response200)
+adapter = validator(DealsResponse)
 
 class Deals(FuturesMixin):
   async def deals(
@@ -40,7 +40,7 @@ class Deals(FuturesMixin):
     *,
     limit: int | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> DealsResponse:
     """Return recent transaction/deal data for a contract.
 
     Args:
@@ -52,7 +52,8 @@ class Deals(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-transaction-data"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#get-contract-transaction-data)
+    """
     params = {}
     if limit is not None:
       params['limit'] = limit

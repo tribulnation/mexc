@@ -1,39 +1,39 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
 class RowsItem(TypedDict):
   """Transfer row."""
-  tranId: NotRequired[str | None]
+  tranId: str | None
   """Transfer id."""
-  clientTranId: NotRequired[str | None]
+  clientTranId: str | None
   """Client transfer id."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Asset."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Amount."""
-  fromAccountType: NotRequired[str | None]
+  fromAccountType: str | None
   """Source account type."""
-  toAccountType: NotRequired[str | None]
+  toAccountType: str | None
   """Destination account type."""
-  fromSymbol: NotRequired[str | None]
+  fromSymbol: str | None
   """Source symbol."""
-  toSymbol: NotRequired[str | None]
+  toSymbol: str | None
   """Destination symbol."""
-  status: NotRequired[str | None]
+  status: str | None
   """Transfer status."""
-  timestamp: NotRequired[datetime | None]
+  timestamp: datetime | None
   """Transfer timestamp."""
 
-class Response200Item(TypedDict):
+class UniversalTransferHistoryItem(TypedDict):
   """Universal transfer history page."""
-  rows: NotRequired[list[RowsItem]]
+  rows: list[RowsItem]
   """Transfer rows."""
-  total: NotRequired[int | None]
+  total: int | None
   """Total records."""
 
-Response: type[list[Response200Item] | ErrorResponse] = list[Response200Item] | ErrorResponse # type: ignore
+Response: type[list[UniversalTransferHistoryItem] | ErrorResponse] = list[UniversalTransferHistoryItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class UniversalTransferHistory(AuthSpotMixin):
@@ -48,7 +48,7 @@ class UniversalTransferHistory(AuthSpotMixin):
     size: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Response200Item]:
+  ) -> list[UniversalTransferHistoryItem]:
     """Returns universal transfer records between account types for the signed account.
 
     Args:
@@ -65,7 +65,8 @@ class UniversalTransferHistory(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -86,7 +87,7 @@ class UniversalTransferHistory(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/capital/transfer', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def universal_transfer_history_paged(self, *, from_account_type: str, to_account_type: str, start_time: Timestamp | None = None, end_time: Timestamp | None = None, size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[list[Response200Item]]:
+  async def universal_transfer_history_paged(self, *, from_account_type: str, to_account_type: str, start_time: Timestamp | None = None, end_time: Timestamp | None = None, size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[list[UniversalTransferHistoryItem]]:
     """Yield pages from `universal_transfer_history` until the response reports the final page."""
     page = 1
     while True:

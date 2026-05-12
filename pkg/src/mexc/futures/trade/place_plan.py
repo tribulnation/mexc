@@ -1,8 +1,8 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import Literal, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import validator
 
-class Body(TypedDict):
+class PlacePlanRequest(TypedDict):
   """Place futures trigger order request body."""
   symbol: str
   """Contract symbol."""
@@ -12,22 +12,22 @@ class Body(TypedDict):
   """Order volume in contracts."""
   leverage: NotRequired[int]
   """Leverage, required for isolated margin according to docs."""
-  side: int
-  """Order direction: Item1 open long, 2 close short, 3 open short, 4 close long."""
-  openType: int
-  """Margin mode: Item1 isolated, 2 cross."""
+  side: Literal[1, 2, 3, 4]
+  """Order direction: 1 open long, 2 close short, 3 open short, 4 close long."""
+  openType: Literal[1, 2]
+  """Margin mode: 1 isolated, 2 cross."""
   triggerPrice: float
   """Trigger price."""
-  triggerType: int
-  """Trigger condition: Item1 greater than or equal, 2 less than or equal."""
-  executeCycle: int
-  """Execution cycle: Item1 for 24 hours, 2 for 7 days."""
-  orderType: int
-  """Execution order type: Item1 limit, 2 post-only maker, 3 IOC, 4 FOK, 5 market."""
-  trend: int
-  """Trigger price source: Item1 latest price, 2 fair price, 3 index price."""
+  triggerType: Literal[1, 2]
+  """Trigger condition: 1 greater than or equal, 2 less than or equal."""
+  executeCycle: Literal[1, 2]
+  """Execution cycle: 1 for 24 hours, 2 for 7 days."""
+  orderType: Literal[1, 2, 3, 4, 5]
+  """Execution order type: 1 limit, 2 post-only maker, 3 IOC, 4 FOK, 5 market."""
+  trend: Literal[1, 2, 3]
+  """Trigger price source: 1 latest price, 2 fair price, 3 index price."""
 
-class Response200(TypedDict):
+class PlacePlanResponse(TypedDict):
   """Futures write endpoint response envelope with created order id."""
   success: bool
   """Whether the API request succeeded."""
@@ -38,10 +38,15 @@ class Response200(TypedDict):
   data: NotRequired[int | str | None]
   """Order identifier returned when creation succeeds; null or absent when creation fails."""
 
-adapter = validator(Response200)
+adapter = validator(PlacePlanResponse)
 
 class PlacePlan(AuthFuturesMixin):
-  async def place_plan(self, body: Body, *, validate: bool | None = None) -> Response200:
+  async def place_plan(
+    self,
+    body: PlacePlanRequest,
+    *,
+    validate: bool | None = None
+  ) -> PlacePlanResponse:
     """Places a futures trigger order with trigger price, trigger direction, execution cycle, and execution order type.
 
     Args:
@@ -52,7 +57,8 @@ class PlacePlan(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#trigger-order-under-maintenance"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#trigger-order-under-maintenance)
+    """
     params = {}
     r = await self.signed_post('/api/v1/private/planorder/place', json=body)
     return self.envelope_output(r.text, adapter, validate)

@@ -7,8 +7,25 @@ from .spot.streams.core import MEXC_SPOT_SOCKET_URL as _MEXC_SPOT_SOCKET_URL
 from .futures import Futures
 from .futures.core import MEXC_FUTURES_API_BASE as _MEXC_FUTURES_API_BASE
 from .futures.streams.core import MEXC_FUTURES_SOCKET_URL as _MEXC_FUTURES_SOCKET_URL
-from .core import ApiError, AuthError, BadRequest, Error, LogicError, NetworkError, RateLimited, ValidationError
+from .core.exc import ApiError, AuthError, BadRequest, Error, LogicError, NetworkError, RateLimited, ValidationError
 from . import spot, futures, core
+
+__all__ = [
+  'ApiError',
+  'AuthError',
+  'BadRequest',
+  'Error',
+  'Futures',
+  'LogicError',
+  'MEXC',
+  'NetworkError',
+  'RateLimited',
+  'Spot',
+  'ValidationError',
+  'core',
+  'futures',
+  'spot',
+]
 
 @_dataclass
 class MEXC:
@@ -24,6 +41,7 @@ class MEXC:
     futures_base_url: str = _MEXC_FUTURES_API_BASE,
     futures_ws_url: str = _MEXC_FUTURES_SOCKET_URL,
   ):
+    """Create a MEXC client with signed endpoint support."""
     return cls(
       spot=Spot.new(
         api_key=api_key,
@@ -50,6 +68,7 @@ class MEXC:
     futures_base_url: str = _MEXC_FUTURES_API_BASE,
     futures_ws_url: str = _MEXC_FUTURES_SOCKET_URL,
   ):
+    """Create a MEXC client for public endpoints only."""
     return cls(
       spot=Spot.public(
         base_url=spot_base_url,
@@ -64,6 +83,7 @@ class MEXC:
     )
 
   async def __aenter__(self):
+    """Open the underlying spot and futures transports."""
     await _asyncio.gather(
       self.spot.__aenter__(),
       self.futures.__aenter__(),
@@ -71,6 +91,7 @@ class MEXC:
     return self
   
   async def __aexit__(self, exc_type, exc_value, traceback):
+    """Close the underlying spot and futures transports."""
     await _asyncio.gather(
       self.spot.__aexit__(exc_type, exc_value, traceback),
       self.futures.__aexit__(exc_type, exc_value, traceback),

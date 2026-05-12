@@ -2,20 +2,20 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class CreateRequest(TypedDict):
   subAccount: NotRequired[str]
   """Name to assign to the new sub-account."""
   note: NotRequired[str]
   """Operator note stored with the sub-account."""
 
-class Response200(TypedDict):
+class CreateResponse(TypedDict):
   """Created sub-account record."""
-  subAccount: NotRequired[str | None]
+  subAccount: str | None
   """Created sub-account name."""
-  note: NotRequired[str | None]
+  note: str | None
   """Sub-account note."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[CreateResponse | ErrorResponse] = CreateResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Create(AuthSpotMixin):
@@ -27,7 +27,7 @@ class Create(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CreateResponse:
     """Creates a new sub-account under the signed master account.
 
     Args:
@@ -41,7 +41,8 @@ class Create(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-a-sub-account-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

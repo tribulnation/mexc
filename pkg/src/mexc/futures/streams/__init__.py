@@ -25,9 +25,18 @@ class Streams:
     auth_ws = AuthedStreamsClient(api_key=api_key, api_secret=api_secret, url=url)
     return cls(auth_ws=auth_ws, ws=ws, default_validate=default_validate)
 
+  @classmethod
+  def public(
+    cls, *,
+    url: str = MEXC_FUTURES_SOCKET_URL,
+    default_validate: bool = True,
+  ):
+    ws = StreamsClient(url=url)
+    return cls(auth_ws=None, ws=ws, default_validate=default_validate)
+
   def __init__(
     self, *,
-    auth_ws: AuthedStreamsClient,
+    auth_ws: AuthedStreamsClient | None,
     ws: StreamsClient,
     default_validate: bool = True,
   ):
@@ -37,13 +46,14 @@ class Streams:
     self.user = UserStreams(auth_ws, default_validate=default_validate)
 
   async def __aenter__(self):
-    await self.auth_ws.__aenter__()
+    if self.auth_ws is not None:
+      await self.auth_ws.__aenter__()
     await self.ws.__aenter__()
     return self
   
   async def __aexit__(self, exc_type, exc_value, traceback):
     tasks = []
-    if self.auth_ws.ctx_future.done():
+    if self.auth_ws is not None and self.auth_ws.ctx_future.done():
       tasks.append(self.auth_ws.__aexit__(exc_type, exc_value, traceback))
     if self.ws.ctx_future.done():
       tasks.append(self.ws.__aexit__(exc_type, exc_value, traceback))

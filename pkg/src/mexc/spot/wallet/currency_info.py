@@ -4,37 +4,51 @@ from mexc.core import Timestamp, timestamp as ts, validator
 
 class NetworkListItem(TypedDict):
   """Network settings."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Currency code."""
-  depositEnable: NotRequired[bool | None]
+  depositEnable: bool | None
   """Whether deposits are enabled on this network."""
-  withdrawEnable: NotRequired[bool | None]
+  withdrawEnable: bool | None
   """Whether withdrawals are enabled on this network."""
-  withdrawFee: NotRequired[str | None]
+  withdrawFee: str | None
   """Withdrawal fee."""
-  withdrawMax: NotRequired[str | None]
+  withdrawMax: str | None
   """Maximum withdrawal amount."""
-  withdrawMin: NotRequired[str | None]
+  withdrawMin: str | None
   """Minimum withdrawal amount."""
   contract: NotRequired[str | None]
   """Token contract address, when applicable."""
-  network: NotRequired[str | None]
+  network: str | None
   """Withdrawal network identifier."""
-  netWork: NotRequired[str | None]
+  netWork: str | None
   """New withdrawal network identifier used by newer withdraw endpoint."""
   memo: NotRequired[str | None]
   """Memo/tag requirement, when present."""
+  Name: str
+  """Returned Name field."""
+  depositDesc: None
+  """Returned depositDesc field."""
+  depositTips: str
+  """Returned depositTips field."""
+  minConfirm: int
+  """Returned minConfirm field."""
+  sameAddress: bool
+  """Returned sameAddress field."""
+  withdrawIntegerMultiple: None
+  """Returned withdrawIntegerMultiple field."""
+  withdrawTips: str
+  """Returned withdrawTips field."""
 
-class Response200Item(TypedDict):
+class CurrencyInfoItem(TypedDict):
   """Currency configuration."""
-  coin: NotRequired[str | None]
+  coin: str | None
   """Currency code."""
-  Name: NotRequired[str | None]
+  Name: str | None
   """Currency display name."""
-  networkList: NotRequired[list[NetworkListItem]]
+  networkList: list[NetworkListItem]
   """Network-specific deposit and withdrawal settings."""
 
-Response: type[list[Response200Item] | ErrorResponse] = list[Response200Item] | ErrorResponse # type: ignore
+Response: type[list[CurrencyInfoItem] | ErrorResponse] = list[CurrencyInfoItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class CurrencyInfo(AuthSpotMixin):
@@ -43,7 +57,7 @@ class CurrencyInfo(AuthSpotMixin):
     *,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> list[Response200Item]:
+  ) -> list[CurrencyInfoItem]:
     """Returns supported currencies, deposit/withdrawal availability, network limits, fees, and contract metadata for wallet operations.
 
     Args:
@@ -54,7 +68,8 @@ class CurrencyInfo(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-currency-information"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-the-currency-information)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

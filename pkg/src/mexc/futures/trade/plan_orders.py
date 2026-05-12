@@ -3,44 +3,44 @@ from typing_extensions import AsyncIterator, NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class PlanOrdersItem(TypedDict):
   """Trigger order record."""
-  id: NotRequired[int | str]
+  id: int | str
   """Trigger order id."""
-  symbol: NotRequired[str]
+  symbol: str
   """Contract symbol."""
-  leverage: NotRequired[int]
+  leverage: int
   """Order leverage."""
-  side: NotRequired[int]
+  side: int
   """Order side."""
-  triggerPrice: NotRequired[float]
+  triggerPrice: float
   """Trigger price."""
-  price: NotRequired[float]
+  price: float
   """Execution price."""
-  vol: NotRequired[float]
+  vol: float
   """Order volume."""
-  openType: NotRequired[int]
+  openType: int
   """Margin mode."""
-  triggerType: NotRequired[int]
+  triggerType: int
   """Trigger type."""
-  state: NotRequired[int]
+  state: int
   """Trigger order state."""
-  executeCycle: NotRequired[int]
+  executeCycle: int
   """Execution cycle."""
-  trend: NotRequired[int]
+  trend: int
   """Trigger trend."""
-  orderType: NotRequired[int]
+  orderType: int
   """Order type."""
-  orderId: NotRequired[int | str]
+  orderId: int | str
   """Generated order id."""
-  errorCode: NotRequired[int]
+  errorCode: int
   """Error code."""
-  createTime: NotRequired[datetime | str]
+  createTime: datetime | str
   """Creation time."""
-  updateTime: NotRequired[datetime | str]
+  updateTime: datetime | str
   """Update time."""
 
-class Response200(TypedDict):
+class PlanOrdersResponse(TypedDict):
   """List futures trigger orders response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -48,10 +48,10 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: list[Item]
+  data: NotRequired[list[PlanOrdersItem]]
   """Trigger order records."""
 
-adapter = validator(Response200)
+adapter = validator(PlanOrdersResponse)
 
 class PlanOrders(AuthFuturesMixin):
   async def plan_orders(
@@ -64,7 +64,7 @@ class PlanOrders(AuthFuturesMixin):
     page_num: int,
     page_size: int,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> PlanOrdersResponse:
     """Returns paginated trigger/plan orders for the signed futures account.
 
     Args:
@@ -80,7 +80,8 @@ class PlanOrders(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-trigger-order-list"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-trigger-order-list)
+    """
     headers = {}
     params = {}
     if symbol is not None:
@@ -98,7 +99,7 @@ class PlanOrders(AuthFuturesMixin):
     r = await self.signed_request('GET', '/api/v1/private/planorder/list/orders', params=params or None, headers=headers)
     return self.envelope_output(r.text, adapter, validate)
 
-  async def plan_orders_paged(self, *, symbol: str | None = None, states: str | None = None, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def plan_orders_paged(self, *, symbol: str | None = None, states: str | None = None, start_time: Timestamp | None = None, end_time: Timestamp | None = None, page_size: int, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[PlanOrdersResponse]:
     """Yield pages from `plan_orders` until the response reports the final page."""
     page = 1
     while True:

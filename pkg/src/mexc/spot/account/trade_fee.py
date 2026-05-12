@@ -1,26 +1,26 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Data(TypedDict):
+class TradeFeeData(TypedDict):
   """Commission data."""
-  makerCommission: NotRequired[float]
+  makerCommission: float
   """Maker commission rate."""
-  takerCommission: NotRequired[float]
+  takerCommission: float
   """Taker commission rate."""
 
-class Response200(TypedDict):
+class TradeFeeResponse(TypedDict):
   """Trade fee wrapper response."""
-  data: NotRequired[Data]
-  code: NotRequired[int]
+  data: TradeFeeData
+  code: int
   """Response code."""
-  msg: NotRequired[str]
+  msg: str
   """Response message."""
-  timestamp: NotRequired[datetime]
+  timestamp: datetime
   """Response timestamp."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[TradeFeeResponse | ErrorResponse] = TradeFeeResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class TradeFee(AuthSpotMixin):
@@ -31,7 +31,7 @@ class TradeFee(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TradeFeeResponse:
     """Returns maker and taker commission rates for a symbol.
 
     Args:
@@ -44,7 +44,8 @@ class TradeFee(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-symbol-commission"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-symbol-commission)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

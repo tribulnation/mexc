@@ -2,17 +2,17 @@ from typing_extensions import TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-class Response200(TypedDict):
+class AvgPriceResponse(TypedDict):
   mins: int
   """Average price window in minutes."""
   price: str
   """Average price."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AvgPriceResponse | ErrorResponse] = AvgPriceResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AvgPrice(SpotMixin):
-  async def avg_price(self, *, symbol: str, validate: bool | None = None) -> Response200:
+  async def avg_price(self, *, symbol: str, validate: bool | None = None) -> AvgPriceResponse:
     """Return current average price for a spot symbol.
 
     Args:
@@ -23,7 +23,8 @@ class AvgPrice(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-average-price"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#current-average-price)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

@@ -1,65 +1,65 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class AffiliateReferralItem(TypedDict):
   """Affiliate record."""
-  uid: NotRequired[int | str]
+  uid: int | str
   """Referral user id."""
-  nickName: NotRequired[str | None]
+  nickName: str | None
   """Referral nickname."""
-  email: NotRequired[str]
+  email: str
   """Referral email."""
-  registerTime: NotRequired[datetime]
+  registerTime: datetime
   """Registration time."""
-  inviteCode: NotRequired[str]
+  inviteCode: str
   """Invite code."""
-  depositAmount: NotRequired[str]
+  depositAmount: str
   """Deposit amount in USDT."""
-  tradingAmount: NotRequired[str]
+  tradingAmount: str
   """Trading amount in USDT."""
-  commission: NotRequired[str]
+  commission: str
   """Commission amount in USDT."""
-  firstDepositTime: NotRequired[datetime | None]
+  firstDepositTime: datetime | None
   """First deposit time."""
-  firstTradeTime: NotRequired[datetime | None]
+  firstTradeTime: datetime | None
   """First trade time."""
-  lastDepositTime: NotRequired[datetime | None]
+  lastDepositTime: datetime | None
   """Last deposit time."""
-  lastTradeTime: NotRequired[datetime | None]
+  lastTradeTime: datetime | None
   """Last trade time."""
-  withdrawAmount: NotRequired[str]
+  withdrawAmount: str
   """Withdrawal amount in USDT."""
-  asset: NotRequired[str]
+  asset: str
   """Asset balance band."""
-  identification: NotRequired[int]
+  identification: int
   """KYC identification level."""
 
-class Data(TypedDict):
+class AffiliateReferralData(TypedDict):
   """Paginated affiliate data."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of result pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current result page."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[AffiliateReferralItem]
   """Affiliate records for the page."""
 
-class Response200(TypedDict):
+class AffiliateReferralResponse(TypedDict):
   """Affiliate wrapper response."""
-  success: NotRequired[bool]
+  success: bool
   """Whether the request succeeded."""
-  code: NotRequired[int]
+  code: int
   """Business response code."""
-  message: NotRequired[str | None]
+  message: str | None
   """Business response message."""
-  data: NotRequired[Data]
+  data: AffiliateReferralData
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AffiliateReferralResponse | ErrorResponse] = AffiliateReferralResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AffiliateReferral(AuthSpotMixin):
@@ -74,7 +74,7 @@ class AffiliateReferral(AuthSpotMixin):
     page_size: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> AffiliateReferralResponse:
     """Affiliate-only endpoint returning referred-user deposit, trading, commission, asset-band, and identification data.
 
     Args:
@@ -91,7 +91,8 @@ class AffiliateReferral(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-referral-data-affiliate-only"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-referral-data-affiliate-only)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -112,7 +113,7 @@ class AffiliateReferral(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/rebate/affiliate/referral', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def affiliate_referral_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, uid: str | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def affiliate_referral_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, uid: str | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[AffiliateReferralResponse]:
     """Yield pages from `affiliate_referral` until the response reports the final page."""
     page = 1
     while True:

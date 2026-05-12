@@ -1,30 +1,30 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class UniversalTransferByTranIdResponse(TypedDict):
   """Universal transfer detail."""
-  tranId: NotRequired[str | None]
+  tranId: str | None
   """Transfer id."""
-  clientTranId: NotRequired[str | None]
+  clientTranId: str | None
   """Client transfer id."""
-  asset: NotRequired[str | None]
+  asset: str | None
   """Asset."""
-  amount: NotRequired[str | None]
+  amount: str | None
   """Amount."""
-  fromAccountType: NotRequired[str | None]
+  fromAccountType: str | None
   """Source account type."""
-  toAccountType: NotRequired[str | None]
+  toAccountType: str | None
   """Destination account type."""
-  symbol: NotRequired[str | None]
+  symbol: str | None
   """Symbol."""
-  status: NotRequired[str | None]
+  status: str | None
   """Transfer status."""
-  timestamp: NotRequired[datetime | None]
+  timestamp: datetime | None
   """Transfer timestamp."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[UniversalTransferByTranIdResponse | ErrorResponse] = UniversalTransferByTranIdResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class UniversalTransferByTranId(AuthSpotMixin):
@@ -34,7 +34,7 @@ class UniversalTransferByTranId(AuthSpotMixin):
     tran_id: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> UniversalTransferByTranIdResponse:
     """Returns a single universal transfer record by transfer id.
 
     Args:
@@ -46,7 +46,8 @@ class UniversalTransferByTranId(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history-by-tranid"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#query-user-universal-transfer-history-by-tranid)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

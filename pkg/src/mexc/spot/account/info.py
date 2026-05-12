@@ -1,32 +1,32 @@
 from datetime import datetime
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class SpotBalance(TypedDict):
   """Balance."""
-  asset: NotRequired[str]
-  free: NotRequired[str]
-  locked: NotRequired[str]
+  asset: str
+  free: str
+  locked: str
 
-class Response200(TypedDict):
+class SpotAccountInfo(TypedDict):
   """Account information response."""
-  canTrade: NotRequired[bool]
+  canTrade: bool
   """Whether spot trading is enabled."""
-  canWithdraw: NotRequired[bool]
+  canWithdraw: bool
   """Whether withdrawals are enabled."""
-  canDeposit: NotRequired[bool]
+  canDeposit: bool
   """Whether deposits are enabled."""
-  updateTime: NotRequired[datetime | None]
+  updateTime: datetime | None
   """Account update time."""
-  accountType: NotRequired[str]
+  accountType: str
   """Account type."""
-  balances: NotRequired[list[Item]]
+  balances: list[SpotBalance]
   """Asset balances."""
-  permissions: NotRequired[list[str]]
+  permissions: list[str]
   """Account permissions."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[SpotAccountInfo | ErrorResponse] = SpotAccountInfo | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class Info(AuthSpotMixin):
@@ -36,7 +36,7 @@ class Info(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> SpotAccountInfo:
     """Returns trading permissions and spot balances for the signed account.
 
     Args:
@@ -48,7 +48,8 @@ class Info(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-information"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#account-information)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

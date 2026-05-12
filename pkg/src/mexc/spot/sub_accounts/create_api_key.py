@@ -3,7 +3,7 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Body(TypedDict):
+class CreateApiKeyRequest(TypedDict):
   subAccount: NotRequired[str]
   """Sub-account name for which to create the API key."""
   note: NotRequired[str]
@@ -13,24 +13,24 @@ class Body(TypedDict):
   ip: NotRequired[str]
   """Optional comma-separated IP allowlist."""
 
-class Response200(TypedDict):
+class CreateApiKeyResponse(TypedDict):
   """Created sub-account API key."""
-  subAccount: NotRequired[str | None]
+  subAccount: str | None
   """Sub-account name."""
-  note: NotRequired[str | None]
+  note: str | None
   """API key note."""
-  apiKey: NotRequired[str | None]
+  apiKey: str | None
   """API public key."""
-  secretKey: NotRequired[str | None]
+  secretKey: str | None
   """API secret key returned at creation time."""
-  permissions: NotRequired[str | None]
+  permissions: str | None
   """API key permissions."""
-  ip: NotRequired[str | None]
+  ip: str | None
   """API key IP allowlist."""
-  creatTime: NotRequired[datetime | None]
+  creatTime: datetime | None
   """API key creation time as spelled by the upstream docs."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[CreateApiKeyResponse | ErrorResponse] = CreateApiKeyResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class CreateApiKey(AuthSpotMixin):
@@ -44,7 +44,7 @@ class CreateApiKey(AuthSpotMixin):
     recv_window: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CreateApiKeyResponse:
     """Creates an API key for a sub-account under the signed master account.
 
     Args:
@@ -60,7 +60,8 @@ class CreateApiKey(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-an-apikey-for-a-sub-account-for-master-account"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#create-an-apikey-for-a-sub-account-for-master-account)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

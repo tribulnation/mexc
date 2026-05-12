@@ -1,63 +1,63 @@
 from datetime import datetime
-from typing_extensions import AsyncIterator, NotRequired, TypedDict
+from typing_extensions import AsyncIterator, TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Item(TypedDict):
+class AffiliateCommissionItem(TypedDict):
   """Affiliate record."""
-  uid: NotRequired[str]
+  uid: str
   """Invitee user id."""
-  account: NotRequired[str]
+  account: str
   """Invitee account."""
-  inviteCode: NotRequired[str]
+  inviteCode: str
   """Invite code."""
-  inviteTime: NotRequired[datetime]
+  inviteTime: datetime
   """Invite time."""
-  spot: NotRequired[str]
+  spot: str
   """Spot commission in USDT."""
-  etf: NotRequired[str]
+  etf: str
   """ETF commission in USDT."""
-  futures: NotRequired[str]
+  futures: str
   """Futures commission in USDT."""
-  total: NotRequired[str]
+  total: str
   """Total commission in USDT."""
-  deposit: NotRequired[str | None]
+  deposit: str | None
   """Deposit amount in USDT."""
-  firstDepositTime: NotRequired[str | None]
+  firstDepositTime: str | None
   """First deposit date."""
 
-class Data(TypedDict):
+class AffiliateCommissionData(TypedDict):
   """Paginated affiliate data."""
-  pageSize: NotRequired[int]
+  pageSize: int
   """Number of records requested per page."""
-  totalCount: NotRequired[int]
+  totalCount: int
   """Total number of matching records."""
-  totalPage: NotRequired[int]
+  totalPage: int
   """Total number of result pages."""
-  currentPage: NotRequired[int]
+  currentPage: int
   """Current result page."""
-  resultList: NotRequired[list[Item]]
+  resultList: list[AffiliateCommissionItem]
   """Affiliate records for the page."""
-  usdtAmount: NotRequired[str | None]
+  usdtAmount: str | None
   """USDT amount."""
-  totalCommissionUsdtAmount: NotRequired[str | None]
+  totalCommissionUsdtAmount: str | None
   """Total commission in USDT."""
-  totalTradeUsdtAmount: NotRequired[str | None]
+  totalTradeUsdtAmount: str | None
   """Total trade volume in USDT."""
-  finished: NotRequired[bool | None]
+  finished: bool | None
   """Whether the result set is finished."""
 
-class Response200(TypedDict):
+class AffiliateCommissionResponse(TypedDict):
   """Affiliate wrapper response."""
-  success: NotRequired[bool]
+  success: bool
   """Whether the request succeeded."""
-  code: NotRequired[int]
+  code: int
   """Business response code."""
-  message: NotRequired[str | None]
+  message: str | None
   """Business response message."""
-  data: NotRequired[Data]
+  data: AffiliateCommissionData
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[AffiliateCommissionResponse | ErrorResponse] = AffiliateCommissionResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class AffiliateCommission(AuthSpotMixin):
@@ -71,7 +71,7 @@ class AffiliateCommission(AuthSpotMixin):
     page_size: int | None = None,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> AffiliateCommissionResponse:
     """Affiliate-only endpoint returning invitee-level commission totals for the signed affiliate account.
 
     Args:
@@ -87,7 +87,8 @@ class AffiliateCommission(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-commission-record-affiliate-only"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#get-affiliate-commission-record-affiliate-only)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}
@@ -106,7 +107,7 @@ class AffiliateCommission(AuthSpotMixin):
     r = await self.signed_request('GET', '/api/v3/rebate/affiliate/commission', params=params)
     return self.output(r.text, adapter, validate)
 
-  async def affiliate_commission_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[Response200]:
+  async def affiliate_commission_paged(self, *, start_time: Timestamp | None = None, end_time: Timestamp | None = None, invite_code: str | None = None, page_size: int | None = None, timestamp: Timestamp | None = None, max_pages: int | None = None, validate: bool | None = None) -> AsyncIterator[AffiliateCommissionResponse]:
     """Yield pages from `affiliate_commission` until the response reports the final page."""
     page = 1
     while True:

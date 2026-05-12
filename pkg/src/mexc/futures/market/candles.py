@@ -3,7 +3,7 @@ from typing_extensions import Literal, NotRequired, TypedDict
 from mexc.futures.core import FuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Data(TypedDict):
+class CandlesData(TypedDict):
   """K-line series, with each array index representing the same candle across fields."""
   time: list[datetime]
   """Candle open times in seconds."""
@@ -17,18 +17,18 @@ class Data(TypedDict):
   """Lowest prices."""
   vol: list[float]
   """Contract volumes."""
-  amount: NotRequired[list[float]]
+  amount: list[float]
   """Quote amounts."""
-  realOpen: NotRequired[list[float]]
+  realOpen: list[float]
   """Live API real opening prices."""
-  realClose: NotRequired[list[float]]
+  realClose: list[float]
   """Live API real closing prices."""
-  realHigh: NotRequired[list[float]]
+  realHigh: list[float]
   """Live API real highest prices."""
-  realLow: NotRequired[list[float]]
+  realLow: list[float]
   """Live API real lowest prices."""
 
-class Response200(TypedDict):
+class CandlesResponse(TypedDict):
   """Contract K-line envelope"""
   success: bool
   """Whether the API request succeeded."""
@@ -36,9 +36,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[CandlesData]
 
-adapter = validator(Response200)
+adapter = validator(CandlesResponse)
 
 class Candles(FuturesMixin):
   async def candles(
@@ -49,7 +49,7 @@ class Candles(FuturesMixin):
     start: Timestamp | None = None,
     end: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> CandlesResponse:
     """Return contract K-line/candlestick series for a symbol and optional time window.
 
     Args:
@@ -63,7 +63,8 @@ class Candles(FuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#k-line-data"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#k-line-data)
+    """
     params = {}
     if interval is not None:
       params['interval'] = interval

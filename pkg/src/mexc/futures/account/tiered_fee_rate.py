@@ -2,24 +2,24 @@ from typing_extensions import NotRequired, TypedDict
 from mexc.futures.core import AuthFuturesMixin
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Data(TypedDict):
+class TieredFeeRateData(TypedDict):
   """Current futures tiered fee rate."""
-  level: NotRequired[int]
+  level: int
   """Fee tier level."""
-  dealAmount: NotRequired[float]
+  dealAmount: float
   """Last 30 days turnover."""
-  walletBalance: NotRequired[float]
+  walletBalance: float
   """Yesterday wallet balance."""
-  makerFee: NotRequired[float]
+  makerFee: float
   """Maker fee rate."""
-  takerFee: NotRequired[float]
+  takerFee: float
   """Taker fee rate."""
-  makerFeeDiscount: NotRequired[float]
+  makerFeeDiscount: float
   """Maker fee discount multiplier."""
-  takerFeeDiscount: NotRequired[float]
+  takerFeeDiscount: float
   """Taker fee discount multiplier."""
 
-class Response200(TypedDict):
+class TieredFeeRateResponse(TypedDict):
   """Get futures tiered fee rate response envelope."""
   success: bool
   """Whether the API request succeeded."""
@@ -27,9 +27,9 @@ class Response200(TypedDict):
   """MEXC response code; zero indicates success when present."""
   message: NotRequired[str]
   """Error or status message when present."""
-  data: Data
+  data: NotRequired[TieredFeeRateData]
 
-adapter = validator(Response200)
+adapter = validator(TieredFeeRateResponse)
 
 class TieredFeeRate(AuthFuturesMixin):
   async def tiered_fee_rate(
@@ -37,7 +37,7 @@ class TieredFeeRate(AuthFuturesMixin):
     *,
     symbol: str,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> TieredFeeRateResponse:
     """Returns the signed account tier and maker/taker fee rates for a contract.
 
     Args:
@@ -48,7 +48,8 @@ class TieredFeeRate(AuthFuturesMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-user-39-s-current-trading-fee-rate"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/contract_v1_en/#gets-the-user-39-s-current-trading-fee-rate)
+    """
     headers = {}
     params = {}
     if symbol is not None:

@@ -1,8 +1,22 @@
-from typing_extensions import Any
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-Response: type[dict[str, Any] | list[dict[str, Any]] | ErrorResponse] = dict[str, Any] | list[dict[str, Any]] | ErrorResponse # type: ignore
+class TickerPriceResponse(TypedDict):
+  """Latest price ticker."""
+  symbol: str
+  """Spot symbol."""
+  price: str
+  """Latest traded price."""
+
+class TickerPriceListItem(TypedDict):
+  """Latest price ticker."""
+  symbol: NotRequired[str]
+  """Spot symbol."""
+  price: NotRequired[str]
+  """Latest traded price."""
+
+Response: type[TickerPriceResponse | list[TickerPriceListItem] | ErrorResponse] = TickerPriceResponse | list[TickerPriceListItem] | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class TickerPrice(SpotMixin):
@@ -11,7 +25,7 @@ class TickerPrice(SpotMixin):
     *,
     symbol: str | None = None,
     validate: bool | None = None
-  ) -> dict[str, Any] | list[dict[str, Any]]:
+  ) -> TickerPriceResponse | list[TickerPriceListItem]:
     """Return latest price for one spot symbol or all symbols.
 
     Args:
@@ -22,7 +36,8 @@ class TickerPrice(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-price-ticker"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#symbol-price-ticker)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol

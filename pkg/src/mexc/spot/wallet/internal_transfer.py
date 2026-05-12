@@ -1,13 +1,13 @@
-from typing_extensions import NotRequired, TypedDict
+from typing_extensions import TypedDict
 from mexc.spot.core import AuthSpotMixin, ErrorResponse
 from mexc.core import Timestamp, timestamp as ts, validator
 
-class Response200(TypedDict):
+class InternalTransferResponse(TypedDict):
   """Internal transfer response."""
-  tranId: NotRequired[str | None]
+  tranId: str | None
   """Transfer id."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[InternalTransferResponse | ErrorResponse] = InternalTransferResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class InternalTransfer(AuthSpotMixin):
@@ -21,7 +21,7 @@ class InternalTransfer(AuthSpotMixin):
     amount: str,
     timestamp: Timestamp | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> InternalTransferResponse:
     """Transfers assets internally to another MEXC account by email, UID, or mobile number.
 
     Args:
@@ -37,7 +37,8 @@ class InternalTransfer(AuthSpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#internal-transfer)
+    """
     if timestamp is None:
       timestamp = ts.now()
     params = {}

@@ -1,37 +1,79 @@
 from datetime import datetime
-from typing_extensions import Any, NotRequired, TypedDict
+from typing_extensions import NotRequired, TypedDict
 from mexc.spot.core import ErrorResponse, SpotMixin
 from mexc.core import validator
 
-class Item(TypedDict):
-  symbol: NotRequired[str]
-  """Spot symbol."""
-  status: NotRequired[Any]
-  """Symbol status."""
-  baseAsset: NotRequired[str]
-  """Base asset."""
-  quoteAsset: NotRequired[str]
-  """Quote asset."""
-  orderTypes: NotRequired[list[str]]
-  """Supported order types."""
-  isSpotTradingAllowed: NotRequired[bool]
-  """Whether spot trading is allowed."""
-  isMarginTradingAllowed: NotRequired[bool]
-  """Whether margin trading is allowed."""
+class ExchangeFiltersItem(TypedDict):
+  filterType: NotRequired[str]
+  """Exchange filter type."""
 
-class Response200(TypedDict):
-  timezone: NotRequired[str]
+class SymbolFilter(TypedDict):
+  filterType: NotRequired[str]
+  """Filter type."""
+  askMultiplierDown: NotRequired[str | float]
+  """Ask-side lower percent-price multiplier."""
+  bidMultiplierUp: NotRequired[str | float]
+  """Bid-side upper percent-price multiplier."""
+
+class RateLimitsItem(TypedDict):
+  rateLimitType: NotRequired[str]
+  """Rate limit type."""
+  interval: NotRequired[str]
+  """Rate limit interval."""
+  intervalNum: NotRequired[int]
+  """Number of intervals."""
+  limit: NotRequired[int]
+  """Request limit for the interval."""
+
+class SymbolInfo(TypedDict):
+  symbol: str
+  """Spot symbol."""
+  status: str | int
+  """Symbol status."""
+  baseAsset: str
+  """Base asset."""
+  quoteAsset: str
+  """Quote asset."""
+  quotePrecision: int
+  """Quote asset precision."""
+  baseSizePrecision: NotRequired[str | float]
+  """Minimum base-size precision or step size."""
+  makerCommission: str | float
+  """Maker fee rate."""
+  takerCommission: str | float
+  """Taker fee rate."""
+  orderTypes: list[str]
+  """Supported order types."""
+  filters: NotRequired[list[SymbolFilter]]
+  """Symbol trading filters."""
+  isSpotTradingAllowed: bool
+  """Whether spot trading is allowed."""
+  isMarginTradingAllowed: bool
+  """Whether margin trading is allowed."""
+  baseAssetPrecision: int
+  """Returned baseAssetPrecision field."""
+  fullName: str
+  """Returned fullName field."""
+  permissions: list[str]
+  """Returned permissions field."""
+  quoteAssetPrecision: int
+  """Returned quoteAssetPrecision field."""
+  tradeSideType: int
+  """Returned tradeSideType field."""
+
+class ExchangeInfoResponse(TypedDict):
+  timezone: str
   """Exchange timezone."""
-  serverTime: NotRequired[datetime]
+  serverTime: datetime
   """Server timestamp in milliseconds."""
-  rateLimits: NotRequired[list[Any]]
+  rateLimits: list[RateLimitsItem]
   """Rate limit entries."""
-  exchangeFilters: NotRequired[list[Any]]
+  exchangeFilters: list[ExchangeFiltersItem]
   """Exchange-level filters."""
-  symbols: list[Item]
+  symbols: list[SymbolInfo]
   """Symbol trading rules."""
 
-Response: type[Response200 | ErrorResponse] = Response200 | ErrorResponse # type: ignore
+Response: type[ExchangeInfoResponse | ErrorResponse] = ExchangeInfoResponse | ErrorResponse # type: ignore
 adapter = validator(Response)
 
 class ExchangeInfo(SpotMixin):
@@ -41,7 +83,7 @@ class ExchangeInfo(SpotMixin):
     symbol: str | None = None,
     symbols: str | None = None,
     validate: bool | None = None
-  ) -> Response200:
+  ) -> ExchangeInfoResponse:
     """Return spot exchange metadata and symbol trading rules.
 
     Args:
@@ -53,7 +95,8 @@ class ExchangeInfo(SpotMixin):
       The validated endpoint response.
 
     References:
-      Upstream docs: https://mexcdevelop.github.io/apidocs/spot_v3_en/#exchange-information"""
+      - [MEXC API docs](https://mexcdevelop.github.io/apidocs/spot_v3_en/#exchange-information)
+    """
     params = {}
     if symbol is not None:
       params['symbol'] = symbol
